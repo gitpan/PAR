@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #50 $ $Change: 10382 $ $DateTime: 2004/03/13 20:18:33 $
+   $Revision: #52 $ $Change: 10608 $ $DateTime: 2004/05/17 18:35:31 $
    vim: expandtab shiftwidth=4
 */
 
@@ -28,13 +28,13 @@ static char **fakeargv;
 #    define environ (*environ_pointer)
 EXT char *** environ_pointer;
 #else
-#    if defined(PERL_DARWIN)
+#    if defined(PERL_DARWIN) || defined(__APPLE__)
 #        include <crt_externs.h>
 #        define environ (*_NSGetEnviron())
 #    endif
 #endif
 
-#ifdef HASX_PROCSELFEXE
+#ifdef HAS_PROCSELFEXE
 /* This is a function so that we don't hold on to MAXPATHLEN
    bytes of stack longer than necessary
  */

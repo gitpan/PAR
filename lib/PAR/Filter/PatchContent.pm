@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Filter/PatchContent.pm $ $Author: autrijus $
-# $Revision: #6 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $
+# $Revision: #8 $ $Change: 10561 $ $DateTime: 2004/04/30 19:07:34 $
 
 package PAR::Filter::PatchContent;
 
@@ -22,9 +22,14 @@ by default.
 
 =cut
 
-sub PATCH_CONTENT () { {
+sub PATCH_CONTENT () { +{
+    map { ref($_) ? $_ : lc($_) }
+    'Pod/Usage.pm'	=> [
+    	' = $0' =>
+	' = $ENV{PAR_0} || $0',
+    ],
     'Tk.pm'             => [
-        'foreach $dir (@INC)'   => 
+        'foreach $dir (@INC)' => 
         'if (my $member = PAR::unpar($0, $file, 1)) {
             $file =~ s![/\\\\]!_!g;
             return PAR::Heavy::_dl_extract($member,$file,$file);
@@ -59,6 +64,10 @@ sub PATCH_CONTENT () { {
          }
         ',
     ],
+    'XSLoader.pm'	    => [
+    	'goto retry unless $module and defined &dl_load_file;' =>
+	'goto retry;',
+    ],
     'diagnostics.pm'        => [
         'CONFIG: ' => 'CONFIG: if (0) ',
         'if (eof(POD_DIAG)) ' => 'if (0 and eof(POD_DIAG)) ',
@@ -81,7 +90,7 @@ sub apply {
     my ($class, $ref, $filename, $name) = @_;
     { use bytes; $$ref =~ s/^\xEF\xBB\xBF//; } # remove utf8 BOM
 
-    my @rule = @{PATCH_CONTENT->{$name}||[]} or return $$ref;
+    my @rule = @{PATCH_CONTENT->{lc($name)}||[]} or return $$ref;
     while (my ($from, $to) = splice(@rule, 0, 2)) {
         $$ref =~ s/\Q$from\E/$to/g;
     }

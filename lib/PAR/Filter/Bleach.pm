@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Filter/Bleach.pm $ $Author: autrijus $
-# $Revision: #5 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $
+# $Revision: #6 $ $Change: 10562 $ $DateTime: 2004/04/30 19:40:32 $
 
 package PAR::Filter::Bleach;
 
@@ -28,7 +28,7 @@ sub apply {
     $$ref = unpack("b*", $$ref);
     $$ref =~ tr/01/ \t/;
     $$ref =~ s/(.{9})/$1\n/g;
-    $$ref = q($_=<<'';y;\r\n;;d;s;;pack'b*',$_;ee;!$@||die$@)."\n$$ref\n\n";
+    $$ref = q($_=<<'';y;\r\n;;d;$_=pack'b*',$_;eval;$@&&die$@)."\n$$ref\n\n";
 }
 
 1;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/2-pp.t $ $Author: autrijus $
-# $Revision: #4 $ $Change: 10380 $ $DateTime: 2004/03/13 20:16:31 $
+# $Revision: #5 $ $Change: 10644 $ $DateTime: 2004/05/22 16:33:24 $
 
 use strict;
 use Cwd;
@@ -21,7 +21,7 @@ if (!-e $parl) {
     exit;
 }
 
-warn "Note: Error messages are harmless as long as the tests pass.\n";
+warn "*** NOTE: Error messages are harmless as long as tests pass. ***\n";
 
 unshift @INC, File::Spec->catdir($cwd, 'inc');
 unshift @INC, File::Spec->catdir($cwd, 'blib', 'lib');
@@ -45,5 +45,7 @@ $ENV{PERL5LIB} = join(
 
 chdir $test_dir;
 do "automated_pp_test.pl";
+
+warn "*** NOTE: Error messages are harmless as long as tests pass. ***\n";
 
 __END__

@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #102 $ $Change: 10404 $ $DateTime: 2004/03/17 11:50:19 $ vim: expandtab shiftwidth=4
+# $Revision: #107 $ $Change: 10646 $ $DateTime: 2004/05/22 17:13:01 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -503,7 +503,11 @@ if ($out) {
                 close FILE;
 
                 PAR::Filter::PodStrip->new->apply(\$content, $file)
-                    if !$ENV{PAR_VERBATIM} and lc($name) =~ /\.(?:pm|ix|al)$/i;
+                    if !$ENV{PAR_VERBATIM} and $name =~ /\.(?:pm|ix|al)$/i;
+
+                # Do not let XSLoader pick up auto/* from environment
+                $content =~ s/goto +retry +unless +.*/goto retry;/
+                    if lc($name) eq lc("XSLoader.pm");
             }
 
             outs(qq(Written as "$name"));
@@ -531,7 +535,7 @@ if ($out) {
 }
 # }}}
 
-# Prepare $0 into PAR file cache {{{
+# Prepare $progname into PAR file cache {{{
 {
     last unless defined $start_pos;
 
@@ -546,7 +550,7 @@ if ($out) {
     $zip->readFromFileHandle($fh) == Archive::Zip::AZ_OK() or die "$!: $@";
 
     push @PAR::LibCache, $zip;
-    $PAR::LibCache{$0} = $zip;
+    $PAR::LibCache{$progname} = $zip;
 
     $quiet = !$ENV{PAR_DEBUG};
     outs(qq(\$ENV{PAR_TEMP} = "$ENV{PAR_TEMP}"));
@@ -572,12 +576,12 @@ if ($out) {
 # }}}
 
 # If there's no main.pl to run, show usage {{{
-unless ($PAR::LibCache{$0}) {
+unless ($PAR::LibCache{$progname}) {
     die << "." unless @ARGV;
 Usage: $0 [ -Alib.par ] [ -Idir ] [ -Mmodule ] [ src.par ] [ program.pl ]
        $0 [ -B|-b ] [-Ooutfile] src.par
 .
-    $0 = shift(@ARGV);
+    $ENV{PAR_PROGNAME} = $progname = $0 = shift(@ARGV);
 }
 # }}}
 
@@ -598,6 +602,7 @@ sub require_modules {
     require File::Spec;
     require XSLoader;
     require Config;
+    require IO::Handle;
     require IO::File;
     require Compress::Zlib;
     require Archive::Zip;
@@ -616,7 +621,7 @@ sub _set_par_temp {
 
     foreach my $path (
         (map $ENV{$_}, qw( TMPDIR TEMP TMP )),
-        qw( "C:\\TEMP /tmp . )
+        qw( C:\\TEMP /tmp . )
     ) {
         next unless $path and -d $path and -w $path;
         my $username = defined(&Win32::LoginName)
@@ -675,15 +680,26 @@ sub _set_progname {
     if ($ENV{PAR_PROGNAME} and $ENV{PAR_PROGNAME} =~ /(.+)/) {
         $progname = $1;
     }
-    return if -s ($progname ||= $0);
 
-    if (-s "$progname$Config{_exe}") {
-        $ENV{PAR_PROGNAME} = $progname = "$progname$Config{_exe}";
-        $0 .= $Config{_exe};
-        return $progname;
+    $progname ||= $0;
+
+    if (index($progname, $ENV{PAR_TEMP}) > -1) {
+        $progname = substr($progname, rindex($progname, $Config{_delim}) + 1);
+    }
+
+    if (index($progname, $Config{_delim}) > -1) {
+        if (open my $fh, $progname) {
+            return if -s $fh;
+        }
+        if (-s "$progname$Config{_exe}") {
+            $ENV{PAR_PROGNAME} = $progname = "$progname$Config{_exe}";
+            $0 .= $Config{_exe};
+            return $progname;
+        }
     }
 
     foreach my $dir (split /\Q$Config{path_sep}\E/, $ENV{PATH}) {
+        next if exists $ENV{PAR_TEMP} and $dir eq $ENV{PAR_TEMP};
         $dir =~ s/\Q$Config{_delim}\E$//;
         (($progname = "$dir$Config{_delim}$progname$Config{_exe}"), last)
             if -s "$dir$Config{_delim}$progname$Config{_exe}";
@@ -747,9 +763,9 @@ unshift @INC, \&PAR::find_par;
 PAR->import(@par_args);
 
 die qq(Can't open perl script "$0": No such file or directory\n)
-    unless -e $0;
+    unless -e $progname;
 
-do $0;
+do $progname;
 die $@ if $@;
 
 };

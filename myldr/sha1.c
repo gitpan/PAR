@@ -14,12 +14,19 @@
 
 /* Useful defines & typedefs */
 
-#ifndef ULONG
-typedef unsigned long ULONG;
-#endif
-#ifndef U8TYPE
-#define U8TYPE unsigned char
-typedef U8TYPE U8;
+#if defined(U64TYPE) && (defined(USE_64_BIT_INT) || ((BYTEORDER != 0x1234) && (BYTEORDER != 0x4321)))
+typedef U64TYPE ULONG;
+# if BYTEORDER == 0x1234
+#   undef BYTEORDER
+#   define BYTEORDER 0x12345678
+# elif BYTEORDER == 0x4321
+#   undef BYTEORDER
+#   define BYTEORDER 0x87654321   
+# endif
+#else
+# if (!defined(__GNUC__) || !defined(_WINNT_H))
+typedef unsigned long ULONG;     /* 32-or-more-bit quantity */
+# endif
 #endif
 
 #define SHA_BLOCKSIZE		64
@@ -28,7 +35,7 @@ typedef U8TYPE U8;
 typedef struct {
     ULONG digest[5];		/* message digest */
     ULONG count_lo, count_hi;	/* 64-bit bit count */
-    U8 data[SHA_BLOCKSIZE]; /* SHA data buffer */
+    U8 data[SHA_BLOCKSIZE];	/* SHA data buffer */
     int local;			/* unprocessed amount in data */
 } SHA_INFO;
 
@@ -92,6 +99,16 @@ static void sha_transform(SHA_INFO *sha_info)
 
     dp = sha_info->data;
 
+/*
+the following makes sure that at least one code block below is
+traversed or an error is reported, without the necessity for nested
+preprocessor if/else/endif blocks, which are a great pain in the
+nether regions of the anatomy...
+*/
+#undef SWAP_DONE
+
+#if BYTEORDER == 0x1234
+#define SWAP_DONE
     /* assert(sizeof(ULONG) == 4); */
     for (i = 0; i < 16; ++i) {
 	T = *((ULONG *) dp);
@@ -99,6 +116,46 @@ static void sha_transform(SHA_INFO *sha_info)
 	W[i] =  ((T << 24) & 0xff000000) | ((T <<  8) & 0x00ff0000) |
 		((T >>  8) & 0x0000ff00) | ((T >> 24) & 0x000000ff);
     }
+#endif
+
+#if BYTEORDER == 0x4321
+#define SWAP_DONE
+    /* assert(sizeof(ULONG) == 4); */
+    for (i = 0; i < 16; ++i) {
+	T = *((ULONG *) dp);
+	dp += 4;
+	W[i] = T32(T);
+    }
+#endif
+
+#if BYTEORDER == 0x12345678
+#define SWAP_DONE
+    /* assert(sizeof(ULONG) == 8); */
+    for (i = 0; i < 16; i += 2) {
+	T = *((ULONG *) dp);
+	dp += 8;
+	W[i] =  ((T << 24) & 0xff000000) | ((T <<  8) & 0x00ff0000) |
+		((T >>  8) & 0x0000ff00) | ((T >> 24) & 0x000000ff);
+	T >>= 32;
+	W[i+1] = ((T << 24) & 0xff000000) | ((T <<  8) & 0x00ff0000) |
+		 ((T >>  8) & 0x0000ff00) | ((T >> 24) & 0x000000ff);
+    }
+#endif
+
+#if BYTEORDER == 0x87654321
+#define SWAP_DONE
+    /* assert(sizeof(ULONG) == 8); */
+    for (i = 0; i < 16; i += 2) {
+	T = *((ULONG *) dp);
+	dp += 8;
+	W[i] = T32(T >> 32);
+	W[i+1] = T32(T);
+    }
+#endif
+
+#ifndef SWAP_DONE
+#error Unknown byte order -- you need to add code here
+#endif /* SWAP_DONE */
 
     for (i = 16; i < 80; ++i) {
 	W[i] = W[i-3] ^ W[i-8] ^ W[i-14] ^ W[i-16];

@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #58 $ $Change: 10217 $ $DateTime: 2004/02/26 23:32:51 $
+# $Revision: #62 $ $Change: 10555 $ $DateTime: 2004/04/30 16:19:56 $
 #
-# Copyright 2002, 2003 by Autrijus Tang.
+# Copyright 2002, 2003, 2004 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
@@ -21,13 +21,14 @@ my $exe = $Config{_exe};
 my $link_exe = (($^O eq 'os2' and $Config{ldflags} =~ /-Zexe/) ? '' : $exe);
 my $o = $Config{obj_ext};
 my $gccversion = $Config{gccversion};
-my $pccflags = ccopts;
-my $pldflags = ldopts;
-my $ld = $Config{ld} || (($^O eq 'MSWin32') ? 'link.exe' : $Config{cc});
-my $cc = $Config{cc};
+my $pccflags = ccopts();
+my $pldflags = ldopts();
 my $dynperl = $Config{useshrplib} && ($Config{useshrplib} ne 'false');
+my $cc = $Config{cc};
+my $ld = $Config{ld} || (($^O eq 'MSWin32') ? 'link.exe' : $Config{cc});
+$ld = $Config{cc} if ($^O =~ /^(?:dec_osf|aix)$/);
 
-my $f2c = File::Spec->catfile(".", "file2c.pl");
+my $f2c = File::Spec->catfile('.', "file2c.pl");
 my $par_pl = File::Spec->catfile('..', 'script', "par.pl");
 my $par_exe = File::Spec->catfile('.', "par$exe");
 my $par_exe_link = File::Spec->catfile('.', "par$link_exe");
@@ -39,7 +40,10 @@ my $lib_path = join(' ', map qq(-I"$_"), @INC);
 
 my $libperl;
 
-if ($dynperl) {
+if ($dynperl and $^O eq 'os2') {
+    $libperl = OS2::DLLname();
+}
+elsif ($dynperl) {
     my $file = $Config{libperl};
     my $so = $Config{so} || 'so';
     $file = "libperl.$so" if $file eq 'libper'; # workaround Red Hat bug
@@ -56,12 +60,18 @@ if ($dynperl) {
     foreach my $path (@paths) {
 	$libperl = File::Spec->catfile($path, $file);
 	last if -e $libperl;
-	$libperl = File::Spec->catfile($path, $file . $Config{_a}); # for cygwin
+
+	# for MinGW
+	$libperl = File::Spec->catfile($path, $1) if $file =~ /^lib(.+)/;
+	last if -e $libperl;
+
+       	# for Cygwin
+	$libperl = File::Spec->catfile($path, $file.$Config{_a});
 	last if -e $libperl;
     }
 
-    die "Can't find $file in (@paths) -- please contact the author!" unless -e $libperl or $^O eq 'os2';
-    $libperl = OS2::DLLname() if $^O eq 'os2';
+    die "Can't find $file in (@paths) -- please contact the author!"
+	unless -e $libperl;
 }
 
 my $par = (($dynperl && $^O ne 'os2') ? $static_exe : $par_exe);
@@ -88,7 +98,7 @@ if( $cc =~ m/^cl\b/ ) {
     $ccdebug = $debug ? '-g ' : '';
     $lddebug = ($debug or $^O eq 'darwin') ? '' : '-s ';
     $warn = $debug ? '-Wall -Wno-comments ' : '';
-    $res = '';
+    $res = ($^O =~ /^(?:MSWin|cygwin)/) ? 'win32.coff' : '';
     $long_literal = 1;
 } else {
     $out = '-o ';

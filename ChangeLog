@@ -1,5 +1,41 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #36 $ $Change: 10400 $ $DateTime: 2004/03/16 16:59:01 $
+# $Revision: #37 $ $Change: 10648 $ $DateTime: 2004/05/22 18:31:56 $
+
+[Changes for 0.81 - May 23, 2004]
+
+* New Features
+
+    - Regained support for Win9x, Cygwin and MinGW.
+
+    - PAR now supports 64-bit platforms, such as Tru64 and AIX.
+
+    - Cygwin and MinGW can now build EXEs with icons, too; MinGW can update
+      the icons, but Cygwin cannot.
+
+    - Newly supported modules: Pod::Usage, DBIx::SearchBuilder,
+      DBIx::ReportBuilder, SVK::Command, SVN::Core, and the ':encoding()'
+      IO discipline.
+
+* Bug fixes
+
+    - On non-Win32 systems, invoking pp-generated executable from PATH
+      did not work.
+
+    - Standalone executables were clobbered by existing perl environments
+      with an identical "auto/IO" libpath as the author's environment.
+
+    - Standalone executables did not work on systems with an unset
+      dynamic load path environment variable (eg. LD_LIBRARY_PATH).
+
+    - "pp -p -o multi.par 1.pl 2.pl; parl multi.par 1.pl" now works.
+
+    - $ENV{PATH} and $ENV{TEMP} were truncated at first path delimiter.
+
+    - "pp -f Bleach" did not work for ActivePerl on Win32.
+
+    - Windows 9x systems were generating invalid cache directory names.
+
+    - $ENV{path} is also recognized as $ENV{PATH} for Win32.
 
 [Changes for 0.80 - March 17, 2004]
 

@@ -23,6 +23,7 @@
 char *par_findprog(char *prog, char *path) {
     char *p, filename[MAXPATHLEN];
     int proglen, plen;
+    char *par_temp = par_getenv("PAR_TEMP");
 
 #ifdef WIN32
     if ( GetModuleFileName(0, filename, MAXPATHLEN) ) {
@@ -41,6 +42,11 @@ char *par_findprog(char *prog, char *path) {
     p = strtok(path, path_sep);
     while ( p != NULL ) {
         if (*p == '\0') p = ".";
+
+        if ( par_temp != NULL && ( strcmp(par_temp, p) == 0 ) ) {
+            p = strtok(NULL, path_sep);
+            continue;
+        }
 
         plen = strlen(p);
 

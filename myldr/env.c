@@ -1,6 +1,6 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
  * $Revision: #24 $ $Change: 9558 $ $DateTime: 2004/01/02 18:50:23 $
- * vim: expandtab shiftwidth=4
+ * vim: noexpandtab shiftwidth=4
  *
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,11 @@ __findenv(name, offset)
 		continue;
 	len = np - name;
 	for (p = environ; (c = *p) != NULL; ++p)
+#ifdef WIN32
+		if (strnicmp(c, name, len) == 0 && c[len] == '=') {
+#else
 		if (strncmp(c, name, len) == 0 && c[len] == '=') {
+#endif
 			*offset = p - environ;
 			return (c + len + 1);
 		}
@@ -89,10 +93,9 @@ par_getenv(name)
  *	"value".  If rewrite is set, replace any current value.
  */
 static int
-par_setenv(name, value, rewrite)
+par_setenv(name, value)
 	const char *name;
 	register char *value;
-	int rewrite;
 {
 	extern char **environ;
 	static int alloced = 0;         /* if allocated space before */
@@ -103,10 +106,8 @@ par_setenv(name, value, rewrite)
 		++value;
 	l_value = strlen(value);
 	if ((c = __findenv(name, &offset))) {	/* find if already exists */
-		if (!rewrite)
-			return (0);
 		if (strlen(c) >= l_value) {	/* old larger; copy over */
-			while (*c++ = *value++);
+			while ((*c++ = *value++));
 			return (0);
 		}
 	} else {					/* create new slot */
@@ -136,7 +137,7 @@ par_setenv(name, value, rewrite)
 	    malloc((size_t)((int)(c - name) + l_value + 2))))
 		return (-1);
 	for (c = environ[offset]; (*c = *name++) && *c != '='; ++c);
-	for (*c++ = '='; *c++ = *value++;);
+	for (*c++ = '='; (*c++ = *value++););
 	return (0);
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #118 $ $Change: 10403 $ $DateTime: 2004/03/17 06:59:23 $ vim: expandtab shiftwidth=4
+# $Revision: #122 $ $Change: 10646 $ $DateTime: 2004/05/22 17:13:01 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -175,7 +175,7 @@ sub compile_par {
             my $tkdll = Win32::Exe->new($map{$pfile});
             my $ico = Win32::Exe::IconFile->new(opt(i));
             $tkdll->set_icons(scalar $ico->icons);
-            $zip->addString($tkdll->dump => $root."lib/$pfile");
+            $zip->addString($tkdll->dump => $root."lib/$pfile", %zip_args);
         }
         else {
             $zip->addFile($map{$pfile} => $root."lib/$pfile");
@@ -232,7 +232,8 @@ sub compile_par {
         $manifest{$name}++;
     }
 
-    if (@Input) {
+    # Add a script/main.pl except when building PAR file with multiple scripts
+    if (@Input and (@Input == 1 or !opt(p))) {
         $zip->addString(
             ((@Input == 1)
                 ? _main_pl_single("script/" . basename($Input[0]))
@@ -751,8 +752,8 @@ sub _can_run {
 
 sub _main_pl_multi {
     return << '__MAIN__';
-my $file = $0;
-my $zip = $PAR::LibCache{$0} || Archive::Zip->new(__FILE__);
+my $file = $ENV{PAR_PROGNAME};
+my $zip = $PAR::LibCache{$ENV{PAR_PROGNAME}} || Archive::Zip->new(__FILE__);
 $file =~ s/^.*[\/\\]//;
 $file =~ s/\.[^.]*$//i ;
 my $member = eval { $zip->memberNamed($file) }
@@ -768,7 +769,7 @@ __MAIN__
 sub _main_pl_single {
     my $file = shift;
     return << "__MAIN__";
-my \$zip = \$PAR::LibCache{\$0} || Archive::Zip->new(__FILE__);
+my \$zip = \$PAR::LibCache{\$ENV{PAR_PROGNAME}} || Archive::Zip->new(__FILE__);
 my \$member = eval { \$zip->memberNamed('$file') }
     or die qq(Can't open perl script "$file": No such file or directory (\$zip));
 PAR::_run_member(\$member, 1);

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #57 $ $Change: 10405 $ $DateTime: 2004/03/17 11:54:09 $
+# $Revision: #64 $ $Change: 10648 $ $DateTime: 2004/05/22 18:31:56 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -8,7 +8,9 @@ the appropriate patches.  Corrections, additions, deletions welcome:
 
 Abhijit Menon-Sen	(AMS)
 Alan Stewart
+Alan Teague
 Alasdair Allan		(AALLAN)
+Alvin Belden
 Andy Balaam
 Andy Lester		(PETDANCE)
 Antti Lankila
@@ -17,14 +19,18 @@ Ask Bjoern Hansen	(ABH)
 Barrie Slaymaker	(RBS)
 Barry Jaspan 
 Bill Atkins		(BATKINS)
+Brad Elliott
 Brigitte Jellinek
 Bruce Winter
 Chia-Liang Kao		(CLKAO)
+Christian Schiefer
 Corey Goldberg
 Cosimo Streppone	(COSIMO)
 D. Menzel
 Daniel Cohen-Laroque
 Daniel Shane		(DSHANE)
+Darek Adamkiewicz	(DADAMK)
+David Dyck
 Doug Gruber
 Doug Miles
 Edward S. Peschko
@@ -33,6 +39,7 @@ Eric Paulson
 Germain Garand		(GGARAND)
 Glenn Mabbutt
 H. Wade Minter
+Henrique Dias		(HDIAS)
 Hirosi Taguti
 Iain Cass
 Iain Truskett		(SPOON)
@@ -44,20 +51,25 @@ Jerry Veldhuis
 Jesse Schoch
 Jesse Vincent		(JESSE)
 Jody Belka		(KNEW)
+Johan Lindstroem	(JOHANL)
 John McMahon
 Jonathan Leffler	(JOHNL)
 Joseph Landman
 Jouke Visser		(JOUKE)
 Karl Forner
+Kieran J Broadfoot
 Lindsay Morris
 Luc Willems
 Malcolm Nooning
 Marcus Ramberg		(MRAMBERG)
 Markus Jansen
 Martin Fabiani
+Martin Hosken		(MHOSKEN)
 Matt Sergeant		(MSERGEANT)
 Matthew Braid		(MDBGRIZ)
+Matthew Riedel
 Mattia Barbon		(MBARBON)
+Michael Goldberger
 Mike Campbell
 Mike Stok		(MIKESTOK)
 Morbus Iff
@@ -68,6 +80,9 @@ Nicolas FROMENT
 Nomota KIM
 Paritosh Tyagi
 Paul Miller
+Peter Klewinghaus
+Patrice Parmentier
+Patrick Whitney
 Phil Sallee
 PodMaster		(PODMASTER)
 Rafael Garcia-Suarez	(RGARCIA)
@@ -76,6 +91,7 @@ Randy Carpenter
 Randy W. Sims		(RANDYS)
 Reini Urban
 Richard Soderberg	(RSOD)
+Rick Fitzsimmons
 Rob Casey		(ROBAU)
 Robert Allerstorfer
 Robert Creager		(RCREAGER)
@@ -84,7 +100,9 @@ Ryan Briones
 Simon Andrews
 Simon Cozens		(SIMON)
 Sisyphus
+Steve Hay		(SHAY)
 TP Diffenbach
+Thomas Rush
 Tim Conrow
 Tina Mueller		(TINITA)
 Tom Pollard

@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #37 $ $Change: 10416 $ $DateTime: 2004/03/17 15:14:13 $
+   $Revision: #40 $ $Change: 10645 $ $DateTime: 2004/05/22 16:40:40 $
    vim: expandtab shiftwidth=4
 */
 
@@ -32,7 +32,7 @@ char *par_mktmpdir ( char **argv ) {
     const char *subdirbuf_suffix = "";
 
     char *progname = NULL, *username = NULL;
-    char *ld_path_env, *par_temp_env;
+    char *ld_path_env;
     char *stmpdir;
     int f, j, k;
     char sha1[41];
@@ -50,13 +50,14 @@ char *par_mktmpdir ( char **argv ) {
         username = (char *)malloc(MAXPATHLEN);
         GetUserName((LPTSTR)username, &buflen);
     }
-#else
+#endif
+
     for ( i = 0 ; username == NULL && strlen(key = user_keys[i]) > 0 ; i++ ) {
         if ( (val = (char *)par_getenv(key)) ) {
             username = strdup(val);
         }
     }
-#endif
+
     if ( username == NULL ) {
         username = "SYSTEM";
     }
@@ -98,7 +99,9 @@ char *par_mktmpdir ( char **argv ) {
     sprintf(stmpdir, "%s%s%s%s", tmpdir, dir_sep, subdirbuf_prefix, username);
     mkdir(stmpdir, 0755);
 
-    progname = par_findprog(argv[0], par_getenv("TEMP"));
+    if ((val = par_getenv("TEMP"))) {
+        progname = par_findprog(argv[0], strdup(val));
+    }
 
     if ( !par_env_clean() && (f = open( progname, O_RDONLY | OPEN_O_BINARY ))) {
         /* "$TEMP/par-$USER/cache-$SHA1" */
@@ -131,13 +134,10 @@ char *par_mktmpdir ( char **argv ) {
     }
 
     /* set dynamic loading path */
-    par_temp_env = (char *)malloc(strlen(PAR_TEMP) + strlen(stmpdir) + 2);
     par_setenv(PAR_TEMP, stmpdir);
 
     for ( i = 0 ; strlen(key = ld_path_keys[i]) > 0 ; i++ ) {
-        if ( (val = (char *)par_getenv(key)) == NULL ) continue;
-
-        if ( strlen(val) == 0 ) {
+        if ( ((val = (char *)par_getenv(key)) == NULL) || (strlen(val) == 0) ) {
             par_setenv(key, stmpdir);
         }
         else {

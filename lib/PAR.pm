@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #71 $ $Change: 10442 $ $DateTime: 2004/03/28 14:05:12 $ vim: expandtab shiftwidth=4
+# $Revision: #76 $ $Change: 10648 $ $DateTime: 2004/05/22 18:31:56 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.80_99';
+$PAR::VERSION = '0.81';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.80_99 of PAR, released March 28, 2004.
+This document describes version 0.81 of PAR, released May 23, 2004.
 
 =head1 SYNOPSIS
 
@@ -163,14 +163,18 @@ use vars qw($LastAccessedPAR $LastTempFile);
 
 my $ver  = $Config{version};
 my $arch = $Config{archname};
-my $is_insensitive_fs = (-s $0 and (-s lc($0) || -1) == (-s uc($0) || -1));
-my ($par_temp, $progname);
+my $progname = $ENV{PAR_PROGNAME} || $0;
+my $is_insensitive_fs = (-s $progname and (-s lc($progname) || -1) == (-s uc($progname) || -1));
+my $par_temp;
 
 sub import {
     my $class = shift;
 
     _set_progname();
     _set_par_temp();
+
+    $progname = $ENV{PAR_PROGNAME} || $0;
+    $is_insensitive_fs = (-s $progname and (-s lc($progname) || -1) == (-s uc($progname) || -1));
 
     foreach my $par (@_) {
         if ($par =~ /[?*{}\[\]]/) {
@@ -192,13 +196,13 @@ sub import {
     require PAR::Heavy;
     PAR::Heavy::_init_dynaloader();
 
-    if (unpar($0)) {
+    if (unpar($progname)) {
         # XXX - handle META.yml here!
-        push @PAR_INC, unpar($0, undef, undef, 1);
+        push @PAR_INC, unpar($progname, undef, undef, 1);
 
-        _extract_inc($0) unless $ENV{PAR_CLEAN};
+        _extract_inc($progname) unless $ENV{PAR_CLEAN};
 
-        my $zip = $LibCache{$0};
+        my $zip = $LibCache{$progname};
         my $member = _first_member( $zip,
             "script/main.pl",
             "main.pl",
@@ -236,7 +240,7 @@ sub _first_member {
 sub _run_member {
     my $member = shift;
     my $clear_stack = shift;
-    my ($fh, $is_new) = _tempfile($member->crc32String . ".pl");
+    my ($fh, $is_new, $filename) = _tempfile($member->crc32String . ".pl");
 
     if ($is_new) {
         my $file = $member->fileName;
@@ -251,6 +255,7 @@ sub _run_member {
 
     unshift @INC, sub { $fh };
 
+    $ENV{PAR_0} = $filename; # for Pod::Usage
     { do 'main'; die $@ if $@; exit }
 }
 
@@ -428,7 +433,7 @@ sub _set_par_temp {
 
     foreach my $path (
         (map $ENV{$_}, qw( TMPDIR TEMP TMP )),
-        qw( "C:\\TEMP /tmp . )
+        qw( C:\\TEMP /tmp . )
     ) {
         next unless $path and -d $path and -w $path;
         my $username = defined(&Win32::LoginName)
@@ -502,14 +507,20 @@ sub _set_progname {
     if ($ENV{PAR_PROGNAME} and $ENV{PAR_PROGNAME} =~ /(.+)/) {
         $progname = $1;
     }
-    return if -s ($progname ||= $0);
+    $progname ||= $0;
 
-    if (-s "$progname$Config{_exe}") {
-        $ENV{PAR_PROGNAME} = $progname = "$progname$Config{_exe}";
-        return $progname;
+    if (( () = File::Spec->splitdir($progname) ) > 1) {
+        if (open my $fh, $progname) {
+            return if -s $fh;
+        }
+        if (-s "$progname$Config{_exe}") {
+            $ENV{PAR_PROGNAME} = $progname = "$progname$Config{_exe}";
+            return $progname;
+        }
     }
 
     foreach my $dir (split /\Q$Config{path_sep}\E/, $ENV{PATH}) {
+        next if exists $ENV{PAR_TEMP} and $dir eq $ENV{PAR_TEMP};
         my $name = File::Spec->catfile($dir, "$progname$Config{_exe}");
         if (-s $name) { $progname = $name; last }
         $name = File::Spec->catfile($dir, "$progname");

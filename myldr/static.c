@@ -1,39 +1,15 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #32 $ $Change: 10382 $ $DateTime: 2004/03/13 20:18:33 $
+   $Revision: #38 $ $Change: 10645 $ $DateTime: 2004/05/22 16:40:40 $
    vim: expandtab shiftwidth=4
 */
 
+#include "EXTERN.h"
+#include "perl.h"
+
+#undef PL_statbuf
+#undef readdir
 #ifdef WIN32
-#   include <io.h>
-#   include <process.h>
-#   include <direct.h>
-#   include <errno.h>
-#   include <string.h>
-#   undef mkdir
-#   define mkdir(x, y) _mkdir(x)
-#   define W_OK 2
-#   define S_ISDIR(x) 1
-#else
-#   include <unistd.h>
-#   include <sys/errno.h>
-#   include <dirent.h>
-    typedef struct dirent Direntry_t;
-#endif
-
-typedef int Pid_t;
-
-#include <fcntl.h>
-#include <stdio.h>
-#include <sys/stat.h>
-
-#ifndef S_ISLNK
-#  define S_ISLNK(x) 0
-#endif
-
-#ifdef O_BINARY
-#  define OPEN_O_BINARY O_BINARY
-#else
-#  define OPEN_O_BINARY 0
+#define mkdir(file, mode) _mkdir(file)
 #endif
 
 #include "mktmpdir.c"
@@ -75,12 +51,12 @@ int main ( int argc, char **argv, char **env )
 {
     int i;
     char *stmpdir;
-    char *buf = (char *)malloc(127);
+    char *buf = (char *)malloc(MAXPATHLEN);
 
     par_init_env();
     par_mktmpdir( argv );
 
-    stmpdir = (char *)par_getenv("PAR_TEMP", &i);
+    stmpdir = (char *)par_getenv("PAR_TEMP");
     if ( stmpdir != NULL ) {
         i = mkdir(stmpdir, 0755);
         if ( (i != 0) && (i != EEXIST) && (i != -1) ) {
@@ -96,7 +72,7 @@ int main ( int argc, char **argv, char **env )
         close(i); chmod(my_file, 0755);
     }
 
-    my_file = par_basename(par_findprog(argv[0], par_getenv("PATH", &i)));
+    my_file = par_basename(par_findprog(argv[0], strdup(par_getenv("PATH"))));
 
     i = my_mkfile( argv[0], stmpdir, my_file );
     if ( !i ) return 2;
@@ -115,7 +91,7 @@ int main ( int argc, char **argv, char **env )
 
 #ifdef WIN32
     par_setenv("PAR_SPAWNED", "1");
-    i = spawnvpe(P_WAIT, my_file, argv, environ);
+    i = spawnvpe(P_WAIT, my_file, (const char* const*)argv, (const char* const*)environ);
 #else
     execvp(my_file, argv);
     return 2;
