@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #17 $ $Change: 6082 $ $DateTime: 2003/05/25 16:37:26 $
+   $Revision: #19 $ $Change: 6205 $ $DateTime: 2003/05/31 12:23:55 $
    vim: expandtab shiftwidth=4
 */
 
@@ -166,9 +166,12 @@ int main ( int argc, char **argv, char **env )
 
 #ifdef PAR_MKTMPDIR
     /* create temporary PAR directory */
-    if ( (stmpdir != NULL) && (mkdir(stmpdir, S_IRWXU) != 0) ) {
-        fprintf(stderr, "%s: creation of private temporary subdirectory %s failed - aborting.\n", argv[0], stmpdir);
-        return 2;
+    if ( stmpdir != NULL ) {
+        i = PerlDir_mkdir(stmpdir, 0755);
+        if ( (i != 0) && (i != EEXIST) && (i != -1) ) {
+            PerlIO_printf(PerlIO_stderr(), "%s: creation of private temporary subdirectory %s failed - aborting with %i.\n", argv[0], stmpdir, i);
+            return 2;
+        }
     }
 #endif
 
@@ -187,7 +190,11 @@ int main ( int argc, char **argv, char **env )
             if ( strcmp (dp->d_name, ".") != 0 && strcmp (dp->d_name, "..") != 0 )
             {
                 subsubdir = malloc(strlen(stmpdir) + strlen(dp->d_name) + 2);
-                sprintf(subsubdir, "%s/%s", stmpdir, dp->d_name); /* Unix */
+#ifdef WIN32
+                sprintf(subsubdir, "%s\\%s", stmpdir, dp->d_name);
+#else
+                sprintf(subsubdir, "%s/%s", stmpdir, dp->d_name);
+#endif
                 unlink(subsubdir);
                 free(subsubdir);
                 subsubdir = NULL;

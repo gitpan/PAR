@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #51 $ $Change: 6081 $ $DateTime: 2003/05/25 16:03:59 $ vim: expandtab shiftwidth=4
+# $Revision: #54 $ $Change: 6204 $ $DateTime: 2003/05/31 12:23:24 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -15,9 +15,16 @@ unless (eval { require PAR; 1 }) {
     exec($PARL, $0, @ARGV);
 }
 
-use File::Temp qw(tempfile);
+use Archive::Zip;
 use Cwd;
-our $VERSION = 0.03;
+use ExtUtils::MakeMaker; # just for maybe_command()
+use File::Basename;
+use File::Spec;
+use File::Temp qw(tempfile);
+use Getopt::Long; 
+use Module::ScanDeps 0.10;
+
+our $VERSION = 0.04;
 $| = 1;
 
 $SIG{INT} = sub { exit(); }; # exit gracefully and clean up after ourselves.
@@ -45,10 +52,6 @@ sub main {
 #######################################################################
 
 sub compile_par { 
-    use Module::ScanDeps 0.10;
-    use Archive::Zip;
-    use File::Basename;
-
     my ($cfh, $lose);
 
     if (opt(S) || opt(p)) {
@@ -61,8 +64,8 @@ sub compile_par {
             # hold on: plx is executable; also, careful of ordering!
             $par_file =~ s/\.(?:p(?:lx|l|h)|m)\z//i;
             $par_file .= ".par";
-            $par_file = $Output if opt(p) && $Output =~ /\.par\z/i;
         }
+        $par_file = $Output if opt(p) && $Output =~ /\.par\z/i;
         check_write($par_file);
     } else {
         # Don't need to keep it, be safe with a tempfile.
@@ -72,14 +75,23 @@ sub compile_par {
     }
     vprint 1, "Writing PAR on $par_file";
 
-    my @modules = map {
-        if (/^[\w:]+$/) { s/::/\//g; $_ = "$_.pm" }
-        $_
-    } @{opt(M) || []};
+    my (@modules, @data);
+    foreach (@{opt(M) || []}) {
+        if (/^[\w:]+$/) {
+            s/::/\//g;
+            push @modules, "$_.pm";
+        }
+        elsif (/\.(?:pm|ix|al)$/i) {
+            push @modules, $_;
+        }
+        else {
+            push @data, $_;
+        }
+    }
 
     my %map;
     unshift @INC, @{opt(I) || []};
-    unshift @SharedLibs, @{opt(l) || []};
+    unshift @SharedLibs, map _find_shlib($_), @{opt(l) || []};
 
     Module::ScanDeps::scan_deps(
         rv      => \%map,
@@ -110,10 +122,11 @@ sub compile_par {
             => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
     );
 
+    $zip->addDirectory('', 'lib') if %map and $] >= 5.008;
     my $verbatim = ($ENV{PAR_VERBATIM} || 0);
     foreach my $pfile (sort grep length $map{$_}, keys %map) {
-        next if !opt(B) and ($map{$pfile} eq "$Config::Config{privlib}/$pfile"
-                          or $map{$pfile} eq "$Config::Config{archlib}/$pfile");
+        next if !opt(B) and ($map{$pfile} eq "$Config{privlib}/$pfile"
+                          or $map{$pfile} eq "$Config{archlib}/$pfile");
 
         next unless $zip;
         vprint 2, "... adding $map{$pfile} as lib/$pfile";
@@ -144,6 +157,7 @@ sub compile_par {
 
     @Input = grep !/\.pm\z/i, @Input;
 
+    $zip->addDirectory('', 'script') if @Input and $] >= 5.008;
     foreach my $input (@Input) {
         my $name = basename($input);
         $size += -s $input;
@@ -152,8 +166,9 @@ sub compile_par {
         push @manifest, "script/$name";
     }
 
+    $zip->addDirectory('', 'shlib') if @SharedLibs and $] >= 5.008;
     foreach my $input (@SharedLibs) {
-        # my $name = $input; # XXX: redundant
+        next unless -e $input;
         $size += -s $input;
 
         my $name = basename($input);
@@ -162,13 +177,22 @@ sub compile_par {
         push @manifest, "shlib/$name";
     }
 
-    $zip->addString(
-        ((@Input == 1)
-            ? _main_pl_single("script/" . basename($Input[0]))
-            : _main_pl_multi()) => "script/main.pl", %zip_args
-    );
+    foreach my $input (@data) {
+        my $name = basename($input);
+        $size += -s $input;
 
-    push @manifest, "script/main.pl";
+        $zip->addFile($input => $name);
+        push @manifest, $name;
+    }
+
+    if (@Input) {
+        $zip->addString(
+            ((@Input == 1)
+                ? _main_pl_single("script/" . basename($Input[0]))
+                : _main_pl_multi()) => "script/main.pl", %zip_args
+        );
+        push @manifest, "script/main.pl";
+    }
 
     my $dist_name = (opt(p) ? $par_file : $Output);
     my $manifest    = join("\n", '    <!-- accessible as jar:file:///NAME.par!/MANIFEST in compliant browsers -->', (sort @manifest), q(    # <html><body onload="var X=document.body.innerHTML.split(/\n/);var Y='<iframe src=&quot;META.yml&quot; style=&quot;float:right;height:40%;width:40%&quot;></iframe><ul>';for(var x in X){if(!X[x].match(/^\s*#/)&&X[x].length)Y+='<li><a href=&quot;'+X[x]+'&quot;>'+X[x]+'</a>'}document.body.innerHTML=Y">));
@@ -273,7 +297,6 @@ sub vprint ($@) {
 }
 
 sub parse_argv {
-    use Getopt::Long; 
     Getopt::Long::Configure("no_ignore_case");
 
     # no difference in exists and defined for %ENV; also, a "0"
@@ -434,7 +457,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 sub pod_strip {
     my ($pl_text, $filename) = @_;
 
-    local $^W;
+    no warnings 'uninitialized';
+
     my $line = 1;
     if ($pl_text =~ /^=(?:head\d|pod|begin|item|over|for|back|end)\b/) {
         $pl_text = "\n$pl_text";
@@ -463,15 +487,30 @@ sub _die {
     die @_;
 }
 
-sub _can_run {
-    use File::Spec;
-    use ExtUtils::MakeMaker; # just for maybe_command()
+sub _find_shlib {
+    my $file = shift;
+    return $file if -e $file;
 
+    for my $dir (
+        File::Basename::dirname($0),
+        split(/\Q$Config{path_sep}\E/, $ENV{$Config{ldlibpthname}})
+    ) {
+        my $abs = File::Spec->catfile($dir, $file);
+        return $abs if -e $abs;
+        $abs = File::Spec->catfile($dir, "$file.$Config{dlext}");
+        return $abs if -e $abs;
+    }
+
+    # be extra magical and prepend "lib" to the filename
+    return _find_shlib("lib$file") unless $file =~ /^lib/;
+}
+
+sub _can_run {
     my $command = shift;
 
     for my $dir (
         File::Basename::dirname($0),
-        split(/$Config{path_sep}/, $ENV{PATH})
+        split(/\Q$Config{path_sep}\E/, $ENV{PATH})
     ) {
         my $abs = File::Spec->catfile($dir, $command);
         return $abs if $abs = MM->maybe_command($abs);
@@ -484,10 +523,10 @@ sub _main_pl_multi {
     return << '__MAIN__';
 $PAR::__reading = 1;
 my $file = $0;
-my $zip = $PAR::LibCache{$0};
+my \$zip = \$PAR::LibCache{\$0} || Archive::Zip->new(__FILE__);
 $file =~ s/^.*[\/\\]//;
 $file =~ s/\.[^.]*$//i ;
-my $member  = $zip->memberNamed($file)
+my $member = eval { $zip->memberNamed($file) }
         || $zip->memberNamed("$file.pl")
         || $zip->memberNamed("script/$file")
         || $zip->memberNamed("script/$file.pl")
@@ -501,9 +540,9 @@ sub _main_pl_single {
     my $file = shift;
     return << "__MAIN__";
 \$PAR::__reading = 1;
-my \$zip = \$PAR::LibCache{\$0};
-my \$member = \$zip->memberNamed('$file')
-    or die qq(Can't open perl script "$file": No such file or directory);
+my \$zip = \$PAR::LibCache{\$0} || Archive::Zip->new(__FILE__);
+my \$member = eval { \$zip->memberNamed('$file') }
+    or die qq(Can't open perl script "$file": No such file or directory (\$zip));
 PAR::_run_member(\$member);
 
 __MAIN__
@@ -537,7 +576,7 @@ pp - Perl Packager
                                 # (-B is assumed when making executables)
 
     % pp -e 'print q//'         # Pack a one-liner into 'a.out'
-    % pp -c -e 'print q//'      # Creates a PAR file 'a.out.par'
+    % pp -p -e 'print q//'      # Creates a PAR file 'a.out.par'
 
     % pp -I /foo hello          # Extra paths (notice space after -I)
     % pp -M Foo::Bar hello      # Extra modules (notice space after -M)
@@ -593,6 +632,10 @@ Adds the specified module into the package, along with its dependencies.
 Also accepts filenames relative to the C<@INC> path; i.e. C<-M
 Module::ScanDeps> means the same thing as C<-M Module/ScanDeps.pm>.
 
+If I<FILE> does not have a C<.pm>/C<.ix>/C<.al> extension, it will not
+be scanned for dependencies, and will be placed under C</> instead of
+C</lib/> inside the PAR file.
+
 =item B<-B>, B<--bundle>
 
 Bundles core modules in the resulting package.  This option is enabled
@@ -618,15 +661,22 @@ Shows basic usage information.
 
 =item B<-I>, B<--lib>=I<DIR>
 
-Adds the given directories to the perl library file search path.
+Adds the given directory to the perl library file search path.
 
-=item B<-l>, B<--link>=I<FILE>
+=item B<-l>, B<--link>=I<FILE>|I<LIBRARY>
 
-Adds shared libraries (a.k.a. shared objects or DLLs) to the binary.
+Adds the given shared library (a.k.a. shared object or DLL) into the
+packed file.  Also accepts names under library paths; i.e.
+C<-l ncurses> means the same thing as C<-l libncurses.so> or
+C<-l /usr/local/lib/libncurses.so> in most Unixes.
 
 =item B<-L>, B<--log>=I<FILE>
 
 Log the output of packaging to a file rather than to stdout.
+
+=item B<-m>, B<--multiarch>
+
+Generate architecture-specific layout;
 
 =item B<-o>, B<--output>=I<FILE>
 

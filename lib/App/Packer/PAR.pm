@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/App/Packer/PAR.pm $ $Author: autrijus $
-# $Revision: #1 $ $Change: 4803 $ $DateTime: 2003/03/19 13:34:15 $ vim: expandtab shiftwidth=4
+# $Revision: #2 $ $Change: 6169 $ $DateTime: 2003/05/29 18:53:54 $ vim: expandtab shiftwidth=4
 
 package App::Packer::Backend::PAR;
 
@@ -83,7 +83,7 @@ sub _can_run {
 
     for my $dir (
         File::Basename::dirname($0),
-        split(/$Config{path_sep}/, $ENV{PATH})
+        split(/\Q$Config{path_sep}\E/, $ENV{PATH})
     ) {
         my $abs = File::Spec->catfile($dir, $command);
         return $abs if $abs = MM->maybe_command($abs);

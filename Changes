@@ -1,4 +1,75 @@
 ____________________________________________________________________________
+[  6210] By: autrijus                              on 2003/05/31  12:42:06
+        Log: * This be PAR 0.69.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  6209] By: autrijus                              on 2003/05/31  12:34:59
+        Log: * store shared files in PAR_TEMP instead of TEMP if
+	       possible.
+             * don't do deferred_unlink on win32.
+	   ! lib/PAR/Heavy.pm
+____________________________________________________________________________
+[  6206] By: autrijus                              on 2003/05/31  12:24:14
+        Log: * turns debug off by default.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  6205] By: autrijus                              on 2003/05/31  12:23:55
+        Log: * use Perl's version of mkdir, fprintf, stderr.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  6204] By: autrijus                              on 2003/05/31  12:23:24
+        Log: * Sisyphus reported that 5.6.1's Zlib cannot recognize
+             the additional directory entries meant for Apache::PAR;
+             disable them for the time being.
+	   ! script/pp
+____________________________________________________________________________
+[  6199] By: autrijus                              on 2003/05/31  09:39:37
+        Log: * win32 should use \, not /, when creating stmpdir.
+             * mkdir() should reuse existing directories and make them
+	       ao+rx.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  6198] By: autrijus                              on 2003/05/31  09:34:02
+        Log: * redundant pod.
+	   ! script/parl.pod
+____________________________________________________________________________
+[  6172] By: autrijus                              on 2003/05/29  19:48:24
+        Log: * This be 0.69.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  6171] By: autrijus                              on 2003/05/29  19:26:20
+        Log: * "pp -o out.par -p -e '...'" now honors -o.
+             * "pp -M filename" now adds it to /, not /lib/,
+             unless filename ends in (pm|ix|al).
+             * "pp -l" now searchs in system library paths, and
+             appends "lib" / prepends ".$dl_ext" where necessary.
+             * generated PAR files now works with Apache::PAR
+             * turned off uninitialized warnings on podstripping
+	   ! script/pp
+____________________________________________________________________________
+[  6169] By: autrijus                              on 2003/05/29  18:53:54
+        Log: * split using /\Q$Config{path_sep}\E/, not
+	       $Config{path_sep}
+	   ! lib/App/Packer/PAR.pm lib/PAR/Heavy.pm
+	   ! script/par.pl
+____________________________________________________________________________
+[  6156] By: autrijus                              on 2003/05/29  05:20:34
+        Log: * up to 3.0.3pre1.
+	   ! script/par.pl script/pp
+____________________________________________________________________________
+[  6151] By: autrijus                              on 2003/05/28  18:08:19
+        Log: * need to keep an empty signature for snapshots.
+	   ! SIGNATURE
+____________________________________________________________________________
+[  6141] By: autrijus                              on 2003/05/28  04:45:51
+        Log: * Nicholas Clark caught my fubar'ing Markus's mktmp
+             code, which caused Linux and Solaris to segfault.
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[  6086] By: autrijus                              on 2003/05/25  18:49:56
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE inc/Module/Install/PAR.pm
+____________________________________________________________________________
 [  6085] By: autrijus                              on 2003/05/25  18:32:18
         Log: * This be PAR, 0.68.
 	   ! ChangeLog MANIFEST lib/PAR.pm

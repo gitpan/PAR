@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #61 $ $Change: 6083 $ $DateTime: 2003/05/25 17:55:55 $ vim: expandtab shiftwidth=4
+# $Revision: #63 $ $Change: 6169 $ $DateTime: 2003/05/29 18:53:54 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -146,7 +146,7 @@ if (-s "$0$Config{_exe}") {
     $0 = "$0$Config{_exe}";
 }
 elsif (!-s $0) {
-    foreach my $dir (split /$Config{path_sep}/, $ENV{PATH}) {
+    foreach my $dir (split /\Q$Config{path_sep}\E/, $ENV{PATH}) {
         $dir =~ s/\Q$Config{_delim}\E$//;
         (($0 = "$dir$Config{_delim}$0$Config{_exe}"), last)
             if -s "$dir$Config{_delim}$0$Config{_exe}";
@@ -319,6 +319,8 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
         shift(@ARGV);
     }
 }
+
+# XXX -- add --par-debug support!
 
 # }}}
 

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #2 $ $Change: 5707 $ $DateTime: 2003/05/08 12:27:01 $
+# $Revision: #4 $ $Change: 6209 $ $DateTime: 2003/05/31 12:34:59 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.05';
@@ -22,7 +22,7 @@ No user-serviceable parts inside.
 # Dynamic inclusion of XS modules
 
 my ($bootstrap, $dl_findfile);	# Caches for code references
-my ($dl_dlext);			# Cache for $Config{dl_dlext}
+my ($dlext);			# Cache for $Config{dlext}
 
 # Adds pre-hooks to Dynaloader's key methods
 sub _init_dynaloader {
@@ -62,10 +62,10 @@ sub _bootstrap {
 	}
 
 	# XXX: Multi-platform .dll support in PARs needs better than $Config.
-	$dl_dlext ||= do { require Config; $Config::Config{dlext} };
+	$dlext ||= do { require Config; $Config::Config{dlext} };
 
 	my $modpname = join((($^O eq 'MacOS') ? ':' : '/'), @modparts);
-	my $file = "auto/$modpname/$modfname.$dl_dlext";
+	my $file = "auto/$modpname/$modfname.$dlext";
 
 	if (!$DLCache{$file}++ and
 	    defined &PAR::find_par and
@@ -78,14 +78,15 @@ sub _bootstrap {
 
 	    if ($ENV{PAR_CLEARTEMP}) {
 		($fh, $filename) = File::Temp::tempfile(
-		    SUFFIX	=> ".$dl_dlext",
-		    UNLINK	=> 1,
+		    DIR		=> ($ENV{PAR_TEMP} || File::Spec->tmpdir),
+		    SUFFIX	=> ".$dlext",
+		    UNLINK	=> ($^O ne 'MSWin32'),
 		);
 	    }
 	    else {
 		$filename = File::Spec->catfile(
-		    File::Spec->tmpdir,
-		    $member->crc32String . ".$dl_dlext"
+		    ($ENV{PAR_TEMP} || File::Spec->tmpdir),
+		    $member->crc32String . ".$dlext"
 		);
 
 		open $fh, '>', $filename or die $!

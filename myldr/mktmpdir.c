@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #5 $ $Change: 6084 $ $DateTime: 2003/05/25 18:06:55 $
+   $Revision: #6 $ $Change: 6141 $ $DateTime: 2003/05/28 04:45:51 $
    vim: expandtab shiftwidth=4
 */
 
@@ -44,7 +44,7 @@ char* par_mktmpdir ( char **argv ) {
 
     for ( i = 0 ; tmpdir == NULL && strlen(tmpval = tmpenv[i]) > 0 ; i++ ) {
         /* fprintf(stderr, "%s: testing env var %s.\n", argv[0], tmpval); */
-        if ( (envtmp = getenv(tmpdir)) )
+        if ( (envtmp = getenv(tmpval)) )
         {
             if ( PAR_lstat(envtmp, &statbuf) == 0 &&
                  ( S_ISDIR(statbuf.st_mode) ||
