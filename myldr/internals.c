@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/internals.c $ $Author: autrijus $
-   $Revision: #16 $ $Change: 8579 $ $DateTime: 2003/10/27 10:10:06 $
+   $Revision: #17 $ $Change: 9355 $ $DateTime: 2003/12/19 13:12:28 $
    vim: expandtab shiftwidth=4
 */
 
@@ -50,7 +50,7 @@ XS(XS_Internals_PAR_BOOT) {
             sv_setpv(GvSV(tmpgv), fakeargv[0]);
         }
         else
-#ifdef HAS_PROCSELFEXE
+#ifdef HASX_PROCSELFEXE
             S_procself_val(aTHX_ GvSV(tmpgv), fakeargv[0]);
 #else
 #ifdef OS2

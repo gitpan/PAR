@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #17 $ $Change: 7558 $ $DateTime: 2003/08/16 04:32:39 $
+   $Revision: #18 $ $Change: 9458 $ $DateTime: 2003/12/28 01:08:37 $
    vim: expandtab shiftwidth=4
 */
 
@@ -130,6 +130,7 @@ void par_rmtmpdir ( char *stmpdir ) {
     struct _finddata_t cur_file;
     char *subsubdir = malloc(strlen(stmpdir) + 258);
     long hFile;
+	int tries = 0;
     HMODULE dll;
 
     if ((stmpdir == NULL) || !strlen(stmpdir)) return;
@@ -154,13 +155,14 @@ void par_rmtmpdir ( char *stmpdir ) {
         else {
             sprintf(subsubdir, "%s", cur_file.name);
         }
-        /*if (!(cur_file.attrib & _A_SUBDIR)) fprintf(stderr, "unlinking %s\n", subsubdir);*/
+
+		/*if (!(cur_file.attrib & _A_SUBDIR)) fprintf(stderr, "unlinking %s\n", subsubdir);*/
         if (!(cur_file.attrib & _A_SUBDIR)) {
             dll = GetModuleHandle(cur_file.name);
-            if ( dll ) while ( FreeLibrary(dll) ) {
-                       /* fprintf(stderr, "decrement ref count to %s\n", cur_file.name); */
-                       };
-            _unlink(subsubdir);
+			while ( !_unlink(subsubdir) && ( tries++ < 10 ) ) {
+				if ( dll ) FreeLibrary(dll);
+            };
+            
         }
     }
 

@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR/Filter.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 8584 $ $DateTime: 2003/10/27 11:44:43 $
+# $Revision: #5 $ $Change: 9387 $ $DateTime: 2003/12/23 07:08:48 $
 
 package PAR::Filter;
-$PAR::Filter::VERSION = '0.01';
+$PAR::Filter::VERSION = '0.02';
 
 =head1 NAME
 
@@ -20,9 +20,10 @@ PAR::Filter - Input filter for PAR
 
 =head1 DESCRIPTION
 
-Starting with PAR 0.76, "pp -f" takes a filter name, like "Bleach", and
+Starting with PAR 0.76, C<pp -f> takes a filter name, like C<Bleach>, and
 invokes this module to transform the programs with L<PAR::Filter::Bleach>.
-Similarily, "pp -F Bleach" applies the Bleach filter to all included modules.
+Similarily, C<pp -F Bleach> applies the B<Bleach> filter to all included
+modules.
 
 It is possible to pass in multiple such filters, which are applied in turn.
 
@@ -40,6 +41,11 @@ The archetypical obfuscating filter.
 =item * L<PAR::Filter::Bytecode>
 
 Use L<B::Bytecode> to strip away indents and comments.
+
+=item * L<PAR::Filter::Obfuscate>
+
+Use L<B::Deobfuscate> to strip away indents and comments, as well as mangling
+variable names.
 
 =item * L<PAR::Filter::PatchContent>
 

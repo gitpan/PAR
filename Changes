@@ -1,4 +1,68 @@
 ____________________________________________________________________________
+[  9460] By: autrijus                              on 2003/12/28  02:00:30
+        Log: * This be 0.76_99, for real.
+	   ! Makefile.PL myldr/Makefile.PL myldr/static.c
+____________________________________________________________________________
+[  9459] By: autrijus                              on 2003/12/28  01:18:54
+        Log: * This be PAR, 0.76_99.
+	   ! MANIFEST lib/PAR.pm
+____________________________________________________________________________
+[  9458] By: autrijus                              on 2003/12/28  01:08:37
+        Log: * the static .exe now launches not par.exe,
+             but the same name as the full .exe file.
+             * fix infinite loop trying to free par.exe
+             as a library.
+	   ! myldr/mktmpdir.c myldr/static.c
+____________________________________________________________________________
+[  9457] By: autrijus                              on 2003/12/28  00:41:15
+        Log: * fix Ilya's typo that nilled $link_exe.
+             * made it compile under VS.NET now.
+	   ! Makefile.PL myldr/Makefile.PL myldr/static.c
+____________________________________________________________________________
+[  9387] By: autrijus                              on 2003/12/23  07:08:48
+        Log: * New Filter, PAR::Filter::Obfuscate, based on
+	       B::Deobfuscate.
+	   + lib/PAR/Filter/Obfuscate.pm
+	   ! MANIFEST lib/PAR/Filter.pm
+____________________________________________________________________________
+[  9363] By: autrijus                              on 2003/12/20  01:17:25
+        Log: * Rob Dixon reported that Win9x's "make" does not work
+             due to extra "@[" and "]" pairs.  Let's fix it.
+	   ! inc/ExtUtils/AutoInstall.pm
+	   ! inc/Module/Install/AutoInstall.pm
+	   ! inc/Module/Install/Include.pm
+	   ! inc/Module/Install/PRIVATE/PAR.pm
+____________________________________________________________________________
+[  9362] By: autrijus                              on 2003/12/20  01:14:38
+        Log: * add license metadata.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  9359] By: autrijus                              on 2003/12/19  22:28:54
+        Log: * Merge 1.1 from Doug Gruber.  Mostly cosmetic changes.
+	   ! script/tkpp
+____________________________________________________________________________
+[  9357] By: autrijus                              on 2003/12/19  13:34:07
+        Log: * add Bundle and WriteAll, in preparation to
+             the eventual bundling of everything.
+	   + inc/Module/Install/Bundle.pm
+	   + inc/Module/Install/WriteAll.pm
+____________________________________________________________________________
+[  9356] By: autrijus                              on 2003/12/19  13:33:42
+        Log: * update to a newer Module::Install.
+	   ! inc/Module/Install.pm
+	   ! inc/Module/Install/Base.pm
+	   ! inc/Module/Install/Can.pm
+	   ! inc/Module/Install/Fetch.pm
+	   ! inc/Module/Install/Makefile.pm
+	   ! inc/Module/Install/Metadata.pm
+	   ! inc/Module/Install/PAR.pm
+	   ! inc/Module/Install/Win32.pm
+____________________________________________________________________________
+[  9355] By: autrijus                              on 2003/12/19  13:12:28
+        Log: * Ilya Zakharevich made PAR support OS2.  Yay!
+	   ! AUTHORS myldr/Makefile.PL myldr/internals.c
+	   ! myldr/main.c myldr/static.c
+____________________________________________________________________________
 [  9276] By: autrijus                              on 2003/12/11  22:46:02
         Log: * This be PAR 0.76_98, the version that fixes
              interoperation with newer Archive::Zip.

@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/tkpp $ $Author: autrijus $
-# $Revision: #8 $ $Change: 8575 $ $DateTime: 2003/10/27 06:31:16 $ vim: expandtab shiftwidth=4
+# $Revision: #9 $ $Change: 9359 $ $DateTime: 2003/12/19 22:28:54 $ vim: expandtab shiftwidth=4
 
-our $VERSION = '0.1';
+our $VERSION = '1.1';
 
 =head1 NAME
 
@@ -27,40 +27,41 @@ The file you want to pack.
 =head2 Output file (--output, --par, --perlscript)
 
 The file you want the source file packed as.  This option recognizes the
-".par", ".pl" and executable extensions, and supplies the corresponding build
+C<.par>, C<.pl> and executable extensions, and supplies the corresponding build
 option automatically.
 
 =head2 Use icon (--icon)
 
 The icon file you want your output file to use.  This option will only work
-with exe files in Windows, par files will just ignore this option.
-This options will only accept .ico files.
+when building Microsoft Windows C<.exe> files.  Currently, this option only
+accepts C<.ico> files.
 
 =head2 Add modules/files (--add)
 
 Adds the specified items into the package, along with their dependencies.
-Multiple items should be seperated by a comma (,) or semicolon (;).
+Multiple items should be seperated by a comma (C<,>) or semicolon (C<;>).
 
 =head2 Exclude modules (--exclude)
 
-Excludes the given module from the dependency search patch and from
-the package.  Multiple modules should be seperated by a comma (,) or
-semicolon (;).
+Excludes the given module from the dependency search path and from
+the package.  Multiple modules should be seperated by a comma (C<,>) or
+semicolon (C<;>).
 
 =head2 GUI (--gui)
 
 Build an executable that does not have a console window.  This option is
-ignored when the output file is a par file.
+only applicable on Microsoft Windows, and is ignored when the output file
+is a C<.par> file.
 
 =head2 Log (--log)
 
-Log the output of packaging to a file rather than to stdout.  The log file,
-tkpp.log, will be written in the users home directory.
+Log the output of packaging to a file.  The log file, F<tkpp.log>, will
+be written in the user's home directory.
 
 =head2 Verbose (--verbose)
 
-Increase verbosity of output; from 0 to 5, 5 being the most verbose.  This
-option is ignored if logging is not enabled.
+Increase verbosity of output; from 0 to 5, 5 being the most verbose.
+This option is ignored if logging is not enabled.
 
 =head2 Build
 
@@ -68,9 +69,9 @@ Starts building the package.
 
 =head2 File Menu->Preferences
 
-Specify the location to perl and pp.  The path to perl and pp MUST be set
-before Tkpp will let you build.  The Tkpp configuration file, .tkpprc, is
-stored in the users home directory.
+Specify the location to F<perl> and F<pp>.  They must be set before Tkpp
+will build anything.  The Tkpp configuration file, F<.tkpprc>, is
+stored in the user's home directory.
 
 =head1 NOTES
 
@@ -108,14 +109,15 @@ my $gpgpath;
 my $iconfile;
 my $logfile = File::Spec->catfile($homedir, "tkpp.log");
 my $outputfile;
+my $perlfile = $^X;
 my $perlpath;
 my $pppath;
 my $sourcefile;
 my $statusbar;
 my $verboselevel;
 my $verboselevelbox;
-my $version    = "0.1";
-my $pp_bat     = ($^O eq 'MSWin32') ? "pp.bat" : "pp";
+my $version    = "1.1";
+my $ppfile     = ($^O eq 'MSWin32') ? "pp.bat" : "pp";
 my @win32_only = ($^O eq 'MSWin32') ? () : (-state => 'disabled');
 
 ###################################################
@@ -183,14 +185,13 @@ my $bigframe = $main->Frame(-borderwidth => 10);
 # make the top frame
 #
 my $frame = $bigframe->Frame();
-
-$frame->LabEntry(
-    -textvariable => \$sourcefile,
-    -label        => "Source file   ",
-    -background   => "white",
-    -width        => 30,
-    -labelPack    => [ -side => "left" ]
-  )->grid(
+$frame->Label(-text => "Source file ")->grid(
+    (   $frame->Entry(
+	    -textvariable => \$sourcefile,
+	    -background   => "white",
+	    -width        => 30
+	)
+    ),
     (   $frame->Button(
             -image   => $main->Getimage("srcfile"),
             -command => [
@@ -202,15 +203,17 @@ $frame->LabEntry(
             ]
         )
     ),
+    -padx => 1,
     -pady => 2
-  );
-$frame->LabEntry(
-    -textvariable => \$outputfile,
-    -label        => "Output file   ",
-    -background   => "white",
-    -width        => 30,
-    -labelPack    => [ -side => "left" ]
-  )->grid(
+);
+
+$frame->Label(-text => "Output file ")->grid(
+    (   $frame->Entry(
+	    -textvariable => \$outputfile,
+	    -background   => "white",
+	    -width        => 30
+	)
+    ),
     (   $frame->Button(
             -image   => $main->Getimage("textfile"),
             -command => [
@@ -223,15 +226,16 @@ $frame->LabEntry(
             ]
         )
     ),
-    -pady => 2
+    -padx => 1,
+    -pady => 2,
   );
-$frame->LabEntry(
-    -textvariable => \$iconfile,
-    -label        => "Use icon      ",
-    -background   => "white",
-    -width        => 30,
-    -labelPack    => [ -side => "left" ],
-  )->grid(
+$frame->Label(-text => "Use icon    ")->grid(
+    (   $frame->Entry(
+	    -textvariable => \$iconfile,
+	    -background   => "white",
+	    -width        => 30
+	)
+    ),
     (   $frame->Button(
             -image   => $main->Getimage("file"),
             -command => [
@@ -239,39 +243,46 @@ $frame->LabEntry(
             ]
         )
     ),
-    -pady => 2
+    -padx => 1,
+    -pady => 2,
   )
   if ($^O eq 'MSWin32');
 
 # make the middle frame with the module lists
 #
-my $frame2         = $bigframe->Frame(-borderwidth => 1);
-my $frame2balloon  = $frame2->Balloon();
-my $addmoduleframe = $frame2->LabEntry(
-    -textvariable => \$addmodules,
-    -label        => "Add modules      ",
-    -background   => "white",
-    -width        => 30,
-    -labelPack    => [ -side => "left" ]
-)->grid(-pady => 2);
-my $excludemoduleframe = $frame2->LabEntry(
-    -textvariable => \$excludemodules,
-    -label        => "Exclude modules",
-    -background   => "white",
-    -width        => 30,
-    -labelPack    => [ -side => "left" ]
-)->grid(-pady => 2);
+my $frame2 = $bigframe->Frame(-borderwidth => 1);
+my $frame2balloon = $frame2->Balloon();
+$frame2->Label(-text => "Add modules     ")->grid(
+    my $addmoduleentry = $frame2->Entry(
+	-textvariable => \$addmodules,
+	-background   => "white",
+	-width        => 30
+    ),
+    -padx => 1,
+    -pady => 2
+);
+
+$frame2->Label(-text => "Exclude modules ")->grid(
+    my $excludemoduleentry = $frame2->Entry(
+	-textvariable => \$excludemodules,
+	-background   => "white",
+	-width        => 30
+    ),
+    -padx => 1,
+    -pady => 2
+);
+
 $frame2balloon->attach(
-    $addmoduleframe,
+    $addmoduleentry,
     -balloonposition => "mouse",
     -balloonmsg      =>
 "Adds the specified module(s) into the package, along with its dependencies, seperate each module with a comma or semicolon"
 );
 $frame2balloon->attach(
-    $excludemoduleframe,
+    $excludemoduleentry,
     -balloonposition => "mouse",
     -balloonmsg      =>
-"Excludes the given module(s) from the dependency search patch and from the package, seperate each module with a comma or semicolon"
+"Excludes the given module(s) from the dependency search path and from the package, seperate each module with a comma or semicolon"
 );
 
 # make the middle frame with the checkboxes
@@ -305,16 +316,19 @@ my $guicheck      = $frame3->Checkbutton(
     )
   );
 
+my $guiballon =
+  (($^O eq "MSWin32")
+    ? "Build an executable that does not have a console window"
+    : "This option is only available under Windows");
 $frame3balloon->attach(
     $guicheck,
     -balloonposition => "mouse",
-    -balloonmsg => "Build an executable that does not have a console window"
+    -balloonmsg      => $guiballon
 );
 $frame3balloon->attach(
     $logcheck,
     -balloonposition => "mouse",
-    -balloonmsg      =>
-      "Log the output of packaging to a file rather than to stdout"
+    -balloonmsg      => "Log the output of packaging to a file"
 );
 $frame3balloon->attach(
     $verbosecheck,
@@ -414,7 +428,7 @@ Please go to File -> Preferences to continue.
     }
     elsif (!$pppath) {
         showdialog("Path not set", << ".", "error");
-The path to $pp_bat has not been set.
+The path to $ppfile has not been set.
 Please go to File -> Preferences to continue.
 .
     }
@@ -426,7 +440,7 @@ Please go to File -> Preferences to continue.
     }
     elsif (!(-e $pppath)) {
         showdialog("Invalid path", << ".", "error");
-The path to $pp_bat is invalid.
+The path to $ppfile is invalid.
 Check that the file exits and that your path is setup correctly.
 Please go to File -> Preferences to change the setting.
 .
@@ -548,48 +562,47 @@ sub editpreferences {
     }
     else {
         $perlpath = can_run($^X);
-        $pppath = File::Spec->catfile($FindBin::Bin, $pp_bat);
-        $pppath = File::Spec->catfile(dirname($perlpath), $pp_bat)
+        $pppath = File::Spec->catfile($FindBin::Bin, $ppfile);
+        $pppath = File::Spec->catfile(dirname($perlpath), $ppfile)
 	    unless -e $pppath;
         $perlpath = '' unless -e $perlpath;
         $pppath = '' unless -e $pppath;
         open CONFIGFILE, ">>$configfile";
     }
-    my $preferences = $main->DialogBox(-title => "Preferences");
-    my $perllabentry = $preferences->add(
-        "LabEntry",
-        -textvariable => \$perlpath,
-        -label        => "Path to perl ",
-        -background   => "white",
-        -width        => 30,
-        -labelPack    => [ -side => "left" ]
-      )->grid(
-        (          $preferences->Button(
-                -image   => $main->Getimage("openfold"),
-                -command => [     sub { &openfile },
-                    [                 [ "Perl",      ["perl$Config{_exe}"] ],
-                        [ "All Files", ["*"] ]
-                    ],
-                    \$perlpath
-                ]
-            )
-        ),
-        -padx => 1,
-        -pady => 10
-      );
-    my $pplabentry = $preferences->add(
-        "LabEntry",
-        -textvariable => \$pppath,
-        -label        => "Path to pp   ",
-        -background   => "white",
-        -width        => 30,
-        -labelPack    => [ -side => "left" ]
-      )->grid(
+    my $preferences = $main->DialogBox(-title          => "Preferences");
+    my $prefframe   = $preferences->Frame(-borderwidth => 5);
+
+    $prefframe->Label(-text => "Path to perl ")->grid(
+	(          $prefframe->Entry(
+		-textvariable => \$perlpath,
+		-background   => "white",
+		-width        => 30
+	    )
+	),
+	(          $prefframe->Button(
+		-image   => $main->Getimage("openfold"),
+		-command => [     sub { &openfile },
+		    [ [ "Perl", ["$perlfile"] ], [ "All Files", ["*"] ] ],
+		    \$perlpath
+		]
+	    )
+	),
+	-padx => 1,
+	-pady => 2
+    );
+
+    $prefframe->Label(-text => "Path to pp   ")->grid(
+	(          $prefframe->Entry(
+		-textvariable => \$pppath,
+		-background   => "white",
+		-width        => 30
+	    )
+	),
         (          $preferences->Button(
                 -image   => $main->Getimage("openfold"),
                 -command => [     sub { &openfile },
                     [                 [   "pp Batch File",
-                            [ $pp_bat ]
+                            [ $ppfile ]
                         ],
                         [ "All Files", ["*"] ]
                     ],
@@ -598,29 +611,29 @@ sub editpreferences {
             )
         ),
         -padx => 1,
-        -pady => 10
+        -pady => 2,
       );
-    my $gpglabentry = $preferences->add(
-        "LabEntry",
-        -textvariable => \$gpgpath,
-        -label        => "Path to gpg ",
-        -background   => "white",
-        -width        => 30,
-        -labelPack    => [ -side => "left" ]
-      )->grid(
-        (          $preferences->Button(
-                -image   => $main->Getimage("openfold"),
-                -command => [     sub { &openfile },
-                    [                 [ "GPG",       ["gpg$Config{_exe}"] ],
-                        [ "All Files", ["*"] ]
-                    ],
-                    \$gpgpath
-                ]
-            )
-        ),
-        -padx => 1,
-        -pady => 10
-      ) if 0;
+    $prefframe->Label(-text => "Path to gpg ")->grid(
+	(          $prefframe->Entry(
+		-textvariable => \$gpgpath,
+		-background   => "white",
+		-width        => 30
+	    )
+	),
+	(          $prefframe->Button(
+		-image   => $main->Getimage("openfold"),
+		-command => [     sub { &openfile },
+		    [                 [ "GPG",       ["gpg$Config{_exe}"] ],
+			[ "All Files", ["*"] ]
+		    ],
+		    \$gpgpath
+		]
+	    )
+	),
+	-padx => 1,
+	-pady => 2
+    ) if 0;
+    $prefframe->pack();
     my $answer = $preferences->Show();
     if ($answer eq "OK") {
         no warnings "uninitialized";
@@ -642,6 +655,8 @@ sub help {
         $help_text =~ s/.*?=head2/=head2/s;
         $help_text =~ s/=head1 NOTES.*//s;
         $help_text =~ s/=head2 (.*)\s+/* $1:\n/g;
+        $help_text =~ s/[LF]<(.*?)>/$1/g;
+        $help_text =~ s/C<(.*?)>/"$1"/g;
     };
     $help->Label(
         -text    => $help_text,

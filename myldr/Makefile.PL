@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #50 $ $Change: 8981 $ $DateTime: 2003/11/20 13:29:03 $
+# $Revision: #53 $ $Change: 9460 $ $DateTime: 2003/12/28 02:00:30 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -18,6 +18,7 @@ my $debug = 0;
 my $chunk_size = 30000;
 my $perl = $^X;
 my $exe = $Config{_exe};
+my $link_exe = (($^O eq 'os2' and $Config{ldflags} =~ /-Zexe/) ? '' : $exe);
 my $o = $Config{obj_ext};
 my $gccversion = $Config{gccversion};
 my $pccflags = ccopts;
@@ -29,7 +30,9 @@ my $dynperl = $Config{useshrplib} && ($Config{useshrplib} ne 'false');
 my $f2c = File::Spec->catfile(".", "file2c.pl");
 my $par_pl = File::Spec->catfile('..', 'script', "par.pl");
 my $par_exe = File::Spec->catfile('.', "par$exe");
+my $par_exe_link = File::Spec->catfile('.', "par$link_exe");
 my $static_exe = File::Spec->catfile('.', "static$exe");
+my $static_exe_link = File::Spec->catfile('.', "static$link_exe");
 my $parl_exe = File::Spec->catfile('..', 'script', "parl$exe");
 my $parldyn_exe = File::Spec->catfile('..', 'script', "parldyn$exe");
 my $lib_path = join(' ', map qq(-I"$_"), @INC);
@@ -57,10 +60,11 @@ if ($dynperl) {
 	last if -e $libperl;
     }
 
-    die "Can't find $file in (@paths) -- please contact the author!" unless -e $libperl;
+    die "Can't find $file in (@paths) -- please contact the author!" unless -e $libperl or $^O eq 'os2';
+    $libperl = OS2::DLLname() if $^O eq 'os2';
 }
 
-my $par = ($dynperl ? $static_exe : $par_exe);
+my $par = (($dynperl && $^O ne 'os2') ? $static_exe : $par_exe);
 my $all = ($dynperl ? "$parl_exe $parldyn_exe" : $parl_exe);
 
 $perl = Win32::GetShortPathName($perl)
@@ -114,7 +118,8 @@ PERL=$perl
 LD=$ld
 CC=$cc
 CFLAGS=$cflags
-LDFLAGS=$ldflags
+LDFLAGS=$Config{ldflags}
+PERL_LDFLAGS=$ldflags
 NOOP=\$(PERL) -e1
 
 OBJECTS=main$o my_par_pl$o $res
@@ -143,7 +148,7 @@ distclean: clean
 	-\$(RM) Makefile Makefile.old
 
 $par_exe: \$(OBJECTS) my_par_pl$o
-	\$(LD) \$(OBJECTS) \$(LDFLAGS) $out\$@
+	\$(LD) \$(OBJECTS) \$(PERL_LDFLAGS) $out$par_exe_link
 
 my_par_pl.c:
 	\$(PERL) $f2c $par_pl \$@ load_me_2 $long_literal
@@ -170,7 +175,7 @@ $parldyn_exe: $par_exe
 	$par_exe -I../myldr/.. -I../blib/lib $lib_path -B -O\$@
 
 $static_exe: my_perl.c my_par.c static$o
-	\$(LD) static$o $res $out\$@
+	\$(LD) static$o \$(PERL_LDFLAGS) $res $out$static_exe_link
 	\$(PERL) parlsig.pl $static_exe $par_exe $dynperl $chunk_size
 
 my_perl.c:

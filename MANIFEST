@@ -8,6 +8,7 @@ inc/ExtUtils/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
 inc/Module/Install/Base.pm
+inc/Module/Install/Bundle.pm
 inc/Module/Install/Can.pm
 inc/Module/Install/Fetch.pm
 inc/Module/Install/Include.pm
@@ -17,12 +18,14 @@ inc/Module/Install/PAR.pm
 inc/Module/Install/PRIVATE.pm
 inc/Module/Install/PRIVATE/PAR.pm
 inc/Module/Install/Win32.pm
+inc/Module/Install/WriteAll.pm
 lib/App/Packer/Backend/PAR.pm
 lib/PAR.pm
 lib/PAR/FAQ.pod
 lib/PAR/Filter.pm
 lib/PAR/Filter/Bleach.pm
 lib/PAR/Filter/Bytecode.pm
+lib/PAR/Filter/Obfuscate.pm
 lib/PAR/Filter/PatchContent.pm
 lib/PAR/Filter/PodStrip.pm
 lib/PAR/Heavy.pm

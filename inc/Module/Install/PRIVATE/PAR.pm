@@ -1,6 +1,6 @@
 #line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.1/Module/Install/PRIVATE/PAR.pm"
 # $File: //member/autrijus/Module-Install-PRIVATE/lib/Module/Install/PRIVATE/PAR.pm $ $Author: autrijus $
-# $Revision: #10 $ $Change: 7210 $ $DateTime: 2003/07/28 14:05:30 $ vim: expandtab shiftwidth=4
+# $Revision: #12 $ $Change: 9361 $ $DateTime: 2003/12/20 01:10:25 $ vim: expandtab shiftwidth=4
 
 package Module::Install::PRIVATE::PAR;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
@@ -90,7 +90,9 @@ sub Autrijus_PAR_fix {
     open IN, '< Makefile' or return;
     open OUT, '> Makefile.new' or return;
     while (<IN>) {
-        print OUT $_ unless /^\t\$\(FIXIN\) .*\Q$exe\E$/;
+        next if /^\t\$\(FIXIN\) .*\Q$exe\E$/;
+        next if /^\@\[$/ or /^\]$/;
+        print OUT $_;
     }
     close OUT;
     close IN;

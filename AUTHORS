@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #46 $ $Change: 9273 $ $DateTime: 2003/12/11 22:09:17 $
+# $Revision: #47 $ $Change: 9355 $ $DateTime: 2003/12/19 13:12:28 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -29,6 +29,7 @@ H. Wade Minter
 Hirosi Taguti
 Iain Cass
 Iain Truskett		(SPOON)
+Ilya Zakharevich	(ILYAZ)
 Indy Singh
 Jan Dubois		(JDB)
 Jeff Goff		(JGOFF)

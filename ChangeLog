@@ -1,13 +1,29 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #26 $ $Change: 9277 $ $DateTime: 2003/12/11 22:55:44 $
+# $Revision: #27 $ $Change: 9462 $ $DateTime: 2003/12/28 02:28:50 $
 
-[Changes for 0.76_98 - December 12, 2003]
+[Changes for 0.77 (tentative)]
 
 * New Features
+
+    - For dynamically-built perls, pp-generated .exe files will now
+      appear in the process table with the same name as it was launched,
+      instead of "par.exe".
+
+    - New filter "Obfuscate", which uses B::Deobfuscate to strip away
+      PODs and comments, as well as mangling variable names.
+
+    - Merged tkpp 1.1 from Doug Gruber.
+
+    - OS/2 is now supported.
 
     - External Zlib is no longer required to run pp-generated binaries.
 
 * Bug fixes
+
+    - No longer needs setting "Windows 95 compatible mode" to run on WinXP.
+
+    - On Win9x with Perl 5.6.1, "nmake" was failing due to extra "@[...]"
+      symbols in Makefile.  It should be fixed now.
 
     - The "bad signature" problem with newer Archive::Zip versions is fixed.
 
@@ -20,15 +36,6 @@
 
     - Some self-built PAR instances on Windows were failing due to
       mismatching short and long pathnames.
-
-* TODO before 0.77
-
-    - Implement Ned Konz's suggestion of writing out par.exe as
-      basename(argv[0]), in myldr/static.c.
-
-    - Merge new version of tkpp from Doug Gruber.
-
-    - Investigate and try to fix sporadic WinXP failures.
 
 [Changes for 0.76 - October 28, 2003]
 

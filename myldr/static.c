@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #11 $ $Change: 9274 $ $DateTime: 2003/12/11 22:42:56 $
+   $Revision: #15 $ $Change: 9460 $ $DateTime: 2003/12/28 02:00:30 $
    vim: expandtab shiftwidth=4
 */
 
@@ -8,11 +8,12 @@
 #   include <process.h>
 #   include <direct.h>
 #   include <errno.h>
+#   include <string.h>
+#   include <ctype.h>
 #   undef mkdir
 #   define mkdir(x, y) _mkdir(x)
 #   define W_OK 2
 #   define S_ISDIR(x) 1
-#   define S_ISLNK(x) 0
 #   define ISSLASH(C) ((C) == '\\')
 #else
 #   include <unistd.h>
@@ -27,6 +28,17 @@ typedef int Pid_t;
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/stat.h>
+
+#ifndef S_ISLNK
+#  define S_ISLNK(x) 0
+#endif
+
+#ifdef O_BINARY
+#  define OPEN_O_BINARY O_BINARY
+#else
+#  define OPEN_O_BINARY 0
+#endif
+
 #include "mktmpdir.c"
 #include "my_perl.c"
 #include "my_par.c"
@@ -46,13 +58,8 @@ int my_mkfile (char* argv0, char* stmpdir, const char* name) {
     int i;
 
     my_file = (char *)malloc(strlen(stmpdir) + strlen(name) + 1);
-#ifdef WIN32
-    sprintf(my_file, "%s\\%s", stmpdir, name);
-    i = open(my_file, O_CREAT | O_WRONLY | O_BINARY);
-#else
     sprintf(my_file, "%s/%s", stmpdir, name);
-    i = open(my_file, O_CREAT | O_WRONLY);
-#endif
+    i = open(my_file, O_CREAT | O_WRONLY | OPEN_O_BINARY);
     if (i == -1) {
         fprintf(stderr, "%s: creation of %s failed - aborting with %i.\n", argv0, my_file, errno);
         return 0;
@@ -93,9 +100,20 @@ int main ( int argc, char **argv, char **env )
     WRITE_load_me_0(i);
     close(i); chmod(my_file, 0755);
 
-    i = my_mkfile( argv[0], stmpdir, name_load_me_1 );
-    /* i = my_mkfile( argv[0], stmpdir, _basename(argv[0]) ) */;
-
+	my_file = _basename(argv[0]);
+#ifdef WIN32
+	i = strlen(my_file);
+	if (
+		(i < 4) ||
+		(		(*(my_file + i - 4)) != '.') ||
+		(tolower(*(my_file + i - 3)) != 'e') ||
+		(tolower(*(my_file + i - 2)) != 'x') ||
+		(tolower(*(my_file + i - 1)) != 'e')
+	) {
+		strcat(my_file, ".exe");
+	}
+#endif
+    i = my_mkfile( argv[0], stmpdir, my_file);
     if (!i) return 2;
     WRITE_load_me_1(i);
     close(i); chmod(my_file, 0755);
@@ -110,7 +128,7 @@ int main ( int argc, char **argv, char **env )
     }
 
 #ifdef WIN32
-    sprintf(buf, "PAR_SPAWNED=1", argc);
+	sprintf(buf, "PAR_SPAWNED=1", argc);
     putenv(buf);
     i = spawnvp(P_WAIT, my_file, argv);
 #else

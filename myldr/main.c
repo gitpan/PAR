@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #34 $ $Change: 8309 $ $DateTime: 2003/10/01 08:58:16 $
+   $Revision: #35 $ $Change: 9355 $ $DateTime: 2003/12/19 13:12:28 $
    vim: expandtab shiftwidth=4
 */
 
@@ -23,7 +23,7 @@ static char *stmpdir;
 static int options_count;
 static char **fakeargv;
 
-#ifdef HAS_PROCSELFEXE
+#ifdef HASX_PROCSELFEXE
 /* This is a function so that we don't hold on to MAXPATHLEN
    bytes of stack longer than necessary
  */
@@ -131,14 +131,9 @@ int main ( int argc, char **argv, char **env )
     exitstatus = perl_parse(my_perl, par_xs_init, argc + options_count - 1,
                             fakeargv, env);
 
-    if (exitstatus) {
-        perl_destruct(my_perl);
-        perl_free(my_perl);
-        PERL_SYS_TERM();
-        return exitstatus;
-    }
+    if (exitstatus == 0)
+	exitstatus = perl_run( my_perl );
 
-    exitstatus = perl_run( my_perl );
     perl_destruct( my_perl );
 
     if ( getenv("PAR_SPAWNED") == NULL ) {

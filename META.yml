@@ -1,7 +1,7 @@
 name: PAR
-version: 0.76_98
+version: 0.76_99
 abstract: Perl Archive Tookit
-license: unknown
+license: perl
 distribution_type: module
 requires:
   File::Temp: 0
@@ -15,7 +15,4 @@ recommends:
 no_index:
   directory:
     - inc
-private:
-  directory:
-    - inc
-generated_by: Module::Install version 0.27
+generated_by: Module::Install version 0.30

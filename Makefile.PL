@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #49 $ $Change: 8611 $ $DateTime: 2003/10/29 03:25:28 $
+# $Revision: #52 $ $Change: 9460 $ $DateTime: 2003/12/28 02:00:30 $
 
 use 5.006;
 use inc::Module::Install;
@@ -8,9 +8,10 @@ use inc::Module::Install;
 name	    ('PAR');
 abstract    ('Perl Archive Tookit');
 version_from('lib/PAR.pm');
+license	    ('perl');
 
 requires    ('File::Temp');
-requires    ('Compress::Zlib'	=> 1.30);
+requires    ('Compress::Zlib'	=> ($^O eq 'MSWin32') ? 1.16 : 1.30);
 requires    ('Archive::Zip'	=> 1.00);
 requires    ('Module::ScanDeps'	=> 0.32);
 requires    ('PAR::Dist'	=> 0.05);
