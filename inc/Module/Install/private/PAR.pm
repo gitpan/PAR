@@ -1,13 +1,13 @@
 # $File: //member/autrijus/Module-Install-private/lib/Module/Install/private/PAR.pm $ $Author: autrijus $
-# $Revision: #11 $ $Change: 4815 $ $DateTime: 2003/03/19 15:25:43 $ vim: expandtab shiftwidth=4
+# $Revision: #13 $ $Change: 5006 $ $DateTime: 2003/03/29 09:33:22 $ vim: expandtab shiftwidth=4
 
 package Module::Install::private::PAR;
-use base 'Module::Install::Base';
+use Module::Install::Base; @ISA = qw(Module::Install::Base);
 
 use 5.006;
 use Config ();
 
-my %no_parl  = ( cygwin => 1 );
+my %no_parl  = ();
 my %no_shlib = ( MSWin32 => ( $Config::Config{cc} =~ /^cl\b/i ), %no_parl );
 
 sub Autrijus_PAR {

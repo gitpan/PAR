@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #1 $ $Change: 4802 $ $DateTime: 2003/03/19 13:33:53 $ vim: expandtab shiftwidth=4
+# $Revision: #5 $ $Change: 5071 $ $DateTime: 2003/03/31 18:52:32 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.66';
+$PAR::VERSION = '0.67';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.66 of PAR, released March 19, 2003.
+This document describes version 0.67 of PAR, released April 1, 2003.
 
 =head1 SYNOPSIS
 
@@ -64,6 +64,10 @@ Use in a program:
     # PAR::par_handle() returns an Archive::Zip handle
     my $zip = PAR::par_handle('foo.par')
     my $src = $zip->memberNamed('lib/Hello.pm')->contents;
+
+You can also use wildcard characters:
+
+    use PAR '/home/foo/*.par';  # loads all PAR files in that directory
 
 =head1 DESCRIPTION
 
@@ -139,6 +143,14 @@ sub import {
     return if !@_ and $_reentrant++;
 
     foreach my $par (@_) {
+        if ($par =~ /[?*{}\[\]]/) {
+            require File::Glob;
+            foreach my $matched (File::Glob::glob($par)) {
+                push @PAR_INC, $matched if unpar($matched, undef, undef, 1);
+            }
+            next;
+        }
+
         push @PAR_INC, $par if unpar($par, undef, undef, 1);
     }
 

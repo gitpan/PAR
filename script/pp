@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #34 $ $Change: 4773 $ $DateTime: 2003/03/18 18:10:55 $ vim: expandtab shiftwidth=4
+# $Revision: #43 $ $Change: 5072 $ $DateTime: 2003/03/31 19:44:00 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -123,22 +123,13 @@ sub compile_par {
             my $content = <$file>;
             $content =~ s/
                 ^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
-                ^=cut\s*$
+                ^=cut\b[^\n]*$
                 \n*
             //smgx unless $verbatim;
 
             if ($map{$pfile} =~ /\bTk\b.*\bWidget\.pm/i) {
-                my $from = << '.';
-  if (defined($name=$INC{"$pkg.pm"}))
-   {
-    $name =~ s#^(.*)$pkg\.pm$#$1auto/$pkg/$func.al#;
-   }
-  else
-.
-                my $to = << '.';
-  unless (defined($name=$INC{"$pkg.pm"}) and
-    $name =~ s#^(.*)$pkg\.pm$#$1auto/$pkg/$func.al#)
-.
+                my $from = 'if (defined($name=$INC{"$pkg.pm"}))';
+                my $to   = 'if (defined($name=$INC{"$pkg.pm"}) and !ref($name) and $name !~ m!^/loader/!)';
                 $content =~ s/\Q$from\E/$to/;
             }
 
@@ -213,6 +204,40 @@ sub par_to_exe {
     my @quiet = (opt(v) ? () : ('-q'));
     vprint 0, "Running $PARL @quiet -B -O$Output $par_file";
     system($PARL, @quiet, "-B", "-O$Output", $par_file);
+
+    if (opt(g) and $^O eq 'MSWin32') {
+        vprint 1, "Fixing $Output to remove its console window";
+        strip_console($Output);
+    }
+}
+
+sub strip_console {
+    my $file = shift;
+    my ($record, $magic, $signature, $offset, $size);
+    open my $exe, "+< $file" or die "Cannot open $file: $!\n";
+    binmode $exe;
+    # read IMAGE_DOS_HEADER structure
+    read $exe, $record, 64;
+    ($magic, $offset) = unpack "Sx58L", $record;
+
+    die "$ARGV[0] is not an MSDOS executable file.\n"
+        unless $magic == 0x5a4d; # "MZ"
+
+    # read signature, IMAGE_FILE_HEADER and first WORD of IMAGE_OPTIONAL_HEADER
+    seek $exe, $offset, 0;
+    read $exe, $record, 4+20+2;
+    ($signature,$size,$magic) = unpack "Lx16Sx2S", $record;
+
+    die "PE header not found" unless $signature == 0x4550; # "PE\0\0"
+
+    die "Optional header is neither in NT32 nor in NT64 format"
+        unless ($size == 224 && $magic == 0x10b) || # IMAGE_NT_OPTIONAL_HDR32_MAGIC
+               ($size == 240 && $magic == 0x20b);   # IMAGE_NT_OPTIONAL_HDR64_MAGIC
+
+    # Offset 68 in the IMAGE_OPTIONAL_HEADER(32|64) is the 16 bit subsystem code
+    seek $exe, $offset+4+20+68, 0;
+    print $exe pack "S", 2; # IMAGE_WINDOWS
+    close $exe;
 }
 
 sub generate_code { 
@@ -233,8 +258,8 @@ sub vprint ($@) {
     my $msg = "@_";
     $msg .= "\n" unless substr($msg, -1) eq "\n";
     if (opt(v) > $level) {
-        print        "$0: $msg" if !opt('log');
-        print $logfh "$0: $msg" if  opt('log');
+        print        "$0: $msg" if !opt(L);
+        print $logfh "$0: $msg" if  opt(L);
     }
 }
 
@@ -248,27 +273,30 @@ sub parse_argv {
 
     $Options = {};
     Getopt::Long::GetOptions( $Options,
-        'M:s@',         # include modules
-        'X:s@',         # exclude modules
-        'I:s@',         # include directories (FOR PERL, NOT FOR C)
-        'o:s',          # Output file
-        'v:i',          # Verbosity level
-        'e:s',          # One-liner
-        'p',            # Generate PAR only
-        'h',            # Help me
-        'S',            # Dump PAR files
-        'B',            # Bundle core modules
-        'r',            # run the resulting executable
-        'log:s',        # where to log packaging process information
+        'M|add:s@',     # Include modules
+        'B|bundle',     # Bundle core modules
+        'e|eval:s',     # One-liner
+        'X|exclude:s@', # Exclude modules
+        'g|gui',        # No console window
+        'h|help',       # Help me
+        'I|lib:s@',     # Include directories (FOR PERL, NOT FOR C)
+        'L|log:s',      # Where to log packaging process information
+        'o|output:s',   # Output file
+        'p|par',        # Generate PAR only
+        'r|run',        # Run the resulting executable
+        'S|save',       # Preserve PAR files
+        'v|verbose:s',  # Verbosity level
+        'V|version',    # Show version
     );
 
-    $Options->{v} += 0;
+    $Options->{v} = 1 if exists $Options->{v} and $Options->{v} eq '';
     $Options->{B} = 1 unless opt(p) and !opt(o);
 
     helpme() if opt(h); # And exit
+    show_version() if opt(V); # And exit
 
     $Output = opt(o) || ( 'a' . ($Config{_exe} || '.out') );
-    open $logfh, '>>', opt('log') or die ("XXX: Cannot open log: $!") if (opt('log'));
+    open $logfh, '>>', opt(L) or die ("XXX: Cannot open log: $!") if (opt(L));
 
     if (opt(e)) {
         warn "$0: using -e 'code' as input file, ignoring @ARGV\n" if @ARGV and !opt(r);
@@ -279,7 +307,7 @@ sub parse_argv {
     }
     else {
         @Input = shift @ARGV if @ARGV;
-        _usage_and_die("$0: No input file specified\n") unless @Input or opt(M);
+        _die("$0: No input files specified\n") unless @Input or opt(M);
         push @Input, @ARGV if @ARGV and !opt(r);
         check_read(@Input) if @Input;
         check_perl(@Input) if @Input;
@@ -357,7 +385,7 @@ sub check_perl {
 } 
 
 sub helpme {
-    print "Perl Packager, version $VERSION\n\n";
+    print "Perl Packager, version $VERSION (PAR version $PAR::VERSION)\n\n";
     {
         no warnings;
         exec "pod2usage $0";
@@ -366,17 +394,36 @@ sub helpme {
     }
 }
 
-sub _die {
-    $logfh->print(@_) if opt('log');
-    print STDERR @_;
-    exit();
+sub show_version {
+    print << ".";
+Perl Packager, version $VERSION (PAR version $PAR::VERSION)
+Copyright 2002, 2003 by Autrijus Tang <autrijus\@autrijus.org>
+
+Neither this program nor the associated "parl" program impose any
+licensing restrictions on files generated by their execution, in
+accordance with the 8th article of the Artistic License:
+
+    "Aggregation of this Package with a commercial distribution is
+    always permitted provided that the use of this Package is embedded;
+    that is, when no overt attempt is made to make this Package's
+    interfaces visible to the end user of the commercial distribution.
+    Such use shall not be construed as a distribution of this Package."
+
+Therefore, you are absolutely free to place any license on the resulting
+executable, as long as the packed 3rd-party libraries are also available
+under the Artistic License.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.  There is NO warranty; not even for
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+.
+    exit;
 }
 
-sub _usage_and_die {
-    _die(<<EOU);
-$0: Usage:
-$0 [-o executable] [-r] [-B|-p|-S] [-log log] [source[.pl] | -e oneliner]
-EOU
+sub _die {
+    $logfh->print(@_) if opt(L);
+    die @_;
 }
 
 sub _can_run {
@@ -464,7 +511,7 @@ pp - Perl Packager
     % pp -r hello a b c         # Pack 'hello' into 'a.out', runs 'a.out'
                                 # with arguments 'a b c' 
 
-    % pp hello -log c           # Pack 'hello' into 'a.out', logs
+    % pp hello --log=c          # Pack 'hello' into 'a.out', logs
                                 # messages into 'c'
 
 =head1 DESCRIPTION
@@ -492,51 +539,77 @@ as the default executable name.
 
 =head1 OPTIONS
 
+Options are available in a I<short> form and a I<long> form.  For
+example, the three lines below are all equivalent:
+
+    % pp -o output.exe input.pl
+    % pp --output output.exe input.pl
+    % pp --output=output.exe input.pl
+
 =over 4
 
-=item -M I<module or file names>
+=item B<-M>, B<--add>=I<MODULE>|I<FILE>
 
-Adds the given modules to the dependency search patch and to the
-binary.  Also accepts filenames relative to the C<@INC> path;
-that is, C<-M Module::ScanDeps> may also be written as C<-M
-Module/ScanDeps.pm>.
+Adds the specified module into the package, along with its dependencies.
+Also accepts filenames relative to the C<@INC> path; i.e. C<-M
+Module::ScanDeps> means the same thing as C<-M Module/ScanDeps.pm>.
 
-=item -X I<module names>
+=item B<-B>, B<--bundle>
 
-Excludes the given modules to the dependency search patch and to the
-binary.
+Bundles core modules in the resulting package.  Defaults to C<1>, unless
+C<-p> is specified and C<-o> is unspecified.
 
-=item -I I<library directories>
-
-Adds the given directories to the perl library file search path.
-
-=item -o I<output file name>
-
-Specifies the file name for the final packaged executable.
-
-=item -p I<PAR file name>
-
-Create PAR archives only; do not package to a standalone binary.
-
-=item -e I<perl code>
+=item B<-e>, B<--eval>=I<STRING>
 
 Package a one-liner, much the same as C<perl -e '...'>
 
-=item -S
+=item B<-X>, B<--exclude>=I<MODULE>
 
-Do not delete generated PAR file after packaging.
+Excludes the given module from the dependency search patch and from the
+package.
 
-=item -v
+=item B<-g>, B<--gui>
 
-Increase verbosity of output; can be repeated for more verbose output.
+Build an executable that does not have a console window. This option is
+ignored on non-MSWin32 platforms or when C<-p> is specified.
 
-=item -r 
+=item B<-o>, B<--output>=I<FILE>
+
+Specifies the file name for the final packaged executable.
+
+=item B<-h>, B<--help>
+
+Shows basic usage information.
+
+=item B<-I>, B<--lib>=I<DIR>
+
+Adds the given directories to the perl library file search path.
+
+=item B<-L>, B<--log>=I<FILE>
+
+Log the output of packaging to a file rather than to stdout.
+
+=item B<-p>, B<--par>
+
+Create PAR archives only; do not package to a standalone binary.
+
+=item B<-r>, B<--run>
 
 Run the resulting packaged script after packaging it.
 
-=item -log
+=item B<-S>, B<--save>
 
-Log the output of packaging to a file rather than to stdout.
+Do not delete generated PAR file after packaging.
+
+=item B<-v>, B<--verbose>[=I<NUMBER>]
+
+Increase verbosity of output; I<NUMBER> is an integer from C<0> to C<5>,
+C<5> being the most verbose.  Defaults to C<1> if specified without an
+argument.
+
+=item B<-V>, B<--version>
+
+Display the version number and copyrights of this program.
 
 =back
 
@@ -604,6 +677,9 @@ Simon Cozens, Tom Christiansen and Edward Peschko for writing
 F<perlcc>; this program try to mimic its interface as close
 as possible, and copied liberally from their code.
 
+Jan Dubois for writing the F<exetype.pl> utility, which has been
+partially adapted into the C<-g> flag.
+
 Mattia Barbon for providing the C<myldr> binary loader code.
 
 Jeff Goff for suggesting the name C<pp>.
@@ -621,6 +697,20 @@ Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 =head1 COPYRIGHT
 
 Copyright 2002, 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+
+Neither this program nor the associated L<parl> program impose any
+licensing restrictions on files generated by their execution, in
+accordance with the 8th article of the Artistic License:
+
+    "Aggregation of this Package with a commercial distribution is
+    always permitted provided that the use of this Package is embedded;
+    that is, when no overt attempt is made to make this Package's
+    interfaces visible to the end user of the commercial distribution.
+    Such use shall not be construed as a distribution of this Package."
+
+Therefore, you are absolutely free to place any license on the resulting
+executable, as long as the packed 3rd-party libraries are also available
+under the Artistic License.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -1,8 +1,8 @@
 # $File: //member/autrijus/Module-Install-private/lib/Module/Install/private.pm $ $Author: autrijus $
-# $Revision: #3 $ $Change: 4807 $ $DateTime: 2003/03/19 14:10:44 $ vim: expandtab shiftwidth=4
+# $Revision: #4 $ $Change: 5006 $ $DateTime: 2003/03/29 09:33:22 $ vim: expandtab shiftwidth=4
 
 package Module::Install::private;
-use base 'Module::Install::Base';
+use Module::Install::Base; @ISA = qw(Module::Install::Base);
 
 sub Autrijus { $_[0] }
 

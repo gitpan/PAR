@@ -1,0 +1,142 @@
+# $File: //member/autrijus/PAR/ChangeLog $
+# $Revision: #3 $ $Change: 5071 $ $DateTime: 2003/03/31 18:52:32 $
+
+[Changes for 0.67 - April 1, 2003]
+
+* New Features
+
+    - PAR now works on Cygwin and MinGW/MSYS.
+
+    - Globbing support in PAR::import(): use PAR "/path/*.pm";
+
+    - New license clarification messages added to POD and 'pp -V'.
+
+    - All 'pp' options now has a short form (-o) and a long form (--output).
+
+    - Revamped documentation for 'pp'.
+
+    - New -g (--gui) flag for 'pp' to build console-less Win32 executables.
+
+* Bug fixes
+
+    - Building on Darwin Perl 5.6.0 was broken with 'cc -s'.
+
+    - Building on 5.6.0 was broken due to bad 'base.pm'.
+
+    - Win32 Tk::Widget autoloading was broken due to a binmode() bug.
+
+    - IPC::Run was pod-stripped incorrectly.  Fixed.
+
+    - Depends on Module::ScanDeps 0.19, which supports utf8 and .ph files.
+
+    - Better AutoInstall support, which uses 'sudo' where necessary.
+
+[Changes for 0.66 - Match 20, 2003]
+
+* New Features
+
+    - Adds PAR::Intro, a PODified version of the online presentation.
+
+    - Adds App::Packer::Backend::PAR, a bridge between PAR and App::Packer.
+
+    - Scripts and modules are now searched in "/" last, instead of first.
+
+    - Experimental patch for packing shared libraries via "pp -l".
+
+    - HTTP fetching of precompiled packages in addition to FTP.
+
+* Bug fixes
+
+    - Makefile.PL now downloads precompiled packages only if needed.
+
+    - AutoInstall has been made to work for an easier installation.
+
+    - The redundant "parl.exe.bat" is no longer created on Win32.
+    - Pre-0.63 PARs used to leave broken .dll in TEMP; now they're cleaned.
+
+    - "pp c:\something.pl" no longer treats c: as a relative path.
+
+    - "pp -I dir" now searches 'dir' first, instead of last.
+
+    - "pp" was broken on Perl 5.6.0 due to => stringification bugs.
+
+    - Support for Tk::Widget autoloading has been added.
+
+    - "parl" was not stripped if "gcc" was invoked as "cc"; fixed.
+
+    - On a machine with multiple "parl"s, "pp" now uses the correct one.
+
+    - File::Temp was missing as a dependency.
+
+* Known Issues
+
+    - Cygwin support is still broken.
+
+    - PAR does not include utf8_heavy.pl nor unicore/* for scripts that
+      has "use utf8;".  This has since been fixed by Module::ScanDeps 0.18.
+
+[Changes for 0.65 - Match 9, 2003]
+
+This release comes with several significant improvements:
+
+* Automatic binary installation
+
+Previously, users without a C compiler cannot build the 'parl'
+executable, and is therefore unable to create self-contained binaries
+using 'pp'.
+
+Now, if there is a binary package available for that architecture under
+my CPAN directory, the Makefile.PL script will automatically fetch it,
+unpack into blib/, and the installation will continue as normal,
+resulting in a fully-functional 'pp'.
+
+This feature is part of the soon-to-be-released Module::Install
+framework; it will greatly benefit all CPAN authors with non-pure-perl
+distributions.
+
+* POD stripping
+
+Packages generated with 'pp' will now strip POD sections from all packed
+dependencies (your own scripts is unaffected); all binary executables
+will save at least 276732 bytes, with additional ~20% saving in
+additional packed dependencies.
+
+You can turn off this feature with the PAR_VERBATIM environment
+variable.
+
+* XS Incompatibility solved
+
+Because 'pp'-generated executables includes some fixed version of shared
+libraries (IO, Zlib, etc), they used to break when the target system has
+different version of shared libraries.
+
+Now PAR::Heavy intercepts DynaLoader::dl_expandspec to always prefer the
+library inside the PAR file, so this issue is resolved.
+
+* 5.6.1 Reclaimed
+
+Thanks to Sisyphus and various others, building on Perl 5.6.1 (with its
+old ExtUtils::MakeMaker and lack of PTHREAD_ATFORK) now works again.
+
+[Changes for 0.64 - Match 2, 2003]
+
+This is primarily a bug-fix release for the binmode() bug, reported
+by Bill Atkins, D. Menzel and others, that prevents dynamic loading
+on Win32 from working.
+
+Also fixed is building on Win32 in directory names that contain
+spaces; the t/0-signature.t is re-enabled for people using my
+Module::Signature to verify the module's OpenPGP signature.
+
+This release is also the first distribution on CPAN to use the
+Module::Install framework, which is a stand-alone, extensible
+drop-in replacement for ExtUtils::MakeMaker that needs no extra
+action/prerequisites for end users.
+
+[Changes for 0.63 - February 6, 2003]
+
+Jerry Veldhuis found out a 0.62-specific bug, namely that the new 'parl'
+binary (which replaces the old 'par' or 'par.exe') doesn't work properly
+when bundling perl modules for self-contained executables, rendering
+'pp' useless on machines without core perl.
+

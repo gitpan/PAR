@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #22 $ $Change: 4808 $ $DateTime: 2003/03/19 14:12:06 $
+# $Revision: #25 $ $Change: 4863 $ $DateTime: 2003/03/22 13:12:24 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -13,6 +13,7 @@ Arthur Bergman		(ABERGMAN)
 Ask Bjoern Hansen	(ABH)
 Barry Jaspan 
 Bill Atkins		(BATKINS)
+Bruce Winter
 Chia-Liang Kao		(CLKAO)
 D. Menzel
 Germain Garand		(GGARAND)
@@ -26,11 +27,13 @@ Jeff Goff		(JGOFF)
 Jerry Veldhuis
 Jesse Vincent		(JESSE)
 John McMahon
+Jonathan Leffler	(JOHNL)
 Markus Jansen
 Mattia Barbon		(MBARBON)
 Matt Sergeant		(MSERGEANT)
 Nicholas Clark		(NWCLARK)
 Nomota KIM
+Paritosh Tyagi
 Randal L. Schwartz	(MERLYN)
 Reini Urban
 Robert Allerstorfer

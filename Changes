@@ -1,4 +1,125 @@
 ____________________________________________________________________________
+[  5071] By: autrijus                              on 2003/03/31  18:52:32
+        Log: * This be PAR 0.67, the "April Fools" release.
+	   ! ChangeLog lib/PAR.pm
+____________________________________________________________________________
+[  5008] By: autrijus                              on 2003/03/29  09:53:05
+        Log: * changelog for 0.67.
+	   ! ChangeLog
+____________________________________________________________________________
+[  5007] By: autrijus                              on 2003/03/29  09:34:26
+        Log: * schwern says, 'loose the base.pm'
+	   ! inc/Module/Install/private.pm
+	   ! inc/Module/Install/private/PAR.pm
+____________________________________________________________________________
+[  5005] By: autrijus                              on 2003/03/29  09:10:50
+        Log: * bring up shlib.diff to modern code.
+             * start release engineering toward 0.67.
+	   ! lib/PAR.pm patches/shlib.diff
+____________________________________________________________________________
+[  5004] By: autrijus                              on 2003/03/29  09:10:29
+        Log: * up to Module::Install 0.19_95 (on cpan).
+	   ! inc/ExtUtils/AutoInstall.pm
+	   ! inc/Module/Install.pm
+	   ! inc/Module/Install/AutoInstall.pm
+	   ! inc/Module/Install/Can.pm
+	   ! inc/Module/Install/Makefile.pm
+____________________________________________________________________________
+[  4906] By: autrijus                              on 2003/03/23  21:56:35
+        Log: * introducing ChangeLog.
+	   + ChangeLog
+	   ! MANIFEST
+____________________________________________________________________________
+[  4902] By: autrijus                              on 2003/03/23  17:58:56
+        Log: * add the --gui (-g) option to make no-console win32
+	       executables.
+             (thanks to H. Wade Minter for suggesting it and Jan Dubois
+	     for
+             writing the original exetype.pl)
+             * order the options alphabetically in pp's POD.
+             * --module is now --add to reduce confusion; likewise,
+	       --include
+             becomes --lib.
+	   ! script/pp
+____________________________________________________________________________
+[  4880] By: autrijus                              on 2003/03/22  17:23:12
+        Log: * up the stake to 0.19 scandeps.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  4879] By: autrijus                              on 2003/03/22  17:11:38
+        Log: * add prominient notice to par.pl and parl.pod too.
+	   ! script/par.pl script/parl.pod
+____________________________________________________________________________
+[  4878] By: autrijus                              on 2003/03/22  17:03:06
+        Log: * follow the GNU documentation convention.
+	   ! script/pp
+____________________________________________________________________________
+[  4877] By: autrijus                              on 2003/03/22  16:51:38
+        Log: * all 'pp' options has both a short form and a long form
+	       now.
+	   ! script/pp
+____________________________________________________________________________
+[  4876] By: autrijus                              on 2003/03/22  16:20:01
+        Log: * explain myself a bit better.
+             * no longer show the obsolete (and redundant) usage
+             when there's no command line; instead die like gcc does.
+	   ! script/pp
+____________________________________________________________________________
+[  4875] By: autrijus                              on 2003/03/22  16:04:05
+        Log: * the licensing disclaimer is such a good idea, I want
+             to add it to the POD.
+	   ! script/pp
+____________________________________________________________________________
+[  4874] By: autrijus                              on 2003/03/22  15:58:15
+        Log: * Nicholas suggests that "in accordance with" is more
+	       Englishlike.
+	   ! script/pp
+____________________________________________________________________________
+[  4872] By: autrijus                              on 2003/03/22  15:12:01
+        Log: * implement Paritosh's suggestion a bit smarter --
+             ditch eval '' in favor of calling File::Glob::glob
+             explicitly to avoid bad parser magic
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  4871] By: autrijus                              on 2003/03/22  15:11:05
+        Log: * better pod stripping as prompted by Markus Jansen.
+             * pp --version now prints a version + license statement,
+             thanks to H. Wade Minter.
+	   ! script/par.pl script/pp
+____________________________________________________________________________
+[  4870] By: autrijus                              on 2003/03/22  15:05:44
+        Log: * cygwin reclaimed!
+	   ! inc/Module/Install/private/PAR.pm
+	   ! lib/PAR/Intro.pod
+____________________________________________________________________________
+[  4863] By: autrijus                              on 2003/03/22  13:12:24
+        Log: * Paritosh Tyagi suggests that use PAR '/dir/*.pm'
+             should DWIM, so we now glob when there's metacharacters.
+	   ! AUTHORS lib/PAR.pm
+____________________________________________________________________________
+[  4844] By: autrijus                              on 2003/03/21  06:26:07
+        Log: * Jonathan Leffler reported that stock darwin perl doesn't
+	       like -s.
+	   ! AUTHORS myldr/Makefile.PL
+____________________________________________________________________________
+[  4840] By: autrijus                              on 2003/03/21  04:39:22
+        Log: * Trying to apply Mattia's suggestion on cygwin
+	       portability.
+	   ! script/par.pl
+____________________________________________________________________________
+[  4839] By: autrijus                              on 2003/03/21  04:39:05
+        Log: * Bruce Winter commented that Tk::Widget magix
+             did not work on win32; fixed.
+	   ! script/pp
+____________________________________________________________________________
+[  4824] By: autrijus                              on 2003/03/20  04:38:06
+        Log: * doc revamping.
+	   ! README lib/PAR/Intro.pod
+____________________________________________________________________________
+[  4819] By: autrijus                              on 2003/03/19  18:51:21
+        Log: * * changes and signatures.
+	   ! Changes
+____________________________________________________________________________
 [  4818] By: autrijus                              on 2003/03/19  15:30:30
         Log: * This be PAR 0.66, the "Too Many Fixes To Note" edition.
 	   ! README

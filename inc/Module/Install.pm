@@ -1,8 +1,19 @@
 # $File: //depot/cpan/Module-Install/lib/Module/Install.pm $ $Author: autrijus $
-# $Revision: #43 $ $Change: 1371 $ $DateTime: 2003/03/18 04:22:04 $ vim: expandtab shiftwidth=4
+# $Revision: #45 $ $Change: 1401 $ $DateTime: 2003/03/27 08:11:53 $ vim: expandtab shiftwidth=4
 
 package Module::Install;
-$VERSION = '0.20';
+$VERSION = '0.19_95';
+
+die <<END unless defined $INC{'inc/Module/Install.pm'};
+You must invoke Module::Install with:
+
+    use inc::Module::Install;
+
+not:
+
+    use Module::Install;
+
+END
 
 use strict 'vars';
 use File::Find;

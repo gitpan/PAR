@@ -1,20 +1,22 @@
 diff -dur ./lib/PAR/Intro.pod ../PAR-shlib/lib/PAR/Intro.pod
---- ./lib/PAR/Intro.pod	Wed Mar 19 23:10:19 2003
-+++ ../PAR-shlib/lib/PAR/Intro.pod	Wed Mar 19 23:18:07 2003
-@@ -112,6 +112,10 @@
-     /script/                    # standard location
-     /                           # casual packaging only
+--- ./lib/PAR/Intro.pod	Sat Mar 22 23:13:10 2003
++++ ../PAR-shlib/lib/PAR/Intro.pod	Sat Mar 29 15:54:58 2003
+@@ -216,6 +216,12 @@
  
-+- Shared libraries are currently stored in a single location:
-+
+ =item *
+ 
++Shared libraries are currently stored in a single location:
++ 
 +    /shlib/                     # standard location
++ 
++=item *
 +
- - Special files:
+ Special files:
  
      /MANIFEST                   # index of the PAR's contents
 diff -dur ./myldr/main.c ../PAR-shlib/myldr/main.c
 --- ./myldr/main.c	Mon Mar 17 08:31:16 2003
-+++ ../PAR-shlib/myldr/main.c	Wed Mar 19 23:18:07 2003
++++ ../PAR-shlib/myldr/main.c	Sat Mar 29 15:51:53 2003
 @@ -8,6 +8,10 @@
  #include "XSUB.h"
  #include "my_par_pl.c"
@@ -163,9 +165,9 @@ diff -dur ./myldr/main.c ../PAR-shlib/myldr/main.c
      return exitstatus;
  }
 diff -dur ./script/par.pl ../PAR-shlib/script/par.pl
---- ./script/par.pl	Mon Mar 17 09:12:35 2003
-+++ ../PAR-shlib/script/par.pl	Wed Mar 19 23:18:07 2003
-@@ -201,6 +201,15 @@
+--- ./script/par.pl	Sun Mar 23 01:19:06 2003
++++ ../PAR-shlib/script/par.pl	Sat Mar 29 15:51:53 2003
+@@ -200,6 +200,15 @@
              $PAR::Heavy::FullCache{$fullname} = $filename;
              $PAR::Heavy::FullCache{$filename} = $fullname;
          }
@@ -181,7 +183,7 @@ diff -dur ./script/par.pl ../PAR-shlib/script/par.pl
          else {
              $require_list{$fullname} = \"$buf";
          }
-@@ -460,6 +469,20 @@
+@@ -459,6 +468,20 @@
  
      push @PAR::LibCache, $zip;
      $PAR::LibCache{$0} = $zip;
@@ -202,7 +204,7 @@ diff -dur ./script/par.pl ../PAR-shlib/script/par.pl
      # }}}
  }
  # }}}
-@@ -498,10 +521,11 @@
+@@ -497,10 +520,11 @@
      require PAR::Heavy;
  }
  
@@ -216,8 +218,8 @@ diff -dur ./script/par.pl ../PAR-shlib/script/par.pl
          if (${"\cTAINT"}) { eval {
              require Scalar::Util;
 diff -dur ./script/pp ../PAR-shlib/script/pp
---- ./script/pp	Wed Mar 19 02:17:13 2003
-+++ ../PAR-shlib/script/pp	Wed Mar 19 23:18:08 2003
+--- ./script/pp	Sat Mar 29 15:51:17 2003
++++ ../PAR-shlib/script/pp	Sat Mar 29 16:43:53 2003
 @@ -30,6 +30,7 @@
  our (@Input, $Output);
  our ($logfh);
@@ -234,7 +236,7 @@ diff -dur ./script/pp ../PAR-shlib/script/pp
  
      Module::ScanDeps::scan_deps(
          rv      => \%map,
-@@ -163,6 +165,16 @@
+@@ -154,6 +156,16 @@
          push @manifest, "script/$name";
      }
  
@@ -251,22 +253,40 @@ diff -dur ./script/pp ../PAR-shlib/script/pp
      $zip->addString(
          ((@Input == 1)
              ? _main_pl_single("script/" . basename($Input[0]))
-@@ -258,6 +270,7 @@
-         'h',            # Help me
-         'S',            # Dump PAR files
-         'B',            # Bundle core modules
-+        'l:s@',         # include additional shared libraries
-         'r',            # run the resulting executable
-         'log:s',        # where to log packaging process information
-     );
-@@ -505,6 +518,10 @@
+@@ -280,6 +292,7 @@
+         'g|gui',        # No console window
+         'h|help',       # Help me
+         'I|lib:s@',     # Include directories (FOR PERL, NOT FOR C)
++        'l|link:s@',    # Include additional shared libraries
+         'L|log:s',      # Where to log packaging process information
+         'o|output:s',   # Output file
+         'p|par',        # Generate PAR only
+@@ -573,10 +586,6 @@
+ Build an executable that does not have a console window. This option is
+ ignored on non-MSWin32 platforms or when C<-p> is specified.
  
- Excludes the given modules to the dependency search patch and to the
- binary.
-+
-+=item -l I<shared libraries>
+-=item B<-o>, B<--output>=I<FILE>
+-
+-Specifies the file name for the final packaged executable.
+-
+ =item B<-h>, B<--help>
+ 
+ Shows basic usage information.
+@@ -585,9 +594,17 @@
+ 
+ Adds the given directories to the perl library file search path.
+ 
++=item B<-l>, B<--link>=I<FILE>
 +
 +Adds shared libraries (a.k.a. shared objects or DLLs) to the binary.
++
+ =item B<-L>, B<--log>=I<FILE>
  
- =item -I I<library directories>
+ Log the output of packaging to a file rather than to stdout.
++
++=item B<-o>, B<--output>=I<FILE>
++
++Specifies the file name for the final packaged executable.
+ 
+ =item B<-p>, B<--par>
  

@@ -1,9 +1,9 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #17 $ $Change: 4798 $ $DateTime: 2003/03/19 13:01:31 $
+# $Revision: #18 $ $Change: 4844 $ $DateTime: 2003/03/21 06:26:07 $
 #
+# Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
-# Copyright (c) 2002 Autrijus Tang.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
@@ -45,7 +45,7 @@ if( $cc =~ m/^cl\b/ ) {
 } elsif ($cc =~ m/^gcc\b/ or ($cc =~ m/^cc\b/ and $gccversion)) {
     $out = '--output ';
     $ccdebug = $debug ? '-g ' : '';
-    $lddebug = $debug ? '' : '-s ';
+    $lddebug = ($debug or $^O eq 'darwin') ? '' : '-s ';
     $warn = $debug ? '-Wall -Wno-comments ' : '';
 } else {
     $out = '-o ';
