@@ -17,7 +17,8 @@ par.pl - Run Perl Archives
 
 =head1 SYNOPSIS
 
-To use F<Hello.pm>, F<lib/Hello.pm> or F<lib/arch/Hello.pm> from F<./foo.par>:
+To use F<Hello.pm>, F<lib/Hello.pm> or F<lib/arch/Hello.pm> from
+F<./foo.par>:
 
     % par.pl -A./foo.par -MHello 
     % par.pl -A./foo -MHello	# the .par part is optional
@@ -29,7 +30,7 @@ Same thing, but search F<foo.par> in the F<@INC>;
 
 Run F<test.pl> or F<script/test.pl> from F<foo.par>:
 
-    % par.pl foo.par test.pl	# only when the first argument ends in '.par'
+    % par.pl foo.par test.pl	# only when $ARGV[0] ends in '.par'
     % par.pl foo.par		# looks for 'main.pl' by default
 
 You can also make a self-reading script containing a PAR file :
@@ -39,40 +40,50 @@ You can also make a self-reading script containing a PAR file :
 
 =head1 DESCRIPTION
 
-This stand-alone command offers roughly the same feature as
-C<perl -MPAR>, except that it takes the pre-loaded F<.par>
-files via C<-Afoo.par> instead of C<-MPAR=foo.par>.
+This stand-alone command offers roughly the same feature as C<perl
+-MPAR>, except that it takes the pre-loaded F<.par> files via
+C<-Afoo.par> instead of C<-MPAR=foo.par>.
 
 The main purpose of this utility is to be feed to C<perlcc>:
 
     % perlcc -o par par.pl
 
-and use the resulting stand-alone executable F<par> to run F<.par> files:
+and use the resulting stand-alone executable F<par> to run F<.par>
+files:
 
     # runs script/run.pl in archive, uses its lib/* as libraries
     % par myapp.par run.pl	# runs run.pl or script/run.pl in myapp.par
     % par myapp.par		# runs main.pl or script/main.pl by default
 
-Finally, as an alternative to C<perl2exe> or C<PerlApp>, the
-C<-o> option makes a stand-alone binary from a PAR file:
+Finally, as an alternative to C<perl2exe> or C<PerlApp>, the C<-o>
+option makes a stand-alone binary from a PAR file:
 
     % par -Omyapp myapp.par	# makes a stand-alone executable
     % ./myapp run.pl		# same as above
     % ./myapp -Omyap2 myapp.par	# makes a ./myap2, identical to ./myapp
     % ./myapp -Omyap3 myap3.par	# makes another app with different PAR
 
+The format for sthe tand-alone executable is simply concatenating the
+PAR file after F<par> or F<par.pl>, followed by the PAR file's length,
+packed in 4 bytes as an unsigned long number, in network order (i.e.
+C<pack('N')>).
+
 =head1 NOTES
 
 After installation, if you want to enable stand-alone binary support,
-please apply the included patch to the B::C module first (5.8.0 only):
+please apply the included patch to the B::C module first (5.8.0 only,
+5.6.1 does not need this):
 
-    patch `perl -MB::C -e'print $INC{"B/C.pm"}'` < patches/perl580.diff
+    % patch `perl -MB::C -e'print $INC{"B/C.pm"}'` < patches/perl580.diff
 
-And then:
+and then:
 
-    perlcc -o /usr/local/bin/par script/par.pl
+    % perlcc -o /usr/local/bin/par script/par.pl
 
-Enjoy. :-)
+Afterwards, you can generate self-executable PAR files by:
+
+    # put a main.pl inside myapp.par to run it automatically
+    % par -O./myapp myapp.par
 
 =cut
 
@@ -186,7 +197,7 @@ exit;
 
 =head1 SEE ALSO
 
-L<PAR>
+L<PAR>, L<perlcc>
 
 =head1 AUTHORS
 
@@ -196,8 +207,8 @@ Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
 Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
-This program is free software; you can redistribute it and/or 
-modify it under the same terms as Perl itself.
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 See L<http://www.perl.com/perl/misc/Artistic.html>
 

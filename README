@@ -1,11 +1,11 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #2 $ $Change: 1521 $ $DateTime: 2002/10/19 02:30:49 $
+# $Revision: #3 $ $Change: 1541 $ $DateTime: 2002/10/19 15:17:50 $
 
 This is the README file for PAR, a module to use perl scripts
 and modules stored inside compressed .par files.
 
-Please see the PAR.pm for typical uses, and script/par.pl for an
-alternative perl packaging utility.
+Please see the PAR.pm for typical uses, and script/par.pl for a
+solution of bundled perl distributions (aka PerlApp or Perl2exe).
 
 * Installation
 
@@ -18,13 +18,19 @@ make test
 make install
 
 After installation, if you want to enable stand-alone binary support,
-please apply the included patch to the B::C module first (5.8.0 only):
+please apply the included patch to the B::C module first (5.8.0 only,
+5.6.1 does not need this):
 
-patch `perl -MB::C -e'print $INC{"B/C.pm"}'` < patches/perl580.diff
+    % patch `perl -MB::C -e'print $INC{"B/C.pm"}'` < patches/perl580.diff
 
-And then:
+and then:
 
-perlcc -o /usr/local/bin/par script/par.pl
+    % perlcc -o /usr/local/bin/par script/par.pl
+
+Afterwards, you can generate self-executable PAR files by:
+
+    # put a main.pl inside myapp.par to run it automatically
+    % par -O./myapp myapp.par
 
 * Copyright
 

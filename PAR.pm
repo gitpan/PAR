@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #6 $ $Change: 1537 $ $DateTime: 2002/10/19 14:18:37 $
+# $Revision: #7 $ $Change: 1541 $ $DateTime: 2002/10/19 15:17:50 $
 
 package PAR;
-$PAR::VERSION = '0.05';
+$PAR::VERSION = '0.06';
 
 use 5.006;
 use strict;
@@ -13,22 +13,23 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.05 of PAR.
+This document describes version 0.06 of PAR, released October 16, 2002.
 
 =head1 SYNOPSIS
 
-(If you want to make an executable that contains all module,
-scripts and data files, please consult L<par.pl> instead.)
+(If you want to make an executable that contains all module, scripts and
+data files, please consult L<par.pl> instead.)
 
-Following examples assume a F<foo.par> file in Zip format;
-support for compressed gzip (F<*.tgz>) format is planned.
+Following examples assume a F<foo.par> file in Zip format; support for
+compressed gzip (F<*.tgz>) format is planned.
 
-To use F<Hello.pm>, F<lib/Hello.pm> or F<lib/arch/Hello.pm> from F<./foo.par>:
+To use F<Hello.pm>, F<lib/Hello.pm> or F<lib/arch/Hello.pm> from
+F<./foo.par>:
 
     % perl -MPAR=./foo.par -MHello
     % perl -MPAR=./foo -MHello		# the .par part is optional
 
-Same thing, but search F<foo.par> in the F<@INC>;
+Same thing, but search F<foo.par> in the C<@INC>;
 
     % perl -MPAR -Ifoo.par -MHello
     % perl -MPAR -Ifoo -MHello		# ditto
@@ -38,7 +39,7 @@ Run F<test.pl> or F<script/test.pl> from F<foo.par>:
     % perl -MPAR foo.par test.pl	# only when $0 ends in '.par'
     % perl -MPAR foo.par		# looks for 'main.pl' by default
 
-Used in a program:
+Use in a program:
 
     use PAR 'foo.par';
     use Hello; # reads within foo.par
@@ -52,32 +53,32 @@ Used in a program:
 
 =head1 DESCRIPTION
 
-This module let you easily bundle a F<blib/> tree into a zip
-file, called a Perl Archive, or C<PAR>.
+This module let you easily bundle a F<blib/> tree into a zip file,
+called a Perl Archive, or C<PAR>.
 
-To generate a F<.par> file, all you have to do is compress a
-F<lib/> tree containing modules, e.g.:
+To generate a F<.par> file, all you have to do is compress a F<lib/>
+tree containing modules, e.g.:
 
     % perl Makefile.PL
     % make
     % cd blib
     % zip -r mymodule.par lib/
 
-Afterwards, you can just use F<mymodule.par> anywhere in your
-C<@INC>, use B<PAR>, and it would Just Work.
+Afterwards, you can just use F<mymodule.par> anywhere in your C<@INC>,
+use B<PAR>, and it would Just Work.
 
 For maximal convenience, you can set the C<PERL5OPT> environment
-variable to C<-MPAR> to enable C<PAR> processing globally (the
-overhead is small if not used), or to C<-MPAR=/path/to/mylib.par>
-to load a specific PAR file.
+variable to C<-MPAR> to enable C<PAR> processing globally (the overhead
+is small if not used), or to C<-MPAR=/path/to/mylib.par> to load a
+specific PAR file.
 
 Please see L</SYNOPSIS> for most typical use cases.
 
 =head1 NOTES
 
-For Perl versions without I<PerlIO> support, the B<IO::Scalar> module
-is needed to support C<__DATA__> sections in script and modules
-inside a PAR file.
+For Perl versions without I<PerlIO> support, the B<IO::Scalar> module is
+needed to support C<__DATA__> sections in script and modules inside a
+PAR file.
 
 If you choose to compile F<script/par.pl> with B<perlcc>, it will
 automatically include the correct module (B<PerlIO::scalar> or
@@ -235,13 +236,20 @@ L<Archive::Zip>, L<perlfunc/require>
 
 L<ex::lib::zip>, L<Acme::use::strict::with::pride>
 
+L<PerlIO::scalar>, L<IO::Scalar>
+
 =head1 ACKNOWLEDGMENTS
 
-Nicholas Clark for pointing out the mad source filter hook within
-the (also mad) coderef C<@INC> hook.
+Nicholas Clark for pointing out the mad source filter hook within the
+(also mad) coderef C<@INC> hook.
 
 Ton Hospel for convincing me to ditch the C<Filter::Simple>
 implementation.
+
+Uri Guttman for suggesting C<read_file> and C<par_handle> interfaces.
+
+Antti Lankila for making me implement the self-contained executable
+options via C<par.pl -O>.
 
 =head1 AUTHORS
 
@@ -251,8 +259,8 @@ Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
 Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
-This program is free software; you can redistribute it and/or 
-modify it under the same terms as Perl itself.
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 See L<http://www.perl.com/perl/misc/Artistic.html>
 

@@ -1,4 +1,18 @@
 ____________________________________________________________________________
+[  1541] By: autrijus                              on 2002/10/19  15:17:50
+        Log: * This be 0.06.
+             * cleaned up the documentations.
+             * documents the stand-alone executable's format.
+	   ! PAR.pm README script/par.pl
+____________________________________________________________________________
+[  1540] By: autrijus                              on 2002/10/19  15:17:09
+        Log: * oops, PerlIO::Scalar should read IO::Scalar.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  1538] By: autrijus                              on 2002/10/19  14:19:57
+        Log: * changes and signature.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1537] By: autrijus                              on 2002/10/19  14:18:37
         Log: * Version 0.05.
              * Full DATA section support with PerlIO::scalar or IO::Scalar.
