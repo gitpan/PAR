@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #64 $ $Change: 10222 $ $DateTime: 2004/02/27 15:13:01 $ vim: expandtab shiftwidth=4
+# $Revision: #65 $ $Change: 10225 $ $DateTime: 2004/02/27 23:52:18 $ vim: expandtab shiftwidth=4
 
 package PAR;
 $PAR::VERSION = '0.79_98';
@@ -394,7 +394,6 @@ sub unpar {
 
     return @rv unless defined $file;
 
-    my %names = map { ( $_ => 1 ) } memberNames
     my $member = _first_member($zip,
         "lib/$file",
         "arch/$file",
