@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #5 $ $Change: 6898 $ $DateTime: 2003/07/08 15:29:29 $
+# $Revision: #10 $ $Change: 7233 $ $DateTime: 2003/07/29 06:37:06 $
 
 package PAR::Heavy;
-$PAR::Heavy::VERSION = '0.05';
+$PAR::Heavy::VERSION = '0.06';
 
 =head1 NAME
 
@@ -71,37 +71,23 @@ sub _bootstrap {
 	    defined &PAR::find_par and
 	    my $member = PAR::find_par(undef, $file, 1)
 	) {
-	    require File::Spec;
-	    require File::Temp;
+	    $DLCache{$modfname} = _dl_extract($member, $file);
 
-	    my ($fh, $filename);
-
-	    if ($ENV{PAR_CLEARTEMP}) {
-		($fh, $filename) = File::Temp::tempfile(
-		    DIR		=> ($ENV{PAR_TEMP} || File::Spec->tmpdir),
-		    SUFFIX	=> ".$dlext",
-		    UNLINK	=> ($^O ne 'MSWin32'),
-		);
-	    }
-	    else {
-		$filename = File::Spec->catfile(
-		    ($ENV{PAR_TEMP} || File::Spec->tmpdir),
-		    $member->crc32String . ".$dlext"
-		);
-
-		open $fh, '>', $filename or die $!
-		    unless -r $filename and -e $file and -s $file == $member->uncompressedSize;
+	    # now extract all associated shared objs in the same auto/ path
+	    my $pat = $member->fileName;
+	    $pat =~ s{[^/]*$}{};
+	    foreach my $member ( $PAR::LastAccessedPAR->members ) {
+		next if $member->isDirectory;
+		# print "Inspecting ", $member->fileName, " - matching $pat*.$dlext\n";
+		my $name = $member->fileName;
+		next unless $name =~ /^\/?\Q$pat\E.*\.\Q$dlext\E[^\/]*$/;
+		$name =~ s{.*/auto}{auto};
+		next if $DLCache{$name}++;
+		$name =~ s{.*/}{};
+		# print "Extracting $name\n";
+		_dl_extract($member, $file, $name);
 	    }
 
-	    if ($fh) {
-		local $PAR::__reading = 1;
-		binmode($fh);
-		print $fh $member->contents;
-		close $fh;
-                chmod 0755, $filename;
-	    }
-
-	    $DLCache{$modfname} = $filename;
 	    local $DynaLoader::do_expand = 1;
 	    return $bootstrap->(@args);
 	}
@@ -113,6 +99,49 @@ sub _bootstrap {
     }
 
     $bootstrap->(@args);
+}
+
+sub _dl_extract {
+    my ($member, $file, $name) = @_;
+
+    require File::Spec;
+    require File::Temp;
+
+    my ($fh, $filename);
+
+    # fix borked tempdir from earlier versions
+    if (-e $ENV{PAR_TEMP} and !-d $ENV{PAR_TEMP}) {
+	unlink($ENV{PAR_TEMP});
+	mkdir($ENV{PAR_TEMP}, 0755);
+    }
+
+    if ($ENV{PAR_CLEARTEMP} and !$name) {
+	($fh, $filename) = File::Temp::tempfile(
+	    DIR		=> ($ENV{PAR_TEMP} || File::Spec->tmpdir),
+	    SUFFIX	=> ".$dlext",
+	    UNLINK	=> ($^O ne 'MSWin32'),
+	);
+    }
+    else {
+	$filename = File::Spec->catfile(
+	    ($ENV{PAR_TEMP} || File::Spec->tmpdir),
+	    ($name || ($member->crc32String . ".$dlext"))
+	);
+
+	open $fh, '>', $filename or die $!
+	    unless -r $filename and -e $file
+		and -s $file == $member->uncompressedSize;
+    }
+
+    if ($fh) {
+	local $PAR::__reading = 1;
+	binmode($fh);
+	print $fh $member->contents;
+	close $fh;
+	chmod 0755, $filename;
+    }
+
+    return $filename;
 }
 
 1;

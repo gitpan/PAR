@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #38 $ $Change: 7148 $ $DateTime: 2003/07/27 07:21:03 $
+# $Revision: #39 $ $Change: 7230 $ $DateTime: 2003/07/29 03:44:17 $
 
 use 5.006;
 use inc::Module::Install;
@@ -18,7 +18,7 @@ features    (
 	-default => 0,
 	recommends  ('Module::Signature' => 0.25),
     ],
-);
+) if eval { require Crypt::OpenPGP; 1 } or can_run('gpg');
 
 include	    ('ExtUtils::AutoInstall');
 check_nmake();

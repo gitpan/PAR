@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #67 $ $Change: 7148 $ $DateTime: 2003/07/27 07:21:03 $ vim: expandtab shiftwidth=4
+# $Revision: #69 $ $Change: 7232 $ $DateTime: 2003/07/29 03:55:38 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -222,7 +222,7 @@ my ($start_pos, $data_pos);
         elsif ( $fullname =~ m|^/?shlib/| and defined $ENV{PAR_TEMP} ) {
             # should be moved to _tempfile()
             $filename = "$ENV{PAR_TEMP}/$basename$ext";
-            print "SHLIB: $filename\n";
+            outs("SHLIB: $filename\n");
             open $out, '>', $filename or die $!;
             binmode($out);
             print $out $buf;
@@ -343,6 +343,8 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
         shift(@ARGV);
 
         if (my $cmd = $dist_cmd{$1}) {
+            delete $ENV{'PAR_TEMP'};
+            init_inc();
             require PAR::Dist;
             &{"PAR::Dist::$cmd"}() unless @ARGV;
             &{"PAR::Dist::$cmd"}($_) for @ARGV;
@@ -388,6 +390,7 @@ if ($out) {
     if ($bundle) {
         require PAR::Heavy;
         PAR::Heavy::_init_dynaloader();
+        init_inc();
         require_modules();
 
         my @inc = sort {
@@ -399,6 +402,8 @@ if ($out) {
             ($_ ne $Config::Config{archlibexp} and
              $_ ne $Config::Config{privlibexp});
         } @INC;
+
+        if ($^O eq 'MSWin32') { s{\\}{/}g for @inc }
 
         my %files;
         /^_<(.+)$/ and $files{$1}++ for keys %::;
@@ -415,7 +420,7 @@ if ($out) {
                     $file = $_;
                     last;
                 }
-                elsif (/^(\Q$dir\E\/(.*[^Cc]))\Z/) {
+                elsif (/^(\Q$dir\E\/(.*[^Cc]))\Z/i) {
                     ($file, $name) = ($1, $2);
                     last;
                 }
@@ -648,6 +653,14 @@ sub pod_strip {
     $pl_text =~ s/^#line 1 (.*\n)(#!.*\n)/$2#line 2 $1/g;
 
     return $pl_text;
+}
+
+sub init_inc {
+    require Config;
+    push @INC, grep defined, map $Config::Config{$_}, qw(
+        archlibexp privlibexp sitearchexp sitelibexp
+        vendorarchexp vendorlibexp
+    );
 }
 
 ########################################################################

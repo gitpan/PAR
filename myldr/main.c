@@ -1,11 +1,13 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #21 $ $Change: 7151 $ $DateTime: 2003/07/27 08:31:51 $
+   $Revision: #24 $ $Change: 7236 $ $DateTime: 2003/07/29 07:00:35 $
    vim: expandtab shiftwidth=4
 */
 
 #ifndef PAR_MKTMPDIR
 #define PAR_MKTMPDIR 1
 #endif
+
+/* #define PAR_CLEARSTACK 1 */
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -23,6 +25,13 @@ static PerlInterpreter *my_perl;
 extern char * name_load_me_2;
 extern unsigned long size_load_me_2;
 extern char load_me_2[];
+
+#ifdef PAR_CLEARSTACK
+XS(XS_Internals_PAR_CLEARSTACK) {
+    dounwind(0); ENTER;
+    SAVEDESTRUCTOR(exit, NULL); ENTER;
+}
+#endif
 
 #ifdef HAS_PROCSELFEXE
 /* This is a function so that we don't hold on to MAXPATHLEN
@@ -59,7 +68,6 @@ S_procself_val(pTHX_ SV *sv, char *arg0)
 }
 #endif /* HAS_PROCSELFEXE */
 
-
 int main ( int argc, char **argv, char **env )
 {
     int exitstatus;
@@ -67,9 +75,6 @@ int main ( int argc, char **argv, char **env )
     char **fakeargv;
     GV* tmpgv;
     int options_count;
-    DIR *partmp_dirp;
-    Direntry_t *dp;
-    char *subsubdir;
 #ifdef PAR_MKTMPDIR
     char *stmpdir;
 #endif
@@ -138,6 +143,15 @@ int main ( int argc, char **argv, char **env )
 
     TAINT;
 
+    if ((tmpgv = gv_fetchpv("\030",TRUE, SVt_PV))) {/* $^X */
+#ifdef WIN32
+        sv_setpv(GvSV(tmpgv),"perl.exe");
+#else
+        sv_setpv(GvSV(tmpgv),"perl");
+#endif
+        SvSETMAGIC(GvSV(tmpgv));
+    }
+
     if ((tmpgv = gv_fetchpv("0", TRUE, SVt_PV))) {/* $0 */
 #ifdef PAR_MKTMPDIR
         if ( ( stmpdir = getenv("PAR_TEMP") ) ) {
@@ -157,15 +171,6 @@ int main ( int argc, char **argv, char **env )
         SvSETMAGIC(GvSV(tmpgv));
     }
 
-    if ((tmpgv = gv_fetchpv("\030",TRUE, SVt_PV))) {/* $^X */
-#ifdef WIN32
-        sv_setpv(GvSV(tmpgv),"perl.exe");
-#else
-        sv_setpv(GvSV(tmpgv),"perl");
-#endif
-        SvSETMAGIC(GvSV(tmpgv));
-    }
-
     TAINT_NOT;
 
     /* PL_main_cv = PL_compcv; */
@@ -177,7 +182,9 @@ int main ( int argc, char **argv, char **env )
     if ( stmpdir == NULL ) {
         stmpdir = par_mktmpdir( argv );
 #ifndef WIN32
-        execv(SvPV_nolen(GvSV(tmpgv)), argv);
+        i = execvp(SvPV_nolen(GvSV(tmpgv)), argv);
+        PerlIO_printf(PerlIO_stderr(), "%s: execution of %s failed - aborting with %i.\n", argv[0], SvPV_nolen(GvSV(tmpgv)), i);
+        return 2;
 #endif
     }
 
@@ -188,34 +195,14 @@ int main ( int argc, char **argv, char **env )
     }
 #endif
 
+#ifdef PAR_CLEARSTACK
+    newXSproto("Internals::PAR_CLEARSTACK", XS_Internals_PAR_CLEARSTACK, "", "");
+#endif
     exitstatus = perl_run( my_perl );
     perl_destruct( my_perl );
 
 #ifdef PAR_MKTMPDIR
-    /* remove temporary PAR directory */
-    partmp_dirp = opendir(stmpdir);
-
-    if ( partmp_dirp != NULL )
-    {
-        /* fprintf(stderr, "%s: removing private temporary subdirectory %s.\n", argv[0], stmpdir); */
-        /* here we simply assume that PAR will NOT create any subdirectories ... */
-        while ( ( dp = readdir(partmp_dirp) ) != NULL ) {
-            if ( strcmp (dp->d_name, ".") != 0 && strcmp (dp->d_name, "..") != 0 )
-            {
-                subsubdir = malloc(strlen(stmpdir) + strlen(dp->d_name) + 2);
-#ifdef WIN32
-                sprintf(subsubdir, "%s\\%s", stmpdir, dp->d_name);
-#else
-                sprintf(subsubdir, "%s/%s", stmpdir, dp->d_name);
-#endif
-                unlink(subsubdir);
-                free(subsubdir);
-                subsubdir = NULL;
-            }
-        }
-        closedir(partmp_dirp);
-        rmdir(stmpdir);
-    }
+    par_rmtmpdir(stmpdir);
 #endif
 
     perl_free( my_perl );

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #9 $ $Change: 7151 $ $DateTime: 2003/07/27 08:31:51 $
+# $Revision: #13 $ $Change: 7237 $ $DateTime: 2003/07/29 07:19:11 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -13,6 +13,7 @@ my $give_help = 0;
 my $pl_file = shift;
 my $c_file = shift;
 my $c_var = shift;
+my $long_literal = shift;
 
 $give_help ||= ( !defined $pl_file or
                 !defined $c_file or
@@ -42,30 +43,23 @@ $pl_text = reverse $pl_text;
 
 #  make a c-array
 
-print OUT "char * name_$c_var = \"" . basename($pl_file) . "\";\n";
+print OUT "const char * name_$c_var = \"" . basename($pl_file) . "\";\n";
 print OUT "unsigned long size_$c_var = " . length($pl_text) . ";\n";
-print OUT "char $c_var\[] = {\n";
-my $i = 0;
-while (length($_ = chop($pl_text))) {
-    print OUT "'";
-    if (m/[\\"']/) {
-	print OUT "\\$_";
-    }
-    elsif ( ord() >= 32 && ord() <= 126 ) {
-	print OUT $_;
-    }
-    elsif ( ord() ) {
-	print OUT sprintf '\%03o', ord()
+print OUT "const char $c_var\[" . (length($pl_text) + 1) . "] = ";
+print OUT $long_literal ? '"' : '{';
+
+my $i;
+for (1..length($pl_text)) {
+    if ($long_literal) {
+	print OUT sprintf '\%03o', ord(chop($pl_text));
     }
     else {
-	print OUT '\0';
+	print OUT sprintf "'\\%03o',", ord(chop($pl_text));
+	print OUT "\n" unless $i++ % 16;
     }
-    print OUT "', ";
-    print OUT "\n" unless ($i++ % 16);
 }
-print OUT "'\\0'\n};\n";
 
-#$c_arr =~ s/((?:'.*?',\s){16})/$1\n/sg;
+print OUT $long_literal ? "\";\n" : "0\n};\n";
 close OUT;
 
 sub pod_strip {

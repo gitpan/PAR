@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #59 $ $Change: 7153 $ $DateTime: 2003/07/27 08:39:43 $ vim: expandtab shiftwidth=4
+# $Revision: #69 $ $Change: 7234 $ $DateTime: 2003/07/29 06:38:20 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -39,6 +39,8 @@ our ($logfh);
 our ($par_file);
 our (@SharedLibs);
 
+my $dynperl = $Config{useshrplib} && ($Config{useshrplib} ne 'false');
+
 main();
 
 sub main {
@@ -53,6 +55,8 @@ sub main {
 
 sub compile_par { 
     my ($cfh, $lose);
+    my $root = '';
+    $root = "$Config{archname}/" if opt('m');
 
     if (opt(S) || opt(p)) {
         # We need to keep it.
@@ -112,9 +116,19 @@ sub compile_par {
     $text{$_} = ($map{$_}{type} =~ /^(?:module|autoload)$/) for keys %map;
     $map{$_}  = $map{$_}{file} for keys %map;
 
-    my @manifest = ('MANIFEST', 'META.yml');
+    my %manifest = map { $_ => 1 } ('MANIFEST', 'META.yml');
     my $size = 0;
     my $zip = Archive::Zip->new;
+    my $old_member;
+    if (opt('m') and -e $par_file) {
+        $zip->read($par_file);
+        if ($old_member = $zip->memberNamed( 'MANIFEST' )) {
+            $manifest{$_}++ for grep /^\S/, split(/\n/, $old_member->contents);
+        }
+        else {
+            $old_member = 1;
+        }
+    }
     my %zip_args = (
         'desiredCompressionMethod'
             => Archive::Zip::COMPRESSION_DEFLATED(),
@@ -122,14 +136,15 @@ sub compile_par {
             => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
     );
 
-    $zip->addDirectory('', 'lib') if %map and $] >= 5.008;
+    $zip->addDirectory('', substr($root, 0, -1)) if $root and %map and $] >= 5.008;
+    $zip->addDirectory('', $root.'lib') if %map and $] >= 5.008;
     my $verbatim = ($ENV{PAR_VERBATIM} || 0);
     foreach my $pfile (sort grep length $map{$_}, keys %map) {
         next if !opt(B) and ($map{$pfile} eq "$Config{privlib}/$pfile"
                           or $map{$pfile} eq "$Config{archlib}/$pfile");
 
         next unless $zip;
-        vprint 2, "... adding $map{$pfile} as lib/$pfile";
+        vprint 2, "... adding $map{$pfile} as ${root}lib/$pfile";
 
         if ($text{$pfile}) {
             local $/;
@@ -145,14 +160,14 @@ sub compile_par {
             }
 
             $size += length($content);
-            $zip->addString( \$content => "lib/$pfile", %zip_args );
+            $zip->addString( \$content => $root."lib/$pfile", %zip_args );
         }
         else {
-            $zip->addFile($map{$pfile} => "lib/$pfile");
+            $zip->addFile($map{$pfile} => $root."lib/$pfile");
             $size += -s $map{$pfile};
         }
 
-        push @manifest, "lib/$pfile";
+        $manifest{$root."lib/$pfile"}++;
     }
 
     @Input = grep !/\.pm\z/i, @Input;
@@ -163,10 +178,10 @@ sub compile_par {
         $size += -s $input;
 
         $zip->addFile($input => "script/$name");
-        push @manifest, "script/$name";
+        $manifest{"script/$name"}++;
     }
 
-    my $shlib = "shlib/$Config::Config{archname}";
+    my $shlib = "shlib/$Config{archname}";
     $zip->addDirectory('', $shlib) if @SharedLibs and $] >= 5.008;
     foreach my $input (@SharedLibs) {
         next unless -e $input;
@@ -175,7 +190,7 @@ sub compile_par {
         my $name = basename($input);
         vprint 2, "... adding $input as $shlib/$name";
         $zip->addFile($input => "$shlib/$name");
-        push @manifest, "$shlib/$name";
+        $manifest{"$shlib/$name"}++;
     }
 
     foreach my $input (@data) {
@@ -183,7 +198,7 @@ sub compile_par {
         $size += -s $input;
 
         $zip->addFile($input => $name);
-        push @manifest, $name;
+        $manifest{$name}++;
     }
 
     if (@Input) {
@@ -192,11 +207,11 @@ sub compile_par {
                 ? _main_pl_single("script/" . basename($Input[0]))
                 : _main_pl_multi()) => "script/main.pl", %zip_args
         );
-        push @manifest, "script/main.pl";
+        $manifest{"script/main.pl"}++;
     }
 
     my $dist_name = (opt(p) ? $par_file : $Output);
-    my $manifest    = join("\n", '    <!-- accessible as jar:file:///NAME.par!/MANIFEST in compliant browsers -->', (sort @manifest), q(    # <html><body onload="var X=document.body.innerHTML.split(/\n/);var Y='<iframe src=&quot;META.yml&quot; style=&quot;float:right;height:40%;width:40%&quot;></iframe><ul>';for(var x in X){if(!X[x].match(/^\s*#/)&&X[x].length)Y+='<li><a href=&quot;'+X[x]+'&quot;>'+X[x]+'</a>'}document.body.innerHTML=Y">));
+    my $manifest    = join("\n", '    <!-- accessible as jar:file:///NAME.par!/MANIFEST in compliant browsers -->', (sort keys %manifest), q(    # <html><body onload="var X=document.body.innerHTML.split(/\n/);var Y='<iframe src=&quot;META.yml&quot; style=&quot;float:right;height:40%;width:40%&quot;></iframe><ul>';for(var x in X){if(!X[x].match(/^\s*#/)&&X[x].length)Y+='<li><a href=&quot;'+X[x]+'&quot;>'+X[x]+'</a>'}document.body.innerHTML=Y">));
     my $meta_yaml   = << "YAML";
 build_requires: {}
 conflicts: {}
@@ -217,7 +232,12 @@ YAML
 
     $zip->addString($manifest   => 'MANIFEST', %zip_args);
     $zip->addString($meta_yaml  => 'META.yml', %zip_args);
-    $zip->writeToFileNamed($par_file);
+    if ($old_member) {
+        $zip->overwrite;
+    }
+    else {
+        $zip->writeToFileNamed($par_file);
+    }
 
     my $newsize = -s $par_file;
     vprint 2, sprintf(
@@ -247,10 +267,45 @@ YAML
 
 sub par_to_exe { 
     my $parl = 'parl';
-    if (opt(d) and $Config{libperl} =~ /\b$Config{dlext}$/i) {
-        $parl = 'parldyn';
-    }
+    $parl = 'parldyn' if (opt(d) and $dynperl);
     $PARL ||= _can_run("$parl$Config{_exe}") or _die("Can't find par loader");
+
+    my $orig_parl = $PARL;
+    my $do_unlink;
+    if (opt(i) and $^O eq 'MSWin32' and Win32::IsWinNT() and
+        my $replace_icon = _can_run("replaceicon.exe")
+    ) {
+        my $cfh;
+        local $/;
+        open _FH, $PARL or die $!;
+        binmode(_FH);
+        ($cfh, $PARL) = tempfile("parlXXXX", SUFFIX => ".exe"); 
+        binmode($cfh);
+        print $cfh <_FH>;
+        close $cfh;
+        vprint 1, "Adding icon to $Output";
+        my $cmd = join(
+            ' ', map Win32::GetShortPathName($_),
+            $replace_icon, $PARL, opt(i)
+        );
+
+        `$cmd`;
+
+        my $buf;
+        seek _FH, -8, 2;
+        read _FH, $buf, 8;
+        die unless $buf eq "\nPAR.pm\n";
+        seek _FH, -12, 2;
+        read _FH, $buf, 4;
+        seek _FH, -12 - unpack("N", $buf), 2;
+        open $cfh, ">>", $PARL or die $!;
+        binmode($cfh);
+        print $cfh <_FH>;
+        close $cfh;
+
+        $do_unlink = 1;
+    }
+
     my @quiet = (opt(v) ? () : ('-q'));
     vprint 0, "Running $PARL @quiet -B -O$Output $par_file";
     system($PARL, @quiet, "-B", "-O$Output", $par_file);
@@ -258,14 +313,35 @@ sub par_to_exe {
     if (opt(g) and $^O eq 'MSWin32') {
         vprint 1, "Fixing $Output to remove its console window";
         strip_console($Output);
+        if ($dynperl and !opt(d)) {
+            # we have a static.exe that needs taking care of.
+            my $buf;
+            open _FH, $orig_parl or die $!;
+            binmode _FH;
+            seek _FH, -8, 2;
+            read _FH, $buf, 8;
+            die unless $buf eq "\nPAR.pm\n";
+            seek _FH, -12, 2;
+            read _FH, $buf, 4;
+            seek _FH, -12 - unpack("N", $buf) - 4, 2;
+            read _FH, $buf, 4;
+            strip_console($Output, unpack("N", $buf));
+        }
+    }
+
+    if ($do_unlink) {
+        unlink($PARL);
+        unlink("$PARL.bak");
     }
 }
 
 sub strip_console {
     my $file = shift;
+    my $preoff = shift || 0;
     my ($record, $magic, $signature, $offset, $size);
     open my $exe, "+< $file" or die "Cannot open $file: $!\n";
     binmode $exe;
+    seek $exe, $preoff, 0;
     # read IMAGE_DOS_HEADER structure
     read $exe, $record, 64;
     ($magic, $offset) = unpack "Sx58L", $record;
@@ -274,7 +350,7 @@ sub strip_console {
         unless $magic == 0x5a4d; # "MZ"
 
     # read signature, IMAGE_FILE_HEADER and first WORD of IMAGE_OPTIONAL_HEADER
-    seek $exe, $offset, 0;
+    seek $exe, $preoff + $offset, 0;
     read $exe, $record, 4+20+2;
     ($signature,$size,$magic) = unpack "Lx16Sx2S", $record;
 
@@ -285,7 +361,7 @@ sub strip_console {
                ($size == 240 && $magic == 0x20b);   # IMAGE_NT_OPTIONAL_HDR64_MAGIC
 
     # Offset 68 in the IMAGE_OPTIONAL_HEADER(32|64) is the 16 bit subsystem code
-    seek $exe, $offset+4+20+68, 0;
+    seek $exe, $preoff + $offset+4+20+68, 0;
     print $exe pack "S", 2; # IMAGE_WINDOWS
     close $exe;
 }
@@ -329,9 +405,11 @@ sub parse_argv {
         'X|exclude:s@', # Exclude modules
         'g|gui',        # No console window
         'h|help',       # Help me
+        'i|icon:s',     # Win32 .ico file
         'I|lib:s@',     # Include directories (FOR PERL, NOT FOR C)
         'l|link:s@',    # Include additional shared libraries
         'L|log:s',      # Where to log packaging process information
+        'm|multiarch',  # Build multiarch PAR file
         'o|output:s',   # Output file
         'p|par',        # Generate PAR only
         'r|run',        # Run the resulting executable
@@ -341,6 +419,7 @@ sub parse_argv {
         'V|version',    # Show version
     );
 
+    $Options->{p} = 1 if opt('m');
     $Options->{v} = 1 if exists $Options->{v} and $Options->{v} eq '';
     $Options->{B} = 1 unless opt(p) and !opt(o);
 
@@ -551,7 +630,7 @@ my $member = eval { $zip->memberNamed($file) }
         || $zip->memberNamed("script/$file")
         || $zip->memberNamed("script/$file.pl")
     or die qq(Can't open perl script "$file": No such file or directory);
-PAR::_run_member($member);
+PAR::_run_member($member, 1);
 
 __MAIN__
 }
@@ -563,7 +642,7 @@ sub _main_pl_single {
 my \$zip = \$PAR::LibCache{\$0} || Archive::Zip->new(__FILE__);
 my \$member = eval { \$zip->memberNamed('$file') }
     or die qq(Can't open perl script "$file": No such file or directory (\$zip));
-PAR::_run_member(\$member);
+PAR::_run_member(\$member, 1);
 
 __MAIN__
 }
@@ -609,8 +688,9 @@ pp - Perl Packager
 
     % pp hello --log=c          # Pack 'hello' into 'a.out', logs
                                 # messages into 'c'
-    % pp --gui -o out.exe hello # Pack 'hello' into a console-less
-                                # 'out.exe' (Win32 only)
+
+    # Pack 'hello' into a console-less 'out.exe' with icon (Win32 only)
+    % pp --gui --icon hello.ico -o out.exe hello
 
 =head1 DESCRIPTION
 
@@ -686,6 +766,11 @@ ignored on non-MSWin32 platforms or when C<-p> is specified.
 
 Shows basic usage information.
 
+=item B<-i>, B<--icon>=I<FILE>
+
+Specify an icon file for the executable. This option is ignored on
+non-MSWin32 platforms or when C<-p> is specified.
+
 =item B<-I>, B<--lib>=I<DIR>
 
 Adds the given directory to the perl library file search path.
@@ -700,6 +785,10 @@ C<-l /usr/local/lib/libncurses.so> in most Unixes.
 =item B<-L>, B<--log>=I<FILE>
 
 Log the output of packaging to a file rather than to stdout.
+
+=item B<-m>, B<--multiarch>
+
+Build a multi-architecture PAR file.  Implies B<-p>.
 
 =item B<-o>, B<--output>=I<FILE>
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #24 $ $Change: 7151 $ $DateTime: 2003/07/27 08:31:51 $
+# $Revision: #35 $ $Change: 7210 $ $DateTime: 2003/07/28 14:05:30 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -24,7 +24,8 @@ my $pccflags = ccopts;
 my $pldflags = ldopts;
 my $ld = $Config{ld} || (($^O eq 'MSWin32') ? 'link.exe' : $Config{cc});
 my $cc = $Config{cc};
-my $dynperl = $Config{libperl} =~ /\b$Config{dlext}$/i;
+my $dynperl = $Config{useshrplib} && ($Config{useshrplib} ne 'false');
+
 my $f2c = File::Spec->catfile(".", "file2c.pl");
 my $par_pl = File::Spec->catfile('..', 'script', "par.pl");
 my $par_exe = File::Spec->catfile('.', "par$exe");
@@ -32,6 +33,11 @@ my $static_exe = File::Spec->catfile('.', "static$exe");
 my $parl_exe = File::Spec->catfile('..', 'script', "parl$exe");
 my $parldyn_exe = File::Spec->catfile('..', 'script', "parldyn$exe");
 my $lib_path = join(' ', map qq(-I"$_"), map { $^O eq 'MSWin32' ? Win32::GetShortPathName($_) : $_ } @INC);
+
+my $libperl = File::Spec->catfile($Config{bin}, $Config{libperl});
+$libperl =~ s/\.[^.]*$/.$Config{so}/;
+$libperl = File::Spec->catfile($Config{archlibexp}, 'CORE', $Config{libperl})
+    unless -e $libperl;
 
 my $par = ($dynperl ? $static_exe : $par_exe);
 my $all = ($dynperl ? "$parl_exe $parldyn_exe" : $parl_exe);
@@ -43,23 +49,29 @@ print "Writing Makefile for the par$exe program\n";
 
 open OUT, "> Makefile" or die "open 'Makefile': $!";
 
-my( $out, $ccdebug, $lddebug, $warn, $rm, $mv );
+my( $out, $ccdebug, $lddebug, $warn, $rm, $mv, $res, $long_literal );
 
 if( $cc =~ m/^cl\b/ ) {
     $out = '-out:';
-    $ccdebug = $debug ? '-Zi ' : '';
+    $ccdebug = $debug ? '-Zi -Zm1000' : '-Zm1000';
     $lddebug = $debug ? '-debug ' : '-release ';
     $warn = $debug ? '-W3' : '';
+    $res = 'win32.res';
+    $long_literal = 0;
 } elsif ($cc =~ m/^gcc\b/ or ($cc =~ m/^cc\b/ and $gccversion)) {
     $out = '--output ';
     $ccdebug = $debug ? '-g ' : '';
     $lddebug = ($debug or $^O eq 'darwin') ? '' : '-s ';
     $warn = $debug ? '-Wall -Wno-comments ' : '';
+    $res = '';
+    $long_literal = 1;
 } else {
     $out = '-o ';
     $ccdebug = '';
     $lddebug = '';
     $warn = '';
+    $res = '';
+    $long_literal = 0; # better safe than sorry
 }
 
 $rm = $^O eq 'MSWin32' ? '$(PERL) -MExtUtils::Command -e rm_f' : 'rm';
@@ -84,7 +96,7 @@ CFLAGS=$cflags
 LDFLAGS=$ldflags
 NOOP=\$(PERL) -e1
 
-OBJECTS=main$o my_par_pl$o
+OBJECTS=main$o my_par_pl$o $res
 
 .c$o:
 	\$(CC) -c \$(CFLAGS) \$<
@@ -100,18 +112,20 @@ clean:
 realclean: clean
 	-\$(RM) $par_exe
 	-\$(RM) $parl_exe
+	-\$(RM) $static_exe
 	-\$(RM) Makefile Makefile.old
 
 distclean: clean
 	-\$(RM) $par_exe
 	-\$(RM) $parl_exe
+	-\$(RM) $static_exe
 	-\$(RM) Makefile Makefile.old
 
 $par_exe: \$(OBJECTS) my_par_pl$o
 	\$(LD) \$(OBJECTS) \$(LDFLAGS) $out\$@
 
 my_par_pl.c:
-	\$(PERL) $f2c $par_pl \$@ load_me_2
+	\$(PERL) $f2c $par_pl \$@ load_me_2 $long_literal
 
 $parl_exe: $par
 	$par $lib_path -I../myldr/.. -I../blib/lib -B -O\$@
@@ -134,14 +148,15 @@ EOT
 $parldyn_exe: $par_exe
 	$par_exe -I../myldr/.. -I../blib/lib $lib_path -B -O\$@
 
-$static_exe: static$o my_perl$o my_par$o
-	\$(LD) static$o my_perl$o my_par$o $out\$@
+$static_exe: my_perl.c my_par.c static$o
+	\$(LD) static$o $res $out\$@
+	\$(PERL) parlsig.pl $static_exe $par_exe $dynperl
 
 my_perl.c:
-	\$(PERL) $f2c $Config{archlibexp}/CORE/$Config{libperl} \$@ load_me_0
+	\$(PERL) $f2c $libperl \$@ load_me_0 $long_literal
 
 my_par.c: $par_exe
-	\$(PERL) $f2c $par_exe \$@ load_me_1
+	\$(PERL) $f2c $par_exe \$@ load_me_1 $long_literal
 
 EOT
 }

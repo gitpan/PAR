@@ -2,11 +2,13 @@
 ^myldr/Makefile$
 ^myldr/Makefile\.old$
 ^myldr/main.[^c].*$
-^myldr/my_par_pl\..*$
+^myldr/x?static(?:.[^c].*)?$
+^myldr/my_.*$
 ^myldr/perlxsi.c$
 ^myldr/par(?:\.\w+)?$
 ^package/parl-.*$
 ^script/parl(?:\.(?!pod).+)?$
+^script/parldyn(?:\.(?!pod).+)?$
 ^MANIFEST.bak$
 ^Makefile$
 ^Makefile.old$

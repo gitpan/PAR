@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.26.
+signed via the Module::Signature module, version 0.27.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,15 +14,18 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 dd6ca47a20c594005103ef3b7570bc5321d1a55e AUTHORS
-SHA1 f9e2f43e1313249b542b452a73c30c51bd29f102 ChangeLog
-SHA1 b4f7d3137067ad77b77081840a8922a5b9b001ca Changes
-SHA1 2cdacbaab8170aa1495710777153a06bcca99847 MANIFEST
-SHA1 287d181ca113ce677c3dfa9317853284af40c8a1 MANIFEST.SKIP
-SHA1 473adfeaf173b6c5e08bebf41d7d2e41f1c36ad5 META.yml
-SHA1 69c7891e06e89ced36cc5a87f6cc2f30f0e212da Makefile.PL
+SHA1 751c484dc61ecd109b5610d6424617d592037f3f AUTHORS
+SHA1 8442b1a8e6c6165ba8bf191aebde380241151522 ChangeLog
+SHA1 fcb352f8b59a88ce1b9001116249071e3ea7ce4c Changes
+SHA1 eb0e965ffc911e148868c23d3c9b78e4dce528de MANIFEST
+SHA1 7ad009415f9e6bf1dd9c6a20c9ca2e85574d2137 MANIFEST.SKIP
+SHA1 48405d99206414aea84bb378b98428ef02c79dcd META.yml
+SHA1 86bf2562a7ad7f74d1295cdb4d265dcc2e0bb18a Makefile.PL
 SHA1 d191bf88c060eddbb5835c72e830bb16e81ff8a1 README
-SHA1 64ba391b7cdf8721f31cbedc1aa509e650c8ec93 TODO
+SHA1 e58fefbb47646aee25c459ceb5d34132968149cf TODO
+SHA1 3dc7ddffb04b8145f8a2860e3b7069b806c5ade5 contrib/file2resourceadder.c
+SHA1 067166756002d639003dd872d960204fe9cfe4ee contrib/replaceicon.exe
+SHA1 b492729ccf3b8f49a8a287c17632c227e8870d56 contrib/replaceicon.html
 SHA1 eb6b49f98912f084e6449d8a81a2ea8da388c2f0 inc/ExtUtils/AutoInstall.pm
 SHA1 fd5093c4d1bf31795995d24c2ed018319ac1ec07 inc/Module/Install.pm
 SHA1 b6eb96744a9cabe8e807f453ab27c584c3eda92e inc/Module/Install/AutoInstall.pm
@@ -32,30 +35,32 @@ SHA1 bcee63bdc6667b0827b5461a1e1ad779b207fc23 inc/Module/Install/Fetch.pm
 SHA1 2947a46529e9b64cf5e0291a20332e71edabc546 inc/Module/Install/Include.pm
 SHA1 f042d91d7f691e36c8bcb0b495dfc0b9f92576c3 inc/Module/Install/Makefile.pm
 SHA1 f085c0e9e00b65499775acd2d09721e760d41897 inc/Module/Install/Metadata.pm
-SHA1 d997886607493eade2225c5ee2cb498c977fdc4c inc/Module/Install/PAR.pm
+SHA1 39b6d36fa32a051b5670d7a10fe51021b0bf7569 inc/Module/Install/PAR.pm
 SHA1 885504493cfd7f7f0135477b01aad7c82c68d9b3 inc/Module/Install/PRIVATE.pm
-SHA1 25cc63bc00999eb34ac79843cb00eb71ab93b6e6 inc/Module/Install/PRIVATE/PAR.pm
+SHA1 e23b438333237f86c7e2569070adfcbbde1dfac6 inc/Module/Install/PRIVATE/PAR.pm
 SHA1 9b06c41dc4bac2ee819854d44000481166d1500c inc/Module/Install/Win32.pm
 SHA1 c6b5df74295a1f3702ee69f128686be406f9d54f lib/App/Packer/PAR.pm
-SHA1 89fe6cfa7846169bd9158b56c3d88c32cb809020 lib/PAR.pm
-SHA1 3ca886de0285dea4eac27a7ed6aabe0f1104a4fc lib/PAR/Heavy.pm
+SHA1 421b84b9c20ba34f3177a29add4f868b83f677a0 lib/PAR.pm
+SHA1 4343513d9162583c5277d64ab7b23fd272114a61 lib/PAR/Heavy.pm
 SHA1 2d2112753e00554a56dad11c0d825c304f5ca3c0 lib/PAR/Intro.pod
-SHA1 d61d1a93ca5b973a866087e9bd2fbb039f5ccd56 myldr/Makefile.PL
-SHA1 94e134916642b4b862432a4776cf0e64eec72b66 myldr/file2c.pl
-SHA1 9ae2db91016c68c7ec146ca0e6b05b0fdcfb024e myldr/main.c
-SHA1 818d21fe85e25abb01519a6d2aca52023a56981a myldr/mktmpdir.c
-SHA1 58e347a4063c77d9e3b7db3f3e4d480f6aef6a59 myldr/static.c
+SHA1 b78f30d6f7b02741d58b8f3bdbd3ac1be98bd86a myldr/Makefile.PL
+SHA1 f034127b5b8c05164ba64fe5decdd9bbbeb0f7a2 myldr/file2c.pl
+SHA1 a42a4d67aaeb94e18e431dc20a36b8ef6aeb6a35 myldr/main.c
+SHA1 2f201d10021b3691705cfc1fdee0a9f7422febc7 myldr/mktmpdir.c
+SHA1 54e776cc34d6dfb7096af89bccc42da9c12aea5b myldr/parlsig.pl
+SHA1 a6fa33f5df329969b5944ce87ccc3623364609c0 myldr/static.c
+SHA1 648caf79e47b84b1d66b8aad73e61c616d5f6506 myldr/win32.res
 SHA1 ee852494fd2882e6012791d968857eb76282498a package/parl.nsi
-SHA1 925f21bfda3683877869a55c66ea387a18c14fa0 script/par.pl
+SHA1 480ceb627cfa49792aefc29626ba6d5d815d814c script/par.pl
 SHA1 2a03e5911672c1be0e9c145884d128e50cddd2ee script/parl.pod
-SHA1 84dfe0c1e67054f989746e20e79555987b4b793f script/pp
-SHA1 8924ad74d9aea310c1f0fdb6e80aaa360f3fec40 t/0-signature.t
+SHA1 9b4a2060164487a467455761b63348c39dc3118e script/pp
+SHA1 df9e9cd1a0c38ef4610e74f0930addac1eb7480b t/0-signature.t
 SHA1 b6f27c2bb07be9c5de1452c0890683a80ba0f39b t/1-basic.t
 SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.2 (FreeBSD)
 
-iD8DBQE/I924tLPdNzw1AaARAoXGAJ4gZZHAShVzg6vakwb/hOBQfQkWbACeL8vs
-LLzgk4bL6NHCwOX5GTAY5O8=
-=G7GF
+iD8DBQE/JiIKtLPdNzw1AaARAulFAKCM5DbNwQqMeoIP/pYSu1rfIgkcwwCgjwTu
+Px3rfix7uN2tSHvMjN4/kuo=
+=E1/D
 -----END PGP SIGNATURE-----

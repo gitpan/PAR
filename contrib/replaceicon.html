@@ -1,0 +1,42 @@
+<HTML>
+
+<HEAD>
+	<TITLE>ReplaceIcon</TITLE>
+</HEAD>
+<BODY>
+
+<H2>ReplaceIcon v1.0 for WinNT</H2>
+<I>by Miha Remec (mail@miharemec.com)</I>
+
+<HR>
+
+<P><B>What is ReplaceIcon</B><BR>
+It is a small program for replacing icon resource within Delphi executable file. First it finds <CODE>MAINICON</CODE> icon resource, deletes it and then adds new icons from specified icon file.</P>
+
+<P><B>How to use it</B><BR>
+Usage is simple: <CODE>ReplaceIcon &lt;FileName&gt; &lt;IconFileName&gt; [-b]</CODE><BR>
+<I>FileName</I> ... the name of the file<BR>
+<I>IconFileName</I> ... the name of the file, containing one or more icons<BR>
+<I>-b</I> ... do not create backup of the file<BR><BR>
+ 
+By default, program will make backup of the original file by appending .bak extension.</P>
+
+<P><B>A note for InnoSetup users</B><BR>
+Program automatically detects InnoSetup SetupLoader file, unpacks it, replaces icon and then packs it back.</P>
+
+<P><B>Limitations</B><BR>
+Program uses functions BeginUpdateResource, UpdateResource and EndUpdateResource. Unfortunately, those functions are available only on Windows NT platforms (NT 3.51, NT 4.0, Windows 2000).</P>
+
+<P><B>Where to find the latest version</B><BR>
+The latest version can be found at <A HREF="http://www.miharemec.com/tools.html">http://www.miharemec.com/tools.html</A></P>
+
+<P><B>License</B><BR>
+<CODE>The program is subject to the Mozilla Public License Version 1.0 (the "License"); you may not use it except in compliance with the License. You may obtain a copy of the License at http://www.mozilla.org/MPL/. Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for the specific language governing rights and limitations under the License.<BR><BR> 
+The Initial Developer of the Original Code is Miha Remec<BR>                    
+Contributor(s): none<BR></CODE>                                                         
+
+<HR>
+Please report any bugs to <A HREF="mailto:mail@miharemec.com">mail@miharemec.com</A>.
+
+</BODY>
+</HTML>

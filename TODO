@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #13 $ $Change: 6999 $ $DateTime: 2003/07/16 07:52:01 $
+# $Revision: #16 $ $Change: 7238 $ $DateTime: 2003/07/29 07:22:42 $
 
 - Implement inflate algorithm in perl, xor implement Archive::Zip,
   Compress::Zlib and friends in C.
@@ -8,3 +8,11 @@
   versions of a module on the same machine.  Or use Ingy's only.pm.
 
 - Refactor pp to use App::Packer.
+
+- Win32 T_VERSION support as --info.
+
+- caller() from pp'ed executable should return nothing, instead
+  of the current calling stacks.  Currently there's a workaround
+  as PAR_CLEARSTACK in myldr/main.c, but it segfaults and hence
+  is commented out by default.
+

@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #7 $ $Change: 7151 $ $DateTime: 2003/07/27 08:31:51 $
+   $Revision: #10 $ $Change: 7171 $ $DateTime: 2003/07/28 04:16:06 $
    vim: expandtab shiftwidth=4
 */
 
@@ -11,10 +11,6 @@
 #define PAR_lstat lstat
 #else
 #define PAR_lstat stat
-#endif
-
-#ifndef Pid_t
-typedef pid_t Pid_t;
 #endif
 
 char* par_mktmpdir ( char **argv ) {
@@ -123,5 +119,67 @@ char* par_mktmpdir ( char **argv ) {
 
     return(stmpdir);
 }
+
+#ifdef WIN32
+void par_rmtmpdir ( char *stmpdir ) {
+    struct _finddata_t cur_file;
+    char *subsubdir = malloc(strlen(stmpdir) + 258);
+    long hFile;
+
+    sprintf(subsubdir, "%s\\*.*", stmpdir);
+
+    if ( ( hFile = _findfirst( subsubdir, &cur_file ) )  == -1L ) {
+        return;
+    }
+
+    if (!strstr(cur_file.name, "\\")) {
+        sprintf(subsubdir, "%s\\%s", stmpdir, cur_file.name);
+    }
+    else {
+        sprintf(subsubdir, "%s", cur_file.name);
+    }
+
+    unlink(subsubdir);
+    while ( _findnext( hFile, &cur_file ) == 0 ) {
+        if (!strstr(cur_file.name, "\\")) {
+            sprintf(subsubdir, "%s\\%s", stmpdir, cur_file.name);
+        }
+        else {
+            sprintf(subsubdir, "%s", cur_file.name);
+        }
+        unlink(subsubdir);
+    }
+
+    rmdir(stmpdir);
+}
+
+#else
+void par_rmtmpdir ( char *stmpdir ) {
+    DIR *partmp_dirp;
+    Direntry_t *dp;
+    char *subsubdir;
+
+    /* remove temporary PAR directory */
+    partmp_dirp = opendir(stmpdir);
+
+    if ( partmp_dirp != NULL )
+    {
+        /* fprintf(stderr, "%s: removing private temporary subdirectory %s.\n", argv[0], stmpdir); */
+        /* here we simply assume that PAR will NOT create any subdirectories ... */
+        while ( ( dp = readdir(partmp_dirp) ) != NULL ) {
+            if ( strcmp (dp->d_name, ".") != 0 && strcmp (dp->d_name, "..") != 0 )
+            {
+                subsubdir = malloc(strlen(stmpdir) + strlen(dp->d_name) + 2);
+                sprintf(subsubdir, "%s/%s", stmpdir, dp->d_name);
+                unlink(subsubdir);
+                free(subsubdir);
+                subsubdir = NULL;
+            }
+        }
+        closedir(partmp_dirp);
+        rmdir(stmpdir);
+    }
+}
+#endif
 
 #endif

@@ -1,4 +1,215 @@
 ____________________________________________________________________________
+[  7238] By: autrijus                              on 2003/07/29  07:22:42
+        Log: * This be PAR, version 0.70.
+	   ! TODO
+____________________________________________________________________________
+[  7237] By: autrijus                              on 2003/07/29  07:19:11
+        Log: * oops. MSVC at -W3 doesn't like casting const int* to
+	       const char* .
+	   ! myldr/file2c.pl
+____________________________________________________________________________
+[  7236] By: autrijus                              on 2003/07/29  07:00:35
+        Log: * PAR_CLEARSTACK should undef by default.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  7235] By: autrijus                              on 2003/07/29  06:38:37
+        Log: * document @INC fix.
+	   ! ChangeLog
+____________________________________________________________________________
+[  7234] By: autrijus                              on 2003/07/29  06:38:20
+        Log: * new PAR_CLEARSTACK compiler directive to try
+             removing the calling stack so main.pl will see
+             an empty caller(). works, but also memory leaks,
+             so #define it to 0 for now.
+	   ! lib/PAR.pm myldr/main.c script/pp
+____________________________________________________________________________
+[  7233] By: autrijus                              on 2003/07/29  06:37:06
+        Log: * Paul Miller reported that sometimes $ENV{PAR_TEMP}
+             is set but is not a directory.
+	   ! AUTHORS lib/PAR/Heavy.pm
+____________________________________________________________________________
+[  7232] By: autrijus                              on 2003/07/29  03:55:38
+        Log: * because parl's @INC is '.', "parl -i" and friends were
+	       not working.
+             * additionally, pp-generated executables may miss IO.dll
+	       and friends.
+	   ! script/par.pl
+____________________________________________________________________________
+[  7231] By: autrijus                              on 2003/07/29  03:44:59
+        Log: * do not auto-extract DLLs in subdirs, only those that
+             in the same auto/ directory
+	   ! lib/PAR/Heavy.pm
+____________________________________________________________________________
+[  7230] By: autrijus                              on 2003/07/29  03:44:17
+        Log: * don't prompt for Module::Signature if the user can't
+	       install it anyway
+	   ! Makefile.PL
+____________________________________________________________________________
+[  7228] By: autrijus                              on 2003/07/29  01:11:52
+        Log: * update changelog.
+	   ! ChangeLog
+____________________________________________________________________________
+[  7227] By: autrijus                              on 2003/07/29  01:09:51
+        Log: * correctly implement loading of .so files inside
+             the same auto/ path.
+	   ! lib/PAR/Heavy.pm
+____________________________________________________________________________
+[  7226] By: autrijus                              on 2003/07/29  01:09:21
+        Log: * new global variable, $PAR::LastAccessedPAR,
+             stores the $zip handle for the previous unpar.
+             * doc tweaks.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  7225] By: autrijus                              on 2003/07/29  01:06:27
+        Log: * clear signature
+	   ! SIGNATURE
+____________________________________________________________________________
+[  7224] By: autrijus                              on 2003/07/29  01:06:10
+        Log: * use par_rmtmpdir() to clean up after ourselves.
+             * the rebooting execv(SvPV_nolen(GvSV(tmpgv))
+             was failing -- tmpgv was wrong, and should use
+             execvp instead.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  7223] By: autrijus                              on 2003/07/29  01:03:22
+        Log: * a newer 'make par' that simply uses PAR::Dist.
+	   ! inc/Module/Install/PAR.pm
+____________________________________________________________________________
+[  7220] By: autrijus                              on 2003/07/28  16:33:49
+        Log: * massive typos fixed
+	   ! lib/PAR/Heavy.pm
+____________________________________________________________________________
+[  7219] By: autrijus                              on 2003/07/28  16:21:52
+        Log: * add support for automatically extracting additional
+             shared objects under the same auto/ directory with
+             a dl_file.
+	   ! lib/PAR.pm lib/PAR/Heavy.pm
+____________________________________________________________________________
+[  7214] By: autrijus                              on 2003/07/28  14:35:12
+        Log: * less noisy signature test, thanks to schwern.
+	   ! t/0-signature.t
+____________________________________________________________________________
+[  7209] By: autrijus                              on 2003/07/28  13:01:21
+        Log: * update todo and authors.
+	   ! AUTHORS TODO
+____________________________________________________________________________
+[  7208] By: autrijus                              on 2003/07/28  12:57:19
+        Log: * delete $ENV{PAR_TEMP} during PAR::Dist
+             so as not to mislead recursive spawning.
+             This needs to be seriously fixed later.
+	   ! script/par.pl
+____________________________________________________________________________
+[  7206] By: autrijus                              on 2003/07/28  12:49:24
+        Log: * typo.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  7205] By: autrijus                              on 2003/07/28  12:45:47
+        Log: * update manifest.
+	   ! MANIFEST
+____________________________________________________________________________
+[  7204] By: autrijus                              on 2003/07/28  12:35:38
+        Log: * --icon --gui now works in combination.
+	   + myldr/parlsig.pl
+	   ! myldr/Makefile.PL script/pp
+____________________________________________________________________________
+[  7200] By: autrijus                              on 2003/07/28  11:49:21
+        Log: * foo.
+	   ! myldr/file2c.pl
+____________________________________________________________________________
+[  7199] By: autrijus                              on 2003/07/28  11:49:04
+        Log: * fix replaceicon for real.
+	   ! script/pp
+____________________________________________________________________________
+[  7196] By: autrijus                              on 2003/07/28  11:27:42
+        Log: * Jouke reported that ReplaceIcon.exe may cripple .exe
+	       files.
+             Try fixing it by letting it try on parl.exe first.
+	   ! script/pp
+____________________________________________________________________________
+[  7194] By: autrijus                              on 2003/07/28  11:08:25
+        Log: * more dynperl.
+	   ! inc/Module/Install/PRIVATE/PAR.pm
+____________________________________________________________________________
+[  7193] By: autrijus                              on 2003/07/28  11:08:18
+        Log: * only use long literals for file2c under gcc
+	   ! myldr/Makefile.PL myldr/file2c.pl
+____________________________________________________________________________
+[  7191] By: autrijus                              on 2003/07/28  09:57:14
+        Log: * use $Config{useshrplib} to correctly determine
+	       dynperlness
+	   ! myldr/Makefile.PL script/pp
+____________________________________________________________________________
+[  7189] By: autrijus                              on 2003/07/28  09:28:19
+        Log: * document --multiarch, --icon in ChangeLog.
+             * bump version to 0.70 and starts testing.
+	   ! ChangeLog lib/PAR.pm
+____________________________________________________________________________
+[  7187] By: autrijus                              on 2003/07/28  09:11:49
+        Log: * regen manifest.
+	   ! MANIFEST MANIFEST.SKIP
+____________________________________________________________________________
+[  7186] By: autrijus                              on 2003/07/28  09:09:27
+        Log: * --multiarch support.
+	   ! script/pp
+____________________________________________________________________________
+[  7185] By: autrijus                              on 2003/07/28  09:09:16
+        Log: * oops. was considering everybody as dynperl.
+	   ! inc/Module/Install/PRIVATE/PAR.pm
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  7184] By: autrijus                              on 2003/07/28  08:21:28
+        Log: * style cleanup.
+	   ! myldr/Makefile.PL myldr/static.c
+____________________________________________________________________________
+[  7183] By: autrijus                              on 2003/07/28  08:20:54
+        Log: * much better file2c, using "" instead of {}.
+	   ! myldr/file2c.pl
+____________________________________________________________________________
+[  7181] By: autrijus                              on 2003/07/28  06:18:05
+        Log: * renew manifest.skip
+	   ! MANIFEST.SKIP
+____________________________________________________________________________
+[  7178] By: autrijus                              on 2003/07/28  06:02:31
+        Log: * fix win32 building of static.obj.
+             * pp --icon now officially work.
+	   ! myldr/Makefile.PL script/pp
+____________________________________________________________________________
+[  7176] By: autrijus                              on 2003/07/28  05:44:22
+        Log: * implement --icon support.
+	   ! TODO inc/Module/Install/PRIVATE/PAR.pm
+	   ! myldr/Makefile.PL myldr/static.c script/pp
+____________________________________________________________________________
+[  7173] By: autrijus                              on 2003/07/28  04:19:52
+        Log: * import a new PRIVATE/PAR so win32 builds parldyn too
+	   ! inc/Module/Install/PRIVATE/PAR.pm
+____________________________________________________________________________
+[  7171] By: autrijus                              on 2003/07/28  04:16:06
+        Log: * finally, the correct rmdir routine.
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[  7170] By: autrijus                              on 2003/07/28  04:03:56
+        Log: * try properly cleaning up
+	   + contrib/file2resourceadder.c
+	   ! myldr/mktmpdir.c myldr/static.c
+____________________________________________________________________________
+[  7169] By: autrijus                              on 2003/07/28  02:57:00
+        Log: * add replaceicon as contrib.
+	   + contrib/replaceicon.exe
+	   + contrib/replaceicon.html
+____________________________________________________________________________
+[  7168] By: autrijus                              on 2003/07/28  02:30:59
+        Log: * we now have an win32 icon.
+	   + myldr/win32.res
+	   ! myldr/Makefile.PL myldr/static.c
+____________________________________________________________________________
+[  7162] By: autrijus                              on 2003/07/27  15:29:23
+        Log: * make it (barely) compile on win32.
+	   ! myldr/mktmpdir.c myldr/static.c
+____________________________________________________________________________
+[  7160] By: autrijus                              on 2003/07/27  14:08:27
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  7159] By: autrijus                              on 2003/07/27  14:05:08
         Log: * This be 0.69_93.
 	   ! ChangeLog lib/PAR.pm

@@ -1,6 +1,6 @@
 #line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.0/Module/Install/PRIVATE/PAR.pm"
 # $File: //member/autrijus/Module-Install-PRIVATE/lib/Module/Install/PRIVATE/PAR.pm $ $Author: autrijus $
-# $Revision: #3 $ $Change: 5903 $ $DateTime: 2003/05/16 17:14:46 $ vim: expandtab shiftwidth=4
+# $Revision: #9 $ $Change: 7197 $ $DateTime: 2003/07/28 11:31:24 $ vim: expandtab shiftwidth=4
 
 package Module::Install::PRIVATE::PAR;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
@@ -16,7 +16,7 @@ sub Autrijus_PAR {
     my $cc   = $self->can_cc unless $bork;
     my $par  = $self->fetch_par('', '', !$cc) unless $cc or $bork;
     my $exe  = $Config::Config{_exe};
-    my $dynperl = $Config::Config{libperl} =~ /\b$Config::Config{dlext}$/i;
+    my $dynperl = $Config::Config{useshrplib} && ($Config::Config{useshrplib} ne 'false');
 
     if ($bork) {
         warn "Binary loading known to fail on $^O; won't generate 'script/parl$exe'!\n";
@@ -62,6 +62,9 @@ sub Autrijus_PAR {
             'script/pp',
           (!$par and $cc) ? (
             "script/parl$exe",
+            ($^O eq 'MSWin32' and Win32::IsWinNT()) ? (
+                "contrib/replaceicon$exe",
+            ) : (),
             $dynperl ? (
                 "script/parldyn$exe",
             ) : (),

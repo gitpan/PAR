@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #30 $ $Change: 7001 $ $DateTime: 2003/07/16 08:16:33 $
+# $Revision: #32 $ $Change: 7233 $ $DateTime: 2003/07/29 06:37:06 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -29,12 +29,14 @@ Jerry Veldhuis
 Jesse Vincent		(JESSE)
 John McMahon
 Jonathan Leffler	(JOHNL)
+Jouke Visser		(JOUKE)
 Markus Jansen
 Mattia Barbon		(MBARBON)
 Matt Sergeant		(MSERGEANT)
 Nicholas Clark		(NWCLARK)
 Nomota KIM
 Paritosh Tyagi
+Paul Miller
 Phil Sallee
 Randal L. Schwartz	(MERLYN)
 Reini Urban

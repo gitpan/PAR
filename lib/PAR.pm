@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #22 $ $Change: 7159 $ $DateTime: 2003/07/27 14:05:08 $ vim: expandtab shiftwidth=4
+# $Revision: #26 $ $Change: 7234 $ $DateTime: 2003/07/29 06:38:20 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.69_93';
+$PAR::VERSION = '0.70';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.69_93 of PAR, released July 27, 2003.
+This document describes version 0.70 of PAR, released July 29, 2003.
 
 =head1 SYNOPSIS
 
@@ -98,12 +98,12 @@ under F<arch/> and F<lib/>, e.g.:
 Afterward, you can just use F<mymodule.par> anywhere in your C<@INC>,
 use B<PAR>, and it will Just Work.
 
-For maximal convenience, you can set the C<PERL5OPT> environment
-variable to C<-MPAR> to enable C<PAR> processing globally (the overhead
-is small if not used), or to C<-MPAR=/path/to/mylib.par> to load a
+For convenience, you can set the C<PERL5OPT> environment variable to
+C<-MPAR> to enable C<PAR> processing globally (the overhead is small
+if not used); setting it to C<-MPAR=/path/to/mylib.par> will load a
 specific PAR file.  Alternatively, consider using the F<par.pl> utility
-bundled with this module, or the self-contained F<parl> utility on
-machines without PAR.pm installed.
+bundled with this module, or using the self-contained F<parl> utility
+on machines without PAR.pm installed.
 
 Note that self-containing scripts and executables created with F<par.pl>
 and F<pp> may also be used as F<.par> archives:
@@ -192,11 +192,16 @@ sub import {
 
 sub _run_member {
     my $member = shift;
+    my $clear_stack = shift;
     my ($fh, $is_new) = _tmpfile($member->crc32String . ".pl");
 
     if ($is_new) {
         my $file = $member->fileName;
-        print $fh "package main; shift \@INC;\n#line 1 \"$file\"\n";
+        print $fh "package main; shift \@INC;\n";
+        if (defined &Internals::PAR_CLEARSTACK and $clear_stack) {
+            print $fh "Internals::PAR_CLEARSTACK();\n";
+        }
+        print $fh "#line 1 \"$file\"\n";
         $member->extractToFileHandle($fh);
         seek ($fh, 0, 0);
     }
@@ -298,6 +303,8 @@ sub unpar {
             push @rv, unpar(\$content, undef, undef, 1);
         }
     }
+
+    $PAR::LastAccessedPAR = $zip;
 
     return @rv unless defined $file;
 
