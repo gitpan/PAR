@@ -3,7 +3,7 @@
 # $Revision: #4 $ $Change: 1537 $ $DateTime: 2002/10/19 14:18:37 $
 
 use Test;
-BEGIN { plan tests => 9 }
+BEGIN { plan tests => 7 }
 
 ok(
     `$^X -Mblib -MPAR -It/hello -MHello -e 'Hello::hello'`,
@@ -19,16 +19,6 @@ skip(
     !(eval { require PerlIO::scalar; 1 } or eval { require IO::Scalar ; 1}),
     `$^X -Mblib -MPAR t/hello.par data.pl`,
     "Data section\nData reflection\n",
-);
-
-ok(
-    `$^X -Mblib -MPAR t/hello.par`,
-    "Good day!\n",
-);
-
-ok(
-    `$^X -Mblib script/par.pl t/hello.par`,
-    "Good day!\n",
 );
 
 require PAR;

@@ -4,6 +4,7 @@ Makefile.PL
 PAR.pm
 README
 SIGNATURE
+TODO
 patches/perl580.diff
 script/par.pl
 t/0-signature.t

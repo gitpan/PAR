@@ -1,0 +1,28 @@
+# $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
+# $Revision: #1 $ $Change: 1559 $ $DateTime: 2002/10/19 21:38:12 $
+
+- Use Archive::Any and Archive::Tar to get rid of the only XS module
+  dependency (Compress::Zlib), or implement inflate algorithm in perl.
+
+- Before that happens, tweak script/par.pl so it can write the Zlib.so
+  (or Zlib.dll, etc) in the currently directly during a BEGIN block.
+
+- Consequently, script/par.pl -O should take another flag that simply
+  in-lines all required perl modules (PAR.pm, IO/Scalar.pm, etc -- but
+  _not_ Config.pm), thus creating a stand-alone, cross-platform,
+  self-contained archive which runs everywhere that has a Perl 5.6.
+
+- Have another flag to cause it to inline standard lib/ modules, too.
+
+- Also probe perlcc to see if it can compile in the standard libraries.
+
+- Make a script/pl2par.pl that takes a script file, and then:
+  - Scan 'use', 'require', 'do', 'use lib' and '(push|unshift) @INC'
+  - Store them in temporary lib/ and $Config{arch}/ directories
+  - Put the original script and associated scripts under script/
+  - Generate a stub 'main.pl'
+  - Archive them into a single .par file
+  - Optionally turn it into a self-executing script -- that's Perl2exe.
+
+- Overrides CORE::require to provide coexistence support for multiple
+  versions of a module on the same machine.

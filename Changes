@@ -1,4 +1,18 @@
 ____________________________________________________________________________
+[  1560] By: autrijus                              on 2002/10/19  22:15:26
+        Log: * Thie be 0.11.
+             * removed obsoleted test files.
+	   ! PAR.pm t/hello.par
+____________________________________________________________________________
+[  1559] By: autrijus                              on 2002/10/19  21:38:12
+        Log: * todo, manifest, changes to default main.pl semantic.
+	   + TODO
+	   ! MANIFEST PAR.pm script/par.pl
+____________________________________________________________________________
+[  1545] By: autrijus                              on 2002/10/19  17:24:52
+        Log: * changes and signature.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1544] By: autrijus                              on 2002/10/19  17:23:23
         Log: * 0.10.
              * XS modules are now supported!

@@ -56,7 +56,11 @@ files:
 
     # runs script/run.pl in archive, uses its lib/* as libraries
     % par myapp.par run.pl	# runs run.pl or script/run.pl in myapp.par
-    % par myapp.par		# runs main.pl or script/main.pl by default
+
+However, if the F<.par> archive contains either F<main.pl> or
+F<script/main.pl>, it is used instead:
+
+    % par myapp.par run.pl	# runs main.pl, with 'run.pl' as @ARGV
 
 Finally, as an alternative to C<perl2exe> or C<PerlApp>, the C<-o>
 option makes a stand-alone binary from a PAR file:
@@ -66,10 +70,10 @@ option makes a stand-alone binary from a PAR file:
     % ./myapp -Omyap2 myapp.par	# makes a ./myap2, identical to ./myapp
     % ./myapp -Omyap3 myap3.par	# makes another app with different PAR
 
-The format for sthe tand-alone executable is simply concatenating the
+The format for the stand-alone executable is simply concatenating the
 PAR file after F<par> or F<par.pl>, followed by the PAR file's length,
-packed in 4 bytes as an unsigned long number, in network order (i.e.
-C<pack('N')>).
+packed in 4 bytes as an unsigned long number in network order (i.e.
+C<pack('N')>), then the magic string "\x0APAR.pm\x0A".
 
 =head1 NOTES
 
@@ -112,11 +116,6 @@ while (@ARGV) {
     shift(@ARGV);
 }
 
-die << "." unless @ARGV;
-Usage: $0 [-Alib.par] [-Idir] [-Mmodule] [src.par] program.pl
-       $0 [-Ooutfile] src.par
-.
-
 my $fh;
 my $start_pos;
 
@@ -126,12 +125,13 @@ my $start_pos;
     last unless $fh->open($0);
 
     my $buf;
-    $fh->seek(-1, 2);
-    $fh->read($buf, 1);
-    last unless $buf eq "\n";
-    $fh->seek(-5, 2);
+    $fh->seek(-8, 2);
+    $fh->read($buf, 8);
+    last unless $buf eq "\nPAR.pm\n";
+
+    $fh->seek(-12, 2);
     $fh->read($buf, 4);
-    $fh->seek(-5 - unpack("N", $buf), 2);
+    $fh->seek(-12 - unpack("N", $buf), 2);
     $fh->read($buf, 4);
     last unless $buf eq "PK\003\004";
     
@@ -156,7 +156,7 @@ if ($out) {
 
     print OUT <PAR>;
     print OUT pack('N', (stat($par))[7]);
-    print OUT "\n";
+    print OUT "\nPAR.pm\n";
 
     chmod 0755, $out;
     exit;
@@ -185,7 +185,14 @@ if ($out) {
     $PAR::LibCache{$0} = $zip;
 }
 
-$0 = shift(@ARGV) unless $PAR::LibCache{$0};
+unless ($PAR::LibCache{$0}) {
+    die << "." unless @ARGV;
+Usage: $0 [-Alib.par] [-Idir] [-Mmodule] [src.par] program.pl
+       $0 [-Ooutfile] src.par
+.
+    $0 = shift(@ARGV)
+}
+
 
 package main;
 

@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #8 $ $Change: 1544 $ $DateTime: 2002/10/19 17:23:23 $
+# $Revision: #10 $ $Change: 1560 $ $DateTime: 2002/10/19 22:15:26 $
 
 package PAR;
-$PAR::VERSION = '0.10';
+$PAR::VERSION = '0.11';
 
 use 5.006;
 use strict;
@@ -14,7 +14,7 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.10 of PAR, released October 20, 2002.
+This document describes version 0.11 of PAR, released October 20, 2002.
 
 =head1 SYNOPSIS
 
@@ -22,7 +22,7 @@ This document describes version 0.10 of PAR, released October 20, 2002.
 data files, please consult L<par.pl> instead.)
 
 Following examples assume a F<foo.par> file in Zip format; support for
-compressed gzip (F<*.tgz>) format is planned.
+compressed gzip (F<*.tgz>) format is under consideration.
 
 To use F<Hello.pm>, F<lib/Hello.pm>, F<lib/arch/Hello.pm> or
 F<lib/$Config{archname}/Hello.pm> from F<./foo.par>:
@@ -38,7 +38,11 @@ Same thing, but search F<foo.par> in the C<@INC>;
 Run F<test.pl> or F<script/test.pl> from F<foo.par>:
 
     % perl -MPAR foo.par test.pl	# only when $0 ends in '.par'
-    % perl -MPAR foo.par		# looks for 'main.pl' by default
+
+However, if the F<.par> archive contains either F<main.pl> or
+F<script/main.pl>, then it is used instead:
+
+    % perl -MPAR foo.par test.pl	# runs main.pl, with 'test.pl' as @ARGV
 
 Use in a program:
 
@@ -54,24 +58,25 @@ Use in a program:
 
 =head1 DESCRIPTION
 
-This module let you easily bundle a F<blib/> tree into a zip file,
-called a Perl Archive, or C<PAR>.
+This module let you easily bundle a typical F<blib/> tree into a zip
+file, called a Perl Archive, or C<PAR>.
 
-To generate a F<.par> file, all you have to do is compress a F<lib/>
-tree containing modules, e.g.:
+To generate a F<.par> file, all you have to do is compress the modules
+under F<arch/> and F<lib/>, e.g.:
 
     % perl Makefile.PL
     % make
     % cd blib
-    % zip -r mymodule.par lib/
+    % zip -r mymodule.par arch/ lib/
 
 Afterwards, you can just use F<mymodule.par> anywhere in your C<@INC>,
-use B<PAR>, and it would Just Work.
+use B<PAR>, and it will Just Work.
 
 For maximal convenience, you can set the C<PERL5OPT> environment
 variable to C<-MPAR> to enable C<PAR> processing globally (the overhead
 is small if not used), or to C<-MPAR=/path/to/mylib.par> to load a
-specific PAR file.
+specific PAR file.  Alternatively, consider using the F<par.pl>
+utility bundled with this module.
 
 Please see L</SYNOPSIS> for most typical use cases.
 
@@ -113,17 +118,23 @@ sub import {
     if (unpar($0)) {
 	push @PAR_INC, $0;
 
-	my $has_argv = @ARGV;
-	my $file = $has_argv ? shift(@ARGV) : 'main.pl';
+	my $file;
 	my $zip = $LibCache{$0};
-	my $member = $zip->memberNamed($file)
-		  || $zip->memberNamed("script/$file")
-	    or die ( $has_argv
-		? qq(Can't open perl script "$file": No such file or directory)
-		: qq(No program file specified)
-	    );
+	my $member = $zip->memberNamed("main.pl")
+		  || $zip->memberNamed("script/main.pl");
 
-	$0 = $file;
+	if ($member) {
+	    $file = 'main.pl';
+	}
+	else {
+	    die qq(No program file specified) unless @ARGV;
+
+	    my $file = shift(@ARGV);
+	    $member = $zip->memberNamed($file)
+		   || $zip->memberNamed("script/$file")
+		or die qq(Can't open perl script "$file": No such file or directory);
+	}
+
 	my $program = $member->contents;
 	if ($program =~ s/^__DATA__\n?(.*)//ms) {
 	    $DATACache{$file} = $1;
@@ -132,6 +143,7 @@ sub import {
 
 	{
 	    package main;
+	    $0 = $file;
 	    eval $program;
 	}
 	die $@ if $@;
