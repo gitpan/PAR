@@ -99,7 +99,8 @@ our  $SUBDIR4 = "subdir4";
 
 ########################################################################
 our $os = (uname())[0];
-if ($os =~ m/^Win/i) {
+our $_exe = $Config{_exe};
+if ($_exe eq '.exe') {
    eval {
     require Win32::Exe;
     Win32::Exe->import();
@@ -4799,10 +4800,11 @@ print "hello";
         'pp -v 3 hello.pl -o hello.exe > v_3_h_o.txt',
   );
 
-  if ($os !~ m/^Win/i) {
+  if ($_exe ne '.exe') {
+    my $_out = $_exe || '.out';
     @converted_array = ();
     foreach $command_string (@command_strings) {
-        $command_string =~ s/hello.exe/hello.out/g;
+        $command_string =~ s/hello\.exe/hello$_out/g;
         push(@converted_array, ($command_string));
     }
     @command_strings = ();
@@ -4850,30 +4852,30 @@ print "hello";
 
 
   #............. Remove the ".exe" parts if not Windows
-  if ($os !~ m/^Win/i) {
+  if ($_exe ne '.exe') {
     @converted_array = ();
     foreach $line (@results_to_expect_v) {
-        $line =~ s/parl.exe/\/parl\\b/g;
+        $line =~ s/parl.exe/parl$_exe/g;
         push(@converted_array, ($line));
     }
     @results_to_expect_v = ();
     push(@results_to_expect_v, @converted_array);
   }
     
-  if ($os !~ m/^Win/i) {
+  if ($_exe ne '.exe') {
     @converted_array = ();
     foreach $line (@results_to_expect_vv) {
-        $line =~ s/parl.exe/\/parl\\b/g;
+        $line =~ s/parl.exe/parl$_exe/g;
         push(@converted_array, ($line));
     }
     @results_to_expect_vv = ();
     push(@results_to_expect_vv, @converted_array);
   }
     
-  if ($os !~ m/^Win/i) {
+  if ($_exe ne '.exe') {
     @converted_array = ();
     foreach $line (@results_to_expect_vvv) {
-        $line =~ s/parl.exe/\/parl\\b/g;
+        $line =~ s/parl.exe/parl$_exe/g;
         push(@converted_array, ($line));
     }
     @results_to_expect_vvv = ();
@@ -5028,7 +5030,7 @@ print "hello";
          "in directory $test_dir\n"                                   .
          "Command $cmd did provide the expected results in file "     .
          "$text_file_to_examine.\n  I expected matches to regexp \n"  .
-         "@expected_lines"                                            .
+         join("\n", @expected_lines)                                  .
          "\nbut instead got \n$all_lines\n"                           .
          "Cannot continue with test $test_name_string\n";
       return (EXIT_FAILURE);

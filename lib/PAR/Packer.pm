@@ -1,12 +1,26 @@
 # $File: //member/autrijus/PAR/lib/PAR/Packer.pm $ $Author: autrijus $
-# $Revision: #1 $ $Change: 10675 $ $DateTime: 2004/05/24 13:22:13 $ vim: expandtab shiftwidth=4
+# $Revision: #10 $ $Change: 10713 $ $DateTime: 2004/05/29 15:04:54 $ vim: expandtab shiftwidth=4
 
 package PAR::Packer;
-$PAR::Packer::VERSION = '0.10';
+$PAR::Packer::VERSION = '0.11';
 
 use 5.006;
 use strict;
 use warnings;
+
+=head1 NAME
+
+PAR::Packer - App::Packer backend for making PAR files
+
+=head1 DESCRIPTION
+
+This module implements the B<App::Packer::Backend> interface, for generating
+stand-alone executables, perl scripts and PAR files.
+
+Currently, this module is only used by the command line tool B<pp> internally.
+Improvements on documenting the API are most welcome.
+
+=cut
 
 use Config;
 use Archive::Zip ();
@@ -17,6 +31,7 @@ use File::Find ();
 use File::Spec ();
 use File::Temp ();
 use Module::ScanDeps ();
+use PAR ();
 use PAR::Filter ();
 
 use constant OPTIONS => {
@@ -54,6 +69,7 @@ use constant OPTIONS => {
 my $ValidOptions = {};
 my $LongToShort = { map { /^(\w+)\|(\w+)/ ? ($1, $2) : () } keys %{+OPTIONS} };
 my $ShortToLong = { reverse %$LongToShort };
+my $PerlExtensionRegex = qr/\.(?:al|ix|p(?:lx|l|h|m))\z/i;
 
 sub options { sort keys %{+OPTIONS} }
 
@@ -100,15 +116,14 @@ sub add_options {
 sub _translate_options {
     my ($self, $opt) = @_;
 
-    $self->_create_valid_hash(OPTIONS, $ValidOptions);
+    $self->_create_valid_hash($self->OPTIONS, $ValidOptions);
 
-    my $key;
-    foreach $key (keys(%$opt)) {
+    foreach my $key (keys(%$opt)) {
         my $value = $opt->{$key};
 
         if (!$ValidOptions->{$key}) {
-            warn "'$key' is not a valid option!\n";
-            usage();
+            $self->_warn("'$key' is not a valid option!\n");
+            $self->_show_usage;
         }
         else {
             $opt->{$key} = $value;
@@ -125,8 +140,6 @@ sub add_args {
 
 sub set_args {
     my ($self, @args) = @_;
-
-    unshift(@args, split ' ', $ENV{PP_OPTS}) if ($ENV{PP_OPTS});
     $self->{args} = \@args;
 }
 
@@ -140,22 +153,20 @@ sub set_front {
 sub _check_read {
     my ($self, @files) = @_;
 
-    my $sn = $self->{script_name};
     foreach my $file (@files) {
         unless (-r $file) {
-            $self->_die("$sn: Input file $file is a directory, not a file\n")
+            $self->_die("Input file $file is a directory, not a file\n")
               if (-d _);
             unless (-e _) {
-                $self->_die("$sn: Input file $file was not found\n");
+                $self->_die("Input file $file was not found\n");
             }
             else {
-                $self->_die("$sn: Cannot read input file $file: $!\n");
+                $self->_die("Cannot read input file $file: $!\n");
             }
         }
         unless (-f _) {
-
             # XXX: die?  don't try this on /dev/tty
-            warn "$sn: WARNING: input $file is not a plain file\n";
+            $self->_warn("Input $file is not a plain file\n");
         }
     }
 }
@@ -165,13 +176,13 @@ sub _check_write {
 
     foreach my $file (@files) {
         if (-d $file) {
-            $self->_die("$0: Cannot write on $file, is a directory\n");
+            $self->_die("Cannot write on $file, is a directory\n");
         }
         if (-e _) {
-            $self->_die("$0: Cannot write on $file: $!\n") unless -w _;
+            $self->_die("Cannot write on $file: $!\n") unless -w _;
         }
         unless (-w Cwd::cwd()) {
-            $self->_die("$0: Cannot write in this directory: $!\n");
+            $self->_die("Cannot write in this directory: $!\n");
         }
     }
 }
@@ -181,20 +192,21 @@ sub _check_perl {
     return if ($self->_check_par($file));
 
     unless (-T $file) {
-        warn "$0: Binary `$file' sure doesn't smell like perl source!\n";
+        $self->_warn("Binary '$file' sure doesn't smell like perl source!\n");
 
         if (my $file_checker = $self->_can_run("file")) {
-            print "Checking file type... ";
+            $self->_vprint(0, "Checking file type... ");
             system($file_checker, $file);
         }
         $self->_die("Please try a perlier file!\n");
     }
 
-    open(my $handle, "<", $file) or $self->_die("XXX: Can't open $file: $!");
+    my $handle = $self->_open($file);
 
-    local $_ = <$handle>;
-    if (/^#!/ && !/perl/) {
-        $self->_die("$0: $file is a ", /^#!\s*(\S+)/, " script, not perl\n");
+    local $/ = "\n";
+    local $_ = readline($handle);
+    if (/^#!/ and !/perl/) {
+        $self->_die("$file is a ", /^#!\s*(\S+)/, " script, not perl\n");
     }
 }
 
@@ -204,20 +216,18 @@ sub _sanity_check {
     my $input  = $self->{input};
     my $output = $self->{output};
 
-    my $sn = $self->{script_name};
-
     # Check the input and output files make sense, are read/writable.
     if ("@$input" eq $output) {
         my $a_out = $self->_a_out();
 
         if ("@$input" eq $a_out) {
-            $self->_die("$0: Packing $a_out to itself is probably not what you want to do.\n");
-
-           # You fully deserve what you get now. No you *don't*. typos happen.
+            $self->_die("Packing $a_out to itself is probably not what you want to do.\n");
         }
         else {
-            warn "$sn: Will not write output on top of input file, ",
-              "packing to $a_out instead\n";
+            $self->_warn(
+                "Will not write output on top of input file, ",
+                "packing to $a_out instead\n"
+            );
             $self->{output} = $a_out;
         }
     }
@@ -242,11 +252,7 @@ sub _parse_opts {
     my $opt  = $self->{options};
 
     $self->_verify_opts($opt);
-    $opt->{L} =
-        (defined($opt->{L})) ? $opt->{L}
-      : ($ENV{PAR_LOG}) ? $ENV{PAR_LOG}
-      : '';
-
+    $opt->{L} = (defined($opt->{L})) ? $opt->{L} : '';
     $opt->{p} = 1 if ($opt->{m});
     $opt->{v} = (defined($opt->{v})) ? ($opt->{v} || 1) : 0;
     $opt->{v} = 2 if ($opt->{vv});
@@ -256,17 +262,12 @@ sub _parse_opts {
     $self->{output}      = $opt->{o}            || $self->_a_out();
     $opt->{o}            = $opt->{o}            || $self->_a_out();
     $self->{script_name} = $self->{script_name} || $opt->{script_name} || $0;
-    my $sn = $self->{script_name};
 
-    my $lf;
-
-    open my $logfh, '>>', $opt->{L} or $self->_die("Cannot append to $opt->{L}$!")
-      if ($opt->{L});
-
-    $self->{logfh} = $logfh if ($logfh);
+    $self->{logfh} = $self->_open('>>', $opt->{L})
+      if length $opt->{L};
 
     if ($opt->{e}) {
-        warn "$sn: using -e 'code' as input file, ignoring @$args\n"
+        $self->_warn("Using -e 'code' as input file, ignoring @$args\n")
           if (@$args and !$opt->{r});
 
         my ($fh, $fake_input) =
@@ -280,7 +281,6 @@ sub _parse_opts {
         $self->{input} ||= [];
 
         push(@{ $self->{input} }, shift @$args) if (@$args);
-        my $sn = $self->{script_name};
 
         push(@{ $self->{input} }, @$args) if (@$args and !$opt->{r});
         my $in = $self->{input};
@@ -294,17 +294,16 @@ sub _parse_opts {
 sub _verify_opts {
     my ($self, $opt) = @_;
 
-    $self->_create_valid_hash(OPTIONS, $ValidOptions);
+    $self->_create_valid_hash($self->OPTIONS, $ValidOptions);
 
     my $show_usage = 0;
-    my $key;
-    foreach $key (keys(%$opt)) {
+    foreach my $key (keys(%$opt)) {
         if (!$ValidOptions->{$key}) {
-            warn "'$key' is not a valid option!\n";
+            $self->_warn("'$key' is not a valid option!\n");
             $show_usage = 1;
-
         }
     }
+
     $self->_show_usage() if ($show_usage);
 }
 
@@ -313,8 +312,7 @@ sub _create_valid_hash {
 
     return () if (%$hashout);
 
-    my $key;
-    foreach $key (keys(%$hashin)) {
+    foreach my $key (keys(%$hashin)) {
         my (@keys) = ($key =~ /\|/) ? ($key =~ /(?<!:)(\w+)/g) : ($key);
         @{$hashout}{@keys} = ($hashin->{$key}) x @keys;
     }
@@ -347,21 +345,13 @@ sub go {
 sub _setup_run {
     my ($self) = @_;
 
-    my $opt  = $self->{options};
-    my $sn   = $self->{script_name};
-    my $args = $self->{args};
-
-    $self->_die("$sn: No input files specified\n")
-      unless @{ $self->{input} }
-      or $opt->{M};
-
-    unless (eval { require PAR; 1 }) {
-        $self->{parl} ||= $self->_can_run("parl$Config{_exe}")
-          or die("Can't find par loader");
-        exec($self->{parl}, $sn, @$args);
-    }
-
+    my $opt    = $self->{options};
+    my $args   = $self->{args};
     my $output = $self->{output};
+
+    $self->_die("No input files specified\n")
+      unless @{ $self->{input} } or $opt->{M};
+
     $self->_check_write($output);
 }
 
@@ -378,7 +368,6 @@ sub generate_pack {
     $self->_vprint(0, "Packing @$input");
 
     if ($self->_check_par($input->[0])) {
-
         # invoked as "pp foo.par" - never unlink it
         $self->{par_file} = $input->[0];
         $opt->{S}         = 1;
@@ -547,11 +536,11 @@ YAML
 
     my %manifest = map { $_ => 1 } ('MANIFEST', 'META.yml');
 
-    $full_manifest->{'MANIFEST'} = [ 'string', $manifest ];
-    $full_manifest->{'META.yml'} = [ 'string', $meta_yaml ];
+    $full_manifest->{'MANIFEST'} = [ string => $manifest ];
+    $full_manifest->{'META.yml'} = [ string => $meta_yaml ];
 
-    $dep_manifest->{'MANIFEST'} = [ 'string', $manifest ];
-    $dep_manifest->{'META.yml'} = [ 'string', $meta_yaml ];
+    $dep_manifest->{'MANIFEST'} = [ string => $manifest ];
+    $dep_manifest->{'META.yml'} = [ string => $meta_yaml ];
 
 }
 
@@ -568,9 +557,9 @@ sub get_par_file {
 
     my $opt = $self->{options};
 
-    if ($opt->{S} || $opt->{p}) {
-
+    if ($opt->{S} or $opt->{p}) {
         # We need to keep it.
+
         if ($opt->{e} or !@$input) {
             $par_file = "a.par";
         }
@@ -578,20 +567,16 @@ sub get_par_file {
             $par_file = $input->[0];
 
             # File off extension if present
-            # hold on: plx is executable; also, careful of ordering!
-
-            $par_file =~ s/\.(?:p(?:lx|l|h)|m)\z//i;
+            $par_file =~ s/$PerlExtensionRegex//;
             $par_file .= ".par";
         }
 
-        $par_file = $output if ($opt->{p} && $output =~ /\.par\z/i);
-
+        $par_file = $output if $opt->{p} and $output =~ /\.par\z/i;
         $output = $par_file if $opt->{p};
 
         $self->_check_write($par_file);
     }
     else {
-
         # Don't need to keep it, be safe with a tempfile.
 
         $self->{pack_attrib}{lose} = 1;
@@ -663,9 +648,8 @@ sub pack_manifest_hash {
         execute => $opt->{x},
         compile => $opt->{c},
         skip    => \%skip,
-        ($opt->{n})
-        ? ()
-        : (        recurse => 1,
+        ($opt->{n}) ? () : (
+            recurse => 1,
             first   => 1,
         ),
     );
@@ -697,9 +681,9 @@ sub pack_manifest_hash {
         $tmpzip->read($par_file);
 
         if ($old_member = $tmpzip->memberNamed('MANIFEST')) {
-            $full_manifest->{$_} = [ "file", $_ ]
+            $full_manifest->{$_} = [ file => $_ ]
               for (grep /^\S/, split(/\n/, $old_member->contents));
-            $dep_manifest->{$_} = [ "file", $_ ]
+            $dep_manifest->{$_} = [ file => $_ ]
               for (grep /^\S/, split(/\n/, $old_member->contents));
         }
         else {
@@ -716,9 +700,10 @@ sub pack_manifest_hash {
       );
 
     foreach my $pfile (sort grep length $map{$_}, keys %map) {
-        next
-          if (!$opt->{B} and ($map{$pfile} eq "$Config{privlib}/$pfile")
-            or $map{$pfile} eq "$Config{archlib}/$pfile");
+        next if !$opt->{B} and (
+            ($map{$pfile} eq "$Config{privlib}/$pfile") or
+            ($map{$pfile} eq "$Config{archlib}/$pfile")
+        );
 
         $self->_vprint(2, "... adding $map{$pfile} as ${root}lib/$pfile");
 
@@ -726,30 +711,30 @@ sub pack_manifest_hash {
             my $content_ref = $mod_filter->apply($map{$pfile}, $pfile);
 
             $full_manifest->{ $root . "lib/$pfile" } =
-              [ "string", $content_ref ];
+              [ string => $content_ref ];
             $dep_manifest->{ $root . "lib/$pfile" } =
-              [ 'string', $content_ref ];
+              [ string => $content_ref ];
         }
         elsif (
             File::Basename::basename($map{$pfile}) =~ /^Tk\.dll$/i and $opt->{i}
             and eval { require Win32::Exe; 1 }
             and eval { require Win32::Exe::IconFile; 1 }
-            and $] < 5.008 # XXX - broken on ActivePerl 5.8+ 
+            and 0 # XXX - broken on larger icon files - XXX
         ) {
             my $tkdll = Win32::Exe->new($map{$pfile});
             my $ico = Win32::Exe::IconFile->new($opt->{i});
             $tkdll->set_icons(scalar $ico->icons);
 
             $full_manifest->{ $root . "lib/$pfile" } =
-              [ "string", $tkdll->dump ];
+              [ string => $tkdll->dump ];
             $dep_manifest->{ $root . "lib/$pfile" } =
-              [ 'string', $tkdll->dump ];
+              [ string => $tkdll->dump ];
         }
         else {
             $full_manifest->{ $root . "lib/$pfile" } =
-              [ "file", $map{$pfile} ];
+              [ file => $map{$pfile} ];
             $dep_manifest->{ $root . "lib/$pfile" } =
-              [ "file", $map{$pfile} ];
+              [ file => $map{$pfile} ];
         }
     }
 
@@ -761,14 +746,14 @@ sub pack_manifest_hash {
         my $name = File::Basename::basename($in);
 
         if ($script_filter) {
-            my $string = $script_filter->appliy($in, $name);
+            my $string = $script_filter->apply($in, $name);
 
-            $full_manifest->{"script/$name"} = [ "string", $string ];
-            $dep_manifest->{"script/$name"}  = [ "string", $string ];
+            $full_manifest->{"script/$name"} = [ string => $string ];
+            $dep_manifest->{"script/$name"}  = [ string => $string ];
         }
         else {
-            $full_manifest->{"script/$name"} = [ "file", $in ];
-            $dep_manifest->{"script/$name"}  = [ "file", $in ];
+            $full_manifest->{"script/$name"} = [ file => $in ];
+            $dep_manifest->{"script/$name"}  = [ file => $in ];
         }
     }
 
@@ -778,17 +763,17 @@ sub pack_manifest_hash {
         next unless -e $in;
         my $name = File::Basename::basename($in);
 
-        $dep_manifest->{"$shlib/$name"}  = [ "file", $in ];
-        $full_manifest->{"$shlib/$name"} = [ "file", $in ];
+        $dep_manifest->{"$shlib/$name"}  = [ file => $in ];
+        $full_manifest->{"$shlib/$name"} = [ file => $in ];
     }
 
     foreach my $in (@data) {
         unless (-r $in and !-d $in) {
-            warn "'$in' does not exist or is not readable; skipping\n";
+            $self->_warn("'$in' does not exist or is not readable; skipping\n");
             next;
         }
-        $full_manifest->{$in} = [ "file", $in ];
-        $dep_manifest->{$in} = [ "file", $in ];
+        $full_manifest->{$in} = [ file => $in ];
+        $dep_manifest->{$in} = [ file => $in ];
     }
 
     if (@$input and (@$input == 1 or !$opt->{p})) {
@@ -797,15 +782,15 @@ sub pack_manifest_hash {
           ? $self->_main_pl_single("script/" . File::Basename::basename($input->[0]))
           : $self->_main_pl_multi();
 
-        $full_manifest->{"script/main.pl"} = [ 'string', $string ];
-        $dep_manifest->{"script/main.pl"}  = [ 'string', $string ];
+        $full_manifest->{"script/main.pl"} = [ string => $string ];
+        $dep_manifest->{"script/main.pl"}  = [ string => $string ];
     }
 
-    $full_manifest->{'MANIFEST'} = [ 'string', "<<placeholder>>" ];
-    $full_manifest->{'META.yml'} = [ 'string', "<<placeholder>>" ];
+    $full_manifest->{'MANIFEST'} = [ string => "<<placeholder>>" ];
+    $full_manifest->{'META.yml'} = [ string => "<<placeholder>>" ];
 
-    $dep_manifest->{'MANIFEST'} = [ 'string', "<<placeholder>>" ];
-    $dep_manifest->{'META.yml'} = [ 'string', "<<placeholder>>" ];
+    $dep_manifest->{'MANIFEST'} = [ string => "<<placeholder>>" ];
+    $dep_manifest->{'META.yml'} = [ string => "<<placeholder>>" ];
 
     return ($dep_manifest);
 }
@@ -835,16 +820,22 @@ sub add_manifest_hash {
     my $elt;
 
     foreach $elt (@$ma) {
-        if (-f $elt->[0]) {
-            $mh->{ $elt->[1] } = [ 'file', $elt->[0] ];
-        }
-        elsif (-d $elt->[0]) {
-            my ($f, $a) = $self->_expand_dir(@$elt);
+        my ($file, $alias) = @$elt;
 
-            my $xx;
-            for ($xx = 0 ; $xx < @$f ; $xx++) {
-                $mh->{ $a->[$xx] } = [ 'file', $f->[$xx] ];
+        if (!-e $file) {
+            $self->_warn("Cannot find file or directory $file for packing\n");
+        }
+        elsif (!-r _) {
+            $self->_warn("Cannot read file or directory $file for packing\n");
+        }
+        elsif (-d _) {
+            my ($files, $aliases) = $self->_expand_dir(@$elt);
+            while (@$files) {
+                $mh->{ shift(@$aliases) } = [ file => shift(@$files) ];
             }
+        }
+        else {
+            $mh->{ $alias } = [ file => $file ];
         }
     }
     return ($mh);
@@ -861,18 +852,26 @@ sub _add_manifest {
     $files = $opt->{a} if ($opt->{a});
     $lists = $opt->{A} if ($opt->{A});
 
+    local $/ = "\n";
     foreach my $list (@$lists) {
-        open my $fh, $list or $self->_die("Can't open file $list: $!\n");
-        while (my $line = <$fh>) { chomp($line); push(@$files, $line); }
+        my $fh = $self->_open('<', $list, 'text');
+        while (my $line = <$fh>) {
+            chomp($line);
+            push(@$files, $line);
+        }
     }
 
     foreach my $file (grep length, @$files) {
+        $file =~ s{\\}{/}g;
+
         if ($file =~ /;/) {
-            my @split = split(/;+/, $file);
-            push(@$return, [ @split[0, 1] ]);
+            push(@$return, [ split(/;/, $file) ]);
         }
         else {
-            push(@$return, [ $file, $file ]);
+            my $alias = $file;
+            $alias = s{^[a-zA-Z]:}{} if $^O eq 'MSWin32';
+            $alias =~ s{^/}{};
+            push(@$return, [ $file, $alias ]);
         }
     }
     return ($return);
@@ -903,7 +902,7 @@ sub _add_pack_manifest {
 
     my $pack_manifest = $self->pack_manifest_hash();
 
-    my $map         = $self->{pack_attrib}{'map'};
+    my $map         = $self->{pack_attrib}{map};
     my $root        = $self->{pack_attrib}{root};
     my $shared_libs = $self->{pack_attrib}{shared_libs};
 
@@ -941,8 +940,7 @@ sub _add_file {
     my $oldsize       = $self->{pack_attrib}{old_size};
     my $full_manifest = $self->{full_manifest};
 
-    if ($value->[0] eq "file")    # file
-    {
+    if ($value->[0] eq 'file') {
         my $fn = $value->[1];
 
         if (-d $fn) {
@@ -950,20 +948,20 @@ sub _add_file {
 
             $self->_vprint(1, "... adding $fn as $in\n");
 
-            my $xx;
-            for ($xx = 0 ; $xx < @$files ; $xx++) {
-                $self->_vprint(1, "... adding $fn as $in\n");
+            while (@$files) {
+                my $file  = shift @$files;
+                my $alias = shift @$aliases;
 
-                $full_manifest->{ $aliases->[$xx] } =
-                  [ 'file', $files->[$xx] ];
-                $manifest->{ $aliases->[$xx] } = [ 'file', $files->[$xx] ];
+                $self->_vprint(1, "... adding $file as $alias\n");
 
-                $oldsize += -s $files->[$xx];
-                $zip->addFile($files->[$xx], $aliases->[$xx]);
+                $full_manifest->{ $alias } = [ file => $file ];
+                $manifest->{ $alias } = [ file => $file ];
+
+                $oldsize += -s $file;
+                $zip->addFile($file, $alias);
             }
         }
-        else {
-
+        elsif (-e $fn and -r $fn) {
             $self->_vprint(1, "... adding $fn as $in\n");
 
             $oldsize += -s $fn;
@@ -976,7 +974,7 @@ sub _add_file {
 
         $self->_vprint(1, "... adding <string> as $in");
         $zip->addString(
-            $str => $in, 
+            $str => $in,
             desiredCompressionMethod => Archive::Zip::COMPRESSION_DEFLATED(),
             desiredCompressionLevel  => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
         );
@@ -992,7 +990,7 @@ sub _expand_dir {
     File::Find::find(
         {
             wanted => sub { push(@return, $File::Find::name) if -f },
-            follow_fast => 1
+            follow_fast => ( ($^O eq 'MSWin32') ? 0 : 1 ),
         },
         $fn
     );
@@ -1005,12 +1003,28 @@ sub _expand_dir {
 
 sub _die {
     my ($self, @args) = @_;
+    $self->_log(@args);
+
+    my $sn = $self->{script_name};
+    die "$sn: ", @args;
+}
+
+sub _warn {
+    my ($self, @args) = @_;
+    $self->_log(@args);
+
+    my $sn = $self->{script_name};
+    warn "$sn: ", @args;
+}
+
+sub _log {
+    my ($self, @args) = @_;
 
     my $opt   = $self->{options};
     my $logfh = $self->{logfh};
+    my $sn    = $self->{script_name};
 
-    $logfh->print(@args) if ($opt->{L});
-    die @args;
+    $logfh->print("$sn: ", @args) if ($opt->{L});
 }
 
 sub _name2moddata {
@@ -1020,10 +1034,14 @@ sub _name2moddata {
         $name =~ s/::/\//g;
         push @$mod, "$name.pm";
     }
-    elsif ($name =~ /\.(?:pm|ix|al|pl)$/i) {
+    elsif ($name =~ /$PerlExtensionRegex/) {
         push @$mod, $name;
     }
     else {
+        $self->_warn(
+            "Using -M to add non-library files is deprecated; ",
+            "try -a instead",
+        );
         push @$dat, $name;
     }
 }
@@ -1043,7 +1061,8 @@ sub _par_to_exe {
     $parl .= $Config{_exe};
 
     $parl = 'par.pl' if ($opt->{P});
-    $self->{parl} = $self->_can_run($parl, $opt->{P}) or $self->_die("Can't find par loader");
+    $self->{parl} = $self->_can_run($parl, $opt->{P})
+      or $self->_die("Can't find par loader");
 
     if ($^O ne 'MSWin32' or $opt->{p} or $opt->{P}) {
         $self->_generate_output();
@@ -1073,7 +1092,7 @@ sub _par_to_exe {
         return;
     }
     else {
-	die "--icon and --info support needs Win32::Exe";
+	$self->_die("--icon and --info support needs Win32::Exe");
     }
 }
 
@@ -1092,15 +1111,15 @@ sub _fix_console {
     if ($dynperl and !$opt->{d}) {
         # we have a static.exe that needs taking care of.
         my $buf;
-        open _FH, $self->{orig_parl} || $self->{parl} or die $!;
-        binmode _FH;
-        seek _FH, -8, 2;
-        read _FH, $buf, 8;
+        my $fh = $self->_open($self->{orig_parl} || $self->{parl});
+        seek $fh, -8, 2;
+        read $fh, $buf, 8;
         die unless $buf eq "\nPAR.pm\n";
-        seek _FH, -12, 2;
-        read _FH, $buf, 4;
-        seek _FH, -12 - unpack("N", $buf) - 4, 2;
-        read _FH, $buf, 4;
+        seek $fh, -12, 2;
+        read $fh, $buf, 4;
+        seek $fh, -12 - unpack("N", $buf) - 4, 2;
+        read $fh, $buf, 4;
+        close $fh;
         $self->_strip_console($output, unpack("N", $buf));
     }
 }
@@ -1111,28 +1130,37 @@ sub _move_parl {
     $self->{orig_parl} = $self->{parl};
 
     my $cfh;
-    local $/;
-    open _FH, $self->{parl} or die $!;
-    binmode(_FH);
-    ($cfh, $self->{parl}) = File::Temp::tempfile("parlXXXX", SUFFIX => ".exe", UNLINK => 1);
+    my $fh = $self->_open($self->{parl});
+    ($cfh, $self->{parl}) = File::Temp::tempfile(
+        "parlXXXX",
+        SUFFIX => ".exe",
+        UNLINK => 1,
+    );
     binmode($cfh);
-    print $cfh <_FH>;
+
+    local $/;
+    print $cfh readline($fh);
     close $cfh;
+
+    $self->{fh} = $fh;
 }
 
 sub _append_parl {
     my ($self) = @_;
 
+    my $fh = delete $self->{fh};
+
     my $buf;
-    seek _FH, -8, 2;
-    read _FH, $buf, 8;
+    seek $fh, -8, 2;
+    read $fh, $buf, 8;
     die unless $buf eq "\nPAR.pm\n";
-    seek _FH, -12, 2;
-    read _FH, $buf, 4;
-    seek _FH, -12 - unpack("N", $buf), 2;
-    open my $cfh, ">>", $self->{parl} or die $!;
-    binmode($cfh);
-    print $cfh <_FH>;
+    seek $fh, -12, 2;
+    read $fh, $buf, 4;
+    seek $fh, -12 - unpack("N", $buf), 2;
+
+    local $/;
+    my $cfh = $self->_open('>>', $self->{parl});
+    print $cfh readline($fh);
     close $cfh;
 }
 
@@ -1144,7 +1172,7 @@ sub _generate_output {
     my $par_file = $self->{par_file};
 
     my @args = ('-B', "-O$output", $par_file);
-    unshift @args, '-q' unless $opt->{v};
+    unshift @args, '-q' unless $opt->{v} > 0;
     if ($opt->{L}) {
         unshift @args, "-L".$opt->{L};
     }
@@ -1163,7 +1191,7 @@ sub _strip_console {
 
     my ($record, $magic, $signature, $offset, $size);
 
-    open my $exe, "+< $file" or die "Cannot open $file: $!\n";
+    my $exe = $self->_open('+<', $file);
     binmode $exe;
     seek $exe, $preoff, 0;
 
@@ -1204,8 +1232,7 @@ sub _obj_function {
 
         if (%$module_or_class) {
             # hack because Module::ScanDeps isn't really object.
-            my $closure = sub { &$func($module_or_class, @_) };
-            return ($closure);
+            return sub { $func->($module_or_class, @_) };
         }
         else {
             return ($func);
@@ -1227,19 +1254,21 @@ sub _vprint {
 
     my $verb = $ENV{PAR_VERBOSE} || 0;
     if ($opt->{v} > $level or $verb > $level) {
-        print "$0: $msg"        if (!$opt->{L});
-        print $logfh "$0: $msg" if ($opt->{L});
+        if ($opt->{L}) {
+            print $logfh "$0: $msg";
+        }
+        else {
+            print "$0: $msg";
+        }
     }
 }
 
 sub _check_par {
     my ($self, $file) = @_;
 
-    open(my $handle, "<", $file) or $self->_die("XXX: Can't open $file: $!");
-
-    binmode($handle);
     local $/ = \4;
-    return (<$handle> eq "PK\x03\x04");
+    my $handle = $self->_open($file);
+    return (readline($handle) eq "PK\x03\x04");
 }
 
 sub _find_shlib {
@@ -1279,6 +1308,7 @@ sub _can_run {
 }
 
 sub _main_pl_multi {
+    my ($self) = @_;
     return << '__MAIN__';
 my $file = $ENV{PAR_PROGNAME};
 my $zip = $PAR::LibCache{$ENV{PAR_PROGNAME}} || Archive::Zip->new(__FILE__);
@@ -1292,6 +1322,18 @@ my $member = eval { $zip->memberNamed($file) }
 PAR::_run_member($member, 1);
 
 __MAIN__
+}
+
+sub _open {
+    my ($self, $mode, $file, $is_text) = @_;
+    ($mode, $file) = ('<', $mode) if @_ < 3;
+    open(my $fh, $mode, $file) or $self->_die(
+        "Cannot open $file for ",
+        (($mode =~ '>') ? 'writing' : 'reading'),
+        ": $!",
+    );
+    binmode($fh) unless $is_text;
+    return $fh;
 }
 
 sub _main_pl_single {
@@ -1311,7 +1353,40 @@ sub DESTROY {
     my $par_file = $self->{par_file};
     my $opt      = $self->{options};
 
-    unlink $par_file if ($par_file && !$opt->{S} && !$opt->{p});
+    unlink $par_file if ($par_file and !$opt->{S} and !$opt->{p});
 }
 
 1;
+
+=head1 SEE ALSO
+
+L<PAR>, L<pp>
+
+L<App::Packer>, L<App::Packer::Backend>
+
+=head1 ACKNOWLEDGMENTS
+
+Mattia Barbon for taking the first step in refactoring B<pp> into
+B<App::Packer::Backend::PAR>, and Edward S. Peschko for continuing
+the work that eventually became this module.
+
+=head1 AUTHORS
+
+Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
+
+L<http://par.perl.org/> is the official PAR website.  You can write
+to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
+E<lt>par-subscribe@perl.orgE<gt> to participate in the discussion.
+
+Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+
+=head1 COPYRIGHT
+
+Copyright 2004 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+See L<http://www.perl.com/perl/misc/Artistic.html>
+
+=cut

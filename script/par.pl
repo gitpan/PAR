@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #109 $ $Change: 10674 $ $DateTime: 2004/05/24 12:15:32 $ vim: expandtab shiftwidth=4
+# $Revision: #111 $ $Change: 10708 $ $DateTime: 2004/05/29 08:40:57 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -187,18 +187,13 @@ my %Config = (
 _set_progname();
 _set_par_temp();
 
-# Append ".exe" to $0 if it was missing
-$0 .= $Config{_exe} if $Config{_exe}
-    and $progname =~ /\Q$Config{_exe}\E$/
-    and $0 !~ /\Q$Config{_exe}\E$/;
-
 # Magic string checking and extracting bundled modules {{{
 my ($start_pos, $data_pos);
 {
     local $SIG{__WARN__} = sub {};
 
     # Check file type, get start of data section {{{
-    open _FH, $progname or last;
+    open _FH, '<', $progname or last;
     binmode(_FH);
 
     my $buf;
@@ -290,7 +285,7 @@ my ($start_pos, $data_pos);
                 print $out $filename->{buf};
                 close $out;
             }
-            open my $fh, $name or die $!;
+            open my $fh, '<', $name or die $!;
             binmode($fh);
             return $fh;
         }
@@ -497,7 +492,7 @@ if ($out) {
                 $content = $file->{buf};
             }
             else {
-                open FILE, "$file" or die "Can't open $file: $!";
+                open FILE, '<', $file or die "Can't open $file: $!";
                 binmode(FILE);
                 $content = <FILE>;
                 close FILE;
@@ -538,6 +533,8 @@ if ($out) {
 # Prepare $progname into PAR file cache {{{
 {
     last unless defined $start_pos;
+
+    _fix_progname();
 
     # Now load the PAR file and put it into PAR::LibCache {{{
     require PAR;
@@ -635,7 +632,7 @@ sub _set_par_temp {
             my $ctx = eval { require Digest::SHA1; Digest::SHA1->new }
                    || eval { require Digest::MD5; Digest::MD5->new };
 
-            if ($ctx and open(my $fh, "<$progname")) {
+            if ($ctx and open(my $fh, "<", $progname)) {
                 binmode($fh);
                 $ctx->addfile($fh);
                 close($fh);
@@ -683,19 +680,17 @@ sub _set_progname {
 
     $progname ||= $0;
 
-    if (index($progname, $ENV{PAR_TEMP}) > -1) {
+    if ($ENV{PAR_TEMP} and index($progname, $ENV{PAR_TEMP}) >= 0) {
         $progname = substr($progname, rindex($progname, $Config{_delim}) + 1);
     }
 
-    if (index($progname, $Config{_delim}) > -1) {
-        if (open my $fh, $progname) {
-            $ENV{PAR_PROGNAME} = $progname;
+    if (!$ENV{PAR_PROGNAME} or index($progname, $Config{_delim}) >= 0) {
+        if (open my $fh, '<', $progname) {
             return if -s $fh;
         }
         if (-s "$progname$Config{_exe}") {
-            $ENV{PAR_PROGNAME} = $progname = "$progname$Config{_exe}";
-            $0 .= $Config{_exe};
-            return $progname;
+            $progname .= $Config{_exe};
+            return;
         }
     }
 
@@ -707,7 +702,13 @@ sub _set_progname {
         (($progname = "$dir$Config{_delim}$progname"), last)
             if -s "$dir$Config{_delim}$progname";
     }
+}
 
+sub _fix_progname {
+    $0 = $progname ||= $ENV{PAR_PROGNAME};
+    if (index($progname, $Config{_delim}) < 0) {
+        $progname = ".$Config{_delim}$progname";
+    }
     $ENV{PAR_PROGNAME} = $progname;
 }
 
@@ -763,7 +764,7 @@ require PAR;
 unshift @INC, \&PAR::find_par;
 PAR->import(@par_args);
 
-die qq(Can't open perl script "$0": No such file or directory\n)
+die qq(Can't open perl script "$progname": No such file or directory\n)
     unless -e $progname;
 
 do $progname;

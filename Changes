@@ -1,4 +1,100 @@
 ____________________________________________________________________________
+[ 10715] By: autrijus                              on 2004/05/29  15:31:21
+        Log: * This be PAR, version 0.83.
+             * update changelog and todo.
+	   ! ChangeLog TODO lib/PAR.pm
+____________________________________________________________________________
+[ 10714] By: autrijus                              on 2004/05/29  15:05:55
+        Log: * add a doc TODO.
+             * fix pod validity.
+	   ! TODO lib/PAR/FAQ.pod
+____________________________________________________________________________
+[ 10713] By: autrijus                              on 2004/05/29  15:04:54
+        Log: * "pp -a dir;dir_alias" was broken due to a typo.
+	   ! lib/PAR/Packer.pm
+____________________________________________________________________________
+[ 10712] By: autrijus                              on 2004/05/29  14:51:36
+        Log: * Synchronize PAR::FAQ with the wiki page.
+             * Update TODO items from rt.cpan.org and the list.
+	   ! TODO lib/PAR/FAQ.pod
+____________________________________________________________________________
+[ 10711] By: autrijus                              on 2004/05/29  13:55:09
+        Log: * Add minimal documentations to PAR:Packer.
+	   ! lib/PAR/Packer.pm
+____________________________________________________________________________
+[ 10710] By: autrijus                              on 2004/05/29  12:22:33
+        Log: * turn all backslashes to slashes for -a/-A.
+	   ! lib/PAR/Packer.pm
+____________________________________________________________________________
+[ 10709] By: autrijus                              on 2004/05/29  11:51:21
+        Log: * Fix tests for Cygwin by testing
+             $Config{_exe} rather than uname().
+	   ! contrib/automated_pp_test/automated_pp_test.pl
+____________________________________________________________________________
+[ 10708] By: autrijus                              on 2004/05/29  08:40:57
+        Log: * scripts made by "pp -P" should not look into PATH
+             when invoked with "perl scriptname".
+             * clean up $0 assignment logic.
+	   ! lib/PAR.pm script/par.pl
+____________________________________________________________________________
+[ 10707] By: autrijus                              on 2004/05/29  05:56:57
+        Log: * Serious flaw: all core XS modules being skipped when
+	       packing files.
+	   ! lib/PAR/Packer.pm
+____________________________________________________________________________
+[ 10706] By: autrijus                              on 2004/05/29  05:38:30
+        Log: * oops, typo.
+	   ! lib/PAR/Packer.pm
+____________________________________________________________________________
+[ 10705] By: autrijus                              on 2004/05/29  05:25:29
+        Log: * Patch from Alan: remove drive letter from -a file names.
+             * Also from Alan: do not use follow_fast on Win32.
+	   ! lib/PAR/Packer.pm
+____________________________________________________________________________
+[ 10703] By: autrijus                              on 2004/05/29  05:03:12
+        Log: * massive style cleanups.
+	   ! lib/PAR/Packer.pm
+____________________________________________________________________________
+[ 10702] By: autrijus                              on 2004/05/29  05:02:43
+        Log: * Set $0 to PAR_PROGNAME.
+	   ! lib/PAR.pm script/par.pl
+____________________________________________________________________________
+[ 10698] By: autrijus                              on 2004/05/27  01:31:51
+        Log: * changes.
+	   ! Changes
+____________________________________________________________________________
+[ 10696] By: autrijus                              on 2004/05/26  13:16:29
+        Log: * add Piotr Martyniuk to authors.
+	   ! AUTHORS
+____________________________________________________________________________
+[ 10695] By: autrijus                              on 2004/05/26  12:44:15
+        Log: * Murphy noticed that PP_OPTS is totally broken.
+	   ! lib/PAR/Packer.pm script/pp
+____________________________________________________________________________
+[ 10688] By: autrijus                              on 2004/05/26  00:56:31
+        Log: * Patch for gpp from Alan: 
+             Bug fix viewing log file with quoted name containing
+	     spaces.
+	   ! contrib/gui_pp/gpp
+____________________________________________________________________________
+[ 10687] By: autrijus                              on 2004/05/25  15:28:05
+        Log: * Murphy points out we have a typo in PAR::Packer
+             that prevented filters from working.
+	   ! AUTHORS lib/PAR/Packer.pm
+____________________________________________________________________________
+[ 10686] By: autrijus                              on 2004/05/25  07:42:50
+        Log: * New version of gpp, designed to work with PAR::Packer,
+             as updated by Alan.
+	   ! contrib/gui_pp/gpp
+____________________________________________________________________________
+[ 10685] By: autrijus                              on 2004/05/25  06:54:47
+        Log: * remove finished TODO.
+	   ! TODO
+____________________________________________________________________________
+[ 10683] By: autrijus                              on 2004/05/24  14:50:47
+        Log: * last-last-minute fix: typo on the previous fix.
+	   ! contrib/automated_pp_test/automated_pp_test.pl
+____________________________________________________________________________
 [ 10682] By: autrijus                              on 2004/05/24  14:36:21
         Log: * This be 0.82, for real.
              * Update changelog.

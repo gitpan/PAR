@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #64 $ $Change: 10648 $ $DateTime: 2004/05/22 18:31:56 $
+# $Revision: #66 $ $Change: 10696 $ $DateTime: 2004/05/26 13:16:29 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -84,6 +84,7 @@ Peter Klewinghaus
 Patrice Parmentier
 Patrick Whitney
 Phil Sallee
+Piotr Martyniuk
 PodMaster		(PODMASTER)
 Rafael Garcia-Suarez	(RGARCIA)
 Randal L. Schwartz	(MERLYN)

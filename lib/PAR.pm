@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #79 $ $Change: 10680 $ $DateTime: 2004/05/24 13:48:55 $ vim: expandtab shiftwidth=4
+# $Revision: #82 $ $Change: 10715 $ $DateTime: 2004/05/29 15:31:21 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.82';
+$PAR::VERSION = '0.83';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.82 of PAR, released May 24, 2004.
+This document describes version 0.83 of PAR, released May 29, 2004.
 
 =head1 SYNOPSIS
 
@@ -173,7 +173,7 @@ sub import {
     _set_progname();
     _set_par_temp();
 
-    $progname = $ENV{PAR_PROGNAME} || $0;
+    $progname = $ENV{PAR_PROGNAME} ||= $0;
     $is_insensitive_fs = (-s $progname and (-s lc($progname) || -1) == (-s uc($progname) || -1));
 
     foreach my $par (@_) {
@@ -509,14 +509,13 @@ sub _set_progname {
     }
     $progname ||= $0;
 
-    if (( () = File::Spec->splitdir($progname) ) > 1) {
+    if (( () = File::Spec->splitdir($progname) ) > 1 or !$ENV{PAR_PROGNAME}) {
         if (open my $fh, $progname) {
-            $ENV{PAR_PROGNAME} = $progname;
             return if -s $fh;
         }
         if (-s "$progname$Config{_exe}") {
-            $ENV{PAR_PROGNAME} = $progname = "$progname$Config{_exe}";
-            return $progname;
+            $progname .= $Config{_exe};
+            return;
         }
     }
 
@@ -527,8 +526,6 @@ sub _set_progname {
         $name = File::Spec->catfile($dir, "$progname");
         if (-s $name) { $progname = $name; last }
     }
-
-    $ENV{PAR_PROGNAME} = $progname;
 }
 
 1;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #124 $ $Change: 10675 $ $DateTime: 2004/05/24 13:22:13 $ vim: expandtab shiftwidth=4
+# $Revision: #125 $ $Change: 10695 $ $DateTime: 2004/05/26 12:44:15 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use PAR ();
@@ -10,6 +10,9 @@ use App::Packer::PAR ();
 use Getopt::Long qw(:config no_ignore_case);
 
 *VERSION = *PAR::Packer::VERSION;
+
+unshift(@ARGV, split / +/, $ENV{PP_OPTS}) if $ENV{PP_OPTS};
+
 my %opt;
 GetOptions( \%opt, PAR::Packer->options, 'h|help', 'V|version' );
 &help if $opt{h};
