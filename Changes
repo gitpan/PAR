@@ -1,4 +1,131 @@
 ____________________________________________________________________________
+[  5905] By: autrijus                              on 2003/05/16  17:17:49
+        Log: * 0.67_89, experimental release.
+             * shlib.diff is merged and thus deleted.
+	   - patches/shlib.diff
+	   ! MANIFEST lib/PAR.pm
+____________________________________________________________________________
+[  5902] By: autrijus                              on 2003/05/16  17:12:13
+        Log: * disable the patch for win32 for now.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  5901] By: autrijus                              on 2003/05/16  16:39:23
+        Log: * shlib's main.c. this probably breaks win32.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  5898] By: autrijus                              on 2003/05/16  16:30:10
+        Log: * more regex tweaks.
+	   ! myldr/file2c.pl script/par.pl script/pp
+____________________________________________________________________________
+[  5895] By: autrijus                              on 2003/05/16  16:12:09
+        Log: * more regex tweaks.
+	   ! myldr/file2c.pl script/par.pl script/pp
+____________________________________________________________________________
+[  5894] By: autrijus                              on 2003/05/16  15:58:18
+        Log: * potentially destablizing (and slowing) patch that merged
+	       the shlib.
+	   ! lib/PAR/Intro.pod myldr/file2c.pl
+	   ! script/par.pl script/pp
+____________________________________________________________________________
+[  5892] By: autrijus                              on 2003/05/16  15:08:26
+        Log: * fully implemented Barry Jaspan's #line suggestion.
+	   - package/podstrip.pl
+	   ! MANIFEST myldr/file2c.pl script/par.pl
+	   ! script/pp
+____________________________________________________________________________
+[  5888] By: autrijus                              on 2003/05/16  14:32:03
+        Log: * ditch lowercased.
+	   - inc/Module/Install/private.pm
+	   - inc/Module/Install/private/PAR.pm
+____________________________________________________________________________
+[  5887] By: autrijus                              on 2003/05/16  14:27:57
+        Log: * add private extensions.
+	   + inc/Module/Install/PRIVATE.pm
+	   + inc/Module/Install/PRIVATE/PAR.pm
+____________________________________________________________________________
+[  5883] By: autrijus                              on 2003/05/16  13:31:32
+        Log: * fix inc/.
+	   ! MANIFEST inc/ExtUtils/AutoInstall.pm
+	   ! inc/Module/Install.pm
+	   ! inc/Module/Install/AutoInstall.pm
+	   ! inc/Module/Install/Base.pm
+	   ! inc/Module/Install/Can.pm
+	   ! inc/Module/Install/Fetch.pm
+	   ! inc/Module/Install/Include.pm
+	   ! inc/Module/Install/Makefile.pm
+	   ! inc/Module/Install/Metadata.pm
+	   ! inc/Module/Install/PAR.pm
+	   ! inc/Module/Install/Win32.pm
+____________________________________________________________________________
+[  5836] By: autrijus                              on 2003/05/14  03:45:50
+        Log: * Sisyphus reported that it no longer builds on activeperl
+	       561; trying a fix.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  5829] By: autrijus                              on 2003/05/13  16:34:01
+        Log: * parl used to pack the in-parl dynamic library (Zlib.so)
+	       with the
+             outside module (Zlib.pm) into newly made executables.  this
+	     breaks
+             stuff for people with a newer Zlib than parl's.  fixed.
+	   ! script/par.pl
+____________________________________________________________________________
+[  5825] By: autrijus                              on 2003/05/13  14:33:08
+        Log: * proof-of-concept new podstrip code.
+	   + package/podstrip.pl
+____________________________________________________________________________
+[  5709] By: autrijus                              on 2003/05/08  12:28:40
+        Log: * upgrade M::I.
+	   ! inc/Module/Install.pm
+	   ! inc/Module/Install/AutoInstall.pm
+	   ! inc/Module/Install/Makefile.pm
+	   ! inc/Module/Install/Metadata.pm
+	   ! inc/Module/Install/PAR.pm
+____________________________________________________________________________
+[  5708] By: autrijus                              on 2003/05/08  12:27:44
+        Log: * bumpingn version.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  5707] By: autrijus                              on 2003/05/08  12:27:01
+        Log: * chmod +x for Heavy too, as pointed out by Markus.
+	   ! lib/PAR/Heavy.pm
+____________________________________________________________________________
+[  5706] By: autrijus                              on 2003/05/08  11:36:00
+        Log: * oops. Markus pointed out that we're infinite recursing.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  5705] By: autrijus                              on 2003/05/08  11:35:42
+        Log: * doc tweaks.
+	   ! script/pp
+____________________________________________________________________________
+[  5367] By: autrijus                              on 2003/04/15  02:31:22
+        Log: * patch from Phil Sallee to dynload in cygwin with correct
+	       permission.
+	   ! AUTHORS script/par.pl
+____________________________________________________________________________
+[  5233] By: autrijus                              on 2003/04/07  18:11:43
+        Log: * add --gui to "pp -h" usage.
+	   ! script/pp
+____________________________________________________________________________
+[  5222] By: autrijus                              on 2003/04/07  15:27:57
+        Log: * special-case for win32 $^X that contains whitespace.
+	   ! inc/Module/Install/PAR.pm myldr/Makefile.PL
+____________________________________________________________________________
+[  5098] By: autrijus                              on 2003/04/02  18:08:27
+        Log: * "use PAR 'name.par'" now unshift()s instead of push()es
+	       into @INC.
+             * same for "par.pl -A" and "parl -A".
+             (issue raised by Paritosh Tyagi)
+	   ! lib/PAR.pm script/par.pl
+____________________________________________________________________________
+[  5074] By: autrijus                              on 2003/04/01  13:01:47
+        Log: * changes.
+	   ! Changes
+____________________________________________________________________________
+[  5072] By: autrijus                              on 2003/03/31  19:44:00
+        Log: * last-second fix of perl 5.6 vs Tk.
+	   ! script/pp
+____________________________________________________________________________
 [  5071] By: autrijus                              on 2003/03/31  18:52:32
         Log: * This be PAR 0.67, the "April Fools" release.
 	   ! ChangeLog lib/PAR.pm

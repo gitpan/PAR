@@ -1,5 +1,6 @@
+#line 1 "inc/Module/Install/AutoInstall.pm - /usr/local/lib/perl5/site_perl/5.8.0/Module/Install/AutoInstall.pm"
 # $File: //depot/cpan/Module-Install/lib/Module/Install/AutoInstall.pm $ $Author: autrijus $
-# $Revision: #11 $ $Change: 1387 $ $DateTime: 2003/03/22 15:50:18 $ vim: expandtab shiftwidth=4
+# $Revision: #12 $ $Change: 1481 $ $DateTime: 2003/05/07 10:41:22 $ vim: expandtab shiftwidth=4
 
 package Module::Install::AutoInstall;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
@@ -25,7 +26,7 @@ AUTO:{my$p='ExtUtils::AutoInstall';my$v=0.49;$p->VERSION||0>=$v
 or+eval"use $p $v;1"or+do{my$e=$ENV{PERL_EXTUTILS_AUTOINSTALL};
 (!defined($e)||$e!~m/--(?:default|skip|testonly)/and-t STDIN or
 eval"use ExtUtils::MakeMaker;WriteMakefile(PREREQ_PM=>{'$p',$v}
-);1"and exit)and print"==> $p $v $@required. Install it from CP".
+);1"and exit)and print"==> $p $v required. Install it from CP".
 "AN? [Y/n] "and<STDIN>!~/^n/i and print"*** Installing $p\n"and
 do{if (eval '$>' and lc(`sudo -V`) =~ /version/){system('sudo',
 $^X,"-MCPANPLUS","-e","CPANPLUS::install $p");eval"use $p $v;1"
@@ -35,8 +36,8 @@ require CPAN;CPAN::install$p};eval"use $p $v;1"||die"*** Please
 manually install $p $v from cpan.org first...\n"}}}
 
     # Flatten array of arrays into a single array
-    my @core = map @$_, map @$_, grep ref, map $self->$_,
-               qw(build_requires requires);
+    my @core = map @$_, map @$_, grep ref,
+               $self->build_requires, $self->requires;
 
     ExtUtils::AutoInstall->import(
         (@core ? (-core => \@core) : ()), @_, $self->features

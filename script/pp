@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #43 $ $Change: 5072 $ $DateTime: 2003/03/31 19:44:00 $ vim: expandtab shiftwidth=4
+# $Revision: #49 $ $Change: 5898 $ $DateTime: 2003/05/16 16:30:10 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -30,6 +30,7 @@ our ($Options);
 our (@Input, $Output);
 our ($logfh);
 our ($par_file);
+our (@SharedLibs);
 
 main();
 
@@ -78,6 +79,7 @@ sub compile_par {
 
     my %map;
     unshift @INC, @{opt(I) || []};
+    unshift @SharedLibs, @{opt(l) || []};
 
     Module::ScanDeps::scan_deps(
         rv      => \%map,
@@ -121,11 +123,7 @@ sub compile_par {
             open my $file, '<', $map{$pfile} or die $!;
             binmode($file);
             my $content = <$file>;
-            $content =~ s/
-                ^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
-                ^=cut\b[^\n]*$
-                \n*
-            //smgx unless $verbatim;
+            $content = pod_strip($content, $map{$pfile}) unless $verbatim;
 
             if ($map{$pfile} =~ /\bTk\b.*\bWidget\.pm/i) {
                 my $from = 'if (defined($name=$INC{"$pkg.pm"}))';
@@ -152,6 +150,16 @@ sub compile_par {
 
         $zip->addFile($input => "script/$name");
         push @manifest, "script/$name";
+    }
+
+    foreach my $input (@SharedLibs) {
+        # my $name = $input; # XXX: redundant
+        $size += -s $input;
+
+        my $name = basename($input);
+        vprint 2, "... adding $input as shlib/$name";
+        $zip->addFile($input => "shlib/$name");
+        push @manifest, "shlib/$name";
     }
 
     $zip->addString(
@@ -280,6 +288,7 @@ sub parse_argv {
         'g|gui',        # No console window
         'h|help',       # Help me
         'I|lib:s@',     # Include directories (FOR PERL, NOT FOR C)
+        'l|link:s@',    # Include additional shared libraries
         'L|log:s',      # Where to log packaging process information
         'o|output:s',   # Output file
         'p|par',        # Generate PAR only
@@ -421,6 +430,33 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
     exit;
 }
 
+sub pod_strip {
+    my ($pl_text, $filename) = @_;
+
+    local $^W;
+    my $line = 1;
+    if ($pl_text =~ /^=(?:head\d|pod|begin|item|over|for|back|end)\b/) {
+        $pl_text = "\n$pl_text";
+        $line--;
+    }
+    $pl_text =~ s{(
+	(.*?\n)
+	=(?:head\d|pod|begin|item|over|for|back|end)\b
+	.*?\n
+	(?:=cut[\t ]*[\r\n]*?|\Z)
+	(\r?\n)?
+    )}{
+	my ($pre, $post) = ($2, $3);
+        "$pre#line " . (
+	    $line += ( () = ( $1 =~ /\n/g ) )
+	) . $post;
+    }gsex;
+    $pl_text = '#line 1 "' . ($filename) . "\"\n" . $pl_text
+        if length $filename;
+
+    return $pl_text;
+}
+
 sub _die {
     $logfh->print(@_) if opt(L);
     die @_;
@@ -513,6 +549,8 @@ pp - Perl Packager
 
     % pp hello --log=c          # Pack 'hello' into 'a.out', logs
                                 # messages into 'c'
+    % pp --gui -o out.exe hello # Pack 'hello' into a console-less
+                                # 'out.exe' (Win32 only)
 
 =head1 DESCRIPTION
 
@@ -556,8 +594,8 @@ Module::ScanDeps> means the same thing as C<-M Module/ScanDeps.pm>.
 
 =item B<-B>, B<--bundle>
 
-Bundles core modules in the resulting package.  Defaults to C<1>, unless
-C<-p> is specified and C<-o> is unspecified.
+Bundles core modules in the resulting package.  This option is enabled
+by default, except when C<-p> is specified and C<-o> is unspecified.
 
 =item B<-e>, B<--eval>=I<STRING>
 
@@ -573,10 +611,6 @@ package.
 Build an executable that does not have a console window. This option is
 ignored on non-MSWin32 platforms or when C<-p> is specified.
 
-=item B<-o>, B<--output>=I<FILE>
-
-Specifies the file name for the final packaged executable.
-
 =item B<-h>, B<--help>
 
 Shows basic usage information.
@@ -585,9 +619,17 @@ Shows basic usage information.
 
 Adds the given directories to the perl library file search path.
 
+=item B<-l>, B<--link>=I<FILE>
+
+Adds shared libraries (a.k.a. shared objects or DLLs) to the binary.
+
 =item B<-L>, B<--log>=I<FILE>
 
 Log the output of packaging to a file rather than to stdout.
+
+=item B<-o>, B<--output>=I<FILE>
+
+Specifies the file name for the final packaged executable.
 
 =item B<-p>, B<--par>
 

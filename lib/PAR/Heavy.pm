@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #1 $ $Change: 4802 $ $DateTime: 2003/03/19 13:33:53 $
+# $Revision: #2 $ $Change: 5707 $ $DateTime: 2003/05/08 12:27:01 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.05';
@@ -97,6 +97,7 @@ sub _bootstrap {
 		binmode($fh);
 		print $fh $member->contents;
 		close $fh;
+                chmod 0755, $filename;
 	    }
 
 	    $DLCache{$modfname} = $filename;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #2 $ $Change: 4668 $ $DateTime: 2003/03/09 10:46:40 $
+# $Revision: #6 $ $Change: 5898 $ $DateTime: 2003/05/16 16:30:10 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -37,16 +37,7 @@ undef $/;
 my $pl_text = <IN>;
 close IN;
 
-my $filename = basename($pl_file);
-
-if (-T $pl_file) {
-    $pl_text =~ s/
-	^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
-	^=cut\s*$
-	\n*
-    //smgx;
-    $pl_text = "#line 1 \"$filename\"\n$pl_text";
-}
+$pl_text = pod_strip($pl_text, basename($pl_file)) if -e $pl_file;
 
 #  make a c-array
 sub map_fun { local $_ = $_[0];
@@ -61,6 +52,29 @@ my $c_arr = "static char $c_var\[] = { " .
 
 print OUT $c_arr;
 close OUT;
+
+sub pod_strip {
+    my ($pl_text, $filename) = @_;
+
+    local $^W;
+    my $line = 1;
+    $pl_text =~ s{(
+	(\A|.*?\n)
+	=(?:head\d|pod|begin|item|over|for|back|end)\b
+	(?:.*?\n)
+	(?:=cut[\t ]*[\r\n]*?|\Z)
+	(\r?\n)?
+    )}{
+	my ($pre, $post) = ($2, $3);
+        "$pre#line " . (
+	    $line += ( () = ( $1 =~ /\n/g ) )
+	) . $post;
+    }gsex;
+    $pl_text = '#line 1 "' . ($filename) . "\"\n" . $pl_text
+        if length $filename;
+
+    return $pl_text;
+}
 
 # local variables:
 # mode: cperl

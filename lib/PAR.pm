@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #5 $ $Change: 5071 $ $DateTime: 2003/03/31 18:52:32 $ vim: expandtab shiftwidth=4
+# $Revision: #9 $ $Change: 5905 $ $DateTime: 2003/05/16 17:17:49 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.67';
+$PAR::VERSION = '0.67_89';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.67 of PAR, released April 1, 2003.
+This document describes version 0.67_89 of PAR, released May 17, 2003.
 
 =head1 SYNOPSIS
 
@@ -154,7 +154,7 @@ sub import {
         push @PAR_INC, $par if unpar($par, undef, undef, 1);
     }
 
-    push @INC, \&find_par unless grep { $_ eq \&find_par } @INC;
+    unshift @INC, \&find_par unless grep { $_ eq \&find_par } @INC;
 
     require PAR::Heavy;
     PAR::Heavy::_init_dynaloader();
@@ -234,6 +234,7 @@ sub unpar {
     my ($par, $file, $member_only, $allow_other_ext) = @_;
     my $zip = $LibCache{$par};
 
+    return if $PAR::__reading;
     local $PAR::__reading = 1;
 
     unless ($zip) {

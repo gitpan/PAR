@@ -1,14 +1,14 @@
-# $File: //member/autrijus/Module-Install-private/lib/Module/Install/private/PAR.pm $ $Author: autrijus $
-# $Revision: #13 $ $Change: 5006 $ $DateTime: 2003/03/29 09:33:22 $ vim: expandtab shiftwidth=4
+#line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.0/Module/Install/PRIVATE/PAR.pm"
+# $File: //member/autrijus/Module-Install-PRIVATE/lib/Module/Install/PRIVATE/PAR.pm $ $Author: autrijus $
+# $Revision: #2 $ $Change: 5848 $ $DateTime: 2003/05/14 20:24:03 $ vim: expandtab shiftwidth=4
 
-package Module::Install::private::PAR;
+package Module::Install::PRIVATE::PAR;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
 
 use 5.006;
 use Config ();
 
 my %no_parl  = ();
-my %no_shlib = ( MSWin32 => ( $Config::Config{cc} =~ /^cl\b/i ), %no_parl );
 
 sub Autrijus_PAR {
     my $self = shift;
@@ -22,16 +22,6 @@ sub Autrijus_PAR {
     }
     elsif (!$par and !$cc) {
         warn "No compiler found, won't generate 'script/parl$exe'!\n";
-    }
-
-    if ($cc and !$no_shlib{$^O} and $self->can_run('patch') and !-e 'PAR/Intro.pod.orig') {
-        my $answer = $self->prompt(
-            "*** Build PAR with *experimental* shared library ('pp -l') support [y/N]?"
-        );
-        if ($answer =~ /^[Yy]/) {
-            chmod 0644, qw(PAR/Intro.pod myldr/main.c script/par.pl script/pp);
-            system($self->can_run('patch') . " -N -p0 < patches/shlib.diff");
-        }
     }
 
     # XXX: this branch is currently not entered

@@ -1,5 +1,6 @@
+#line 1 "inc/Module/Install/Makefile.pm - /usr/local/lib/perl5/site_perl/5.8.0/Module/Install/Makefile.pm"
 # $File: //depot/cpan/Module-Install/lib/Module/Install/Makefile.pm $ $Author: autrijus $
-# $Revision: #39 $ $Change: 1398 $ $DateTime: 2003/03/26 08:45:50 $ vim: expandtab shiftwidth=4
+# $Revision: #42 $ $Change: 1516 $ $DateTime: 2003/05/15 11:14:59 $ vim: expandtab shiftwidth=4
 
 package Module::Install::Makefile;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
@@ -43,11 +44,15 @@ sub write {
 	$args->{ABSTRACT} = $self->abstract;
 	$args->{AUTHOR} = $self->author;
     }
+    if ( eval($ExtUtils::MakeMaker::VERSION) >= 6.10 )
+    {
+        $args->{NO_META} = 1;
+    }
 
     # merge both kinds of requires into prereq_pm
     my $prereq = ($args->{PREREQ_PM} ||= {});
-    %$prereq = ( %$prereq, map { @{$_} } @{ $self->$_ } )
-        for grep $self->$_, qw(requires build_requires);
+    %$prereq = ( %$prereq, map { @{@{$_}} } grep $_,
+                 ($self->build_requires, $self->requires) );
 
     # merge both kinds of requires into prereq_pm
     my $dir = ($args->{DIR} ||= []);
@@ -67,8 +72,8 @@ sub write {
 
 sub fix_up_makefile {
     my $self = shift;
-    my $top_class = ref($self->_top);
-    my $top_version = $self->_top->VERSION;
+    my $top_class = ref($self->_top) || '';
+    my $top_version = $self->_top->VERSION || '';
 
     my $preamble = $self->preamble 
        ? "# Preamble by $top_class $top_version\n" . $self->preamble
@@ -103,3 +108,4 @@ sub postamble {
 
 __END__
 
+#line 240

@@ -1,13 +1,6 @@
 AUTHORS
 ChangeLog
 Changes
-MANIFEST			This list of files
-MANIFEST.SKIP
-META.yml
-Makefile.PL
-README
-SIGNATURE
-TODO
 inc/ExtUtils/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
@@ -18,21 +11,27 @@ inc/Module/Install/Include.pm
 inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
 inc/Module/Install/PAR.pm
+inc/Module/Install/PRIVATE.pm
+inc/Module/Install/PRIVATE/PAR.pm
 inc/Module/Install/Win32.pm
-inc/Module/Install/private.pm
-inc/Module/Install/private/PAR.pm
 lib/App/Packer/PAR.pm
 lib/PAR.pm
 lib/PAR/Heavy.pm
 lib/PAR/Intro.pod
-myldr/Makefile.PL
+Makefile.PL
+MANIFEST			This list of files
+MANIFEST.SKIP
+META.yml
 myldr/file2c.pl
 myldr/main.c
+myldr/Makefile.PL
 package/parl.nsi
-patches/shlib.diff
+README
 script/par.pl
 script/parl.pod
 script/pp
+SIGNATURE
 t/0-signature.t
 t/1-basic.t
 t/hello.par
+TODO

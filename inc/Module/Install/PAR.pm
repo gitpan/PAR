@@ -1,5 +1,6 @@
+#line 1 "inc/Module/Install/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.0/Module/Install/PAR.pm"
 # $File: //depot/cpan/Module-Install/lib/Module/Install/PAR.pm $ $Author: autrijus $
-# $Revision: #20 $ $Change: 1376 $ $DateTime: 2003/03/19 04:49:04 $ vim: expandtab shiftwidth=4
+# $Revision: #22 $ $Change: 1481 $ $DateTime: 2003/05/07 10:41:22 $ vim: expandtab shiftwidth=4
 
 package Module::Install::PAR;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
@@ -33,11 +34,15 @@ sub par_base {
         $self->{file} = $file = "$name-$version-$suffix";
     }
 
+    my $perl = $^X;
+    $perl = Win32::GetShortPathName($perl)
+        if $perl =~ / / and defined &Win32::GetShortPathName;
+
     $self->preamble(<<"END") if $base;
 # --- $class section:
 
 all ::
-\t\@$^X -M$inc_class -e \"extract_par(q($file))\"
+\t\@$perl -M$inc_class -e \"extract_par(q($file))\"
 
 END
 
@@ -112,7 +117,7 @@ sub make_par {
         $zip->writeToFileNamed( $file ) == AZ_OK or die $!;
     }
     elsif ($self->can_run('zip')) {
-        mkdir('blib');
+        mkdir('blib', 0777);
         chdir('blib');
         system(qw(zip -r), "../$file", '.') and die $!;
         chdir('..');

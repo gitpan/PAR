@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #25 $ $Change: 4863 $ $DateTime: 2003/03/22 13:12:24 $
+# $Revision: #27 $ $Change: 5639 $ $DateTime: 2003/05/05 16:52:19 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -34,6 +34,7 @@ Matt Sergeant		(MSERGEANT)
 Nicholas Clark		(NWCLARK)
 Nomota KIM
 Paritosh Tyagi
+Phil Sallee
 Randal L. Schwartz	(MERLYN)
 Reini Urban
 Robert Allerstorfer
@@ -43,5 +44,5 @@ Simon Cozens		(SIMON)
 Sisyphus
 Tim Conrow
 Tina Mueller		(TINITA)
-Ton Hospel
+Ton Hospel		(THOSPEL)
 Uri Guttman		(URI)

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Intro.pod $
-# $Revision: #4 $ $Change: 4870 $ $DateTime: 2003/03/22 15:05:44 $ vim: expandtab shiftwidth=4
+# $Revision: #5 $ $Change: 5894 $ $DateTime: 2003/05/16 15:58:18 $ vim: expandtab shiftwidth=4
 
 =head1 NAME
 
@@ -214,6 +214,12 @@ Scripts are stored in one of the two locations:
     /script/                    # standard location
     /                           # casual packaging only
 
+=item *
+
+Shared libraries are currently stored in a single location:
+ 
+    /shlib/                     # standard location
+ 
 =item *
 
 Special files:

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #18 $ $Change: 4844 $ $DateTime: 2003/03/21 06:26:07 $
+# $Revision: #20 $ $Change: 5836 $ $DateTime: 2003/05/14 03:45:50 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -16,12 +16,13 @@ xsinit(undef);
 
 my $debug = 0;
 
+my $perl = $^X;
 my $exe = $Config{_exe};
 my $o = $Config{obj_ext};
 my $gccversion = $Config{gccversion};
 my $pccflags = ccopts;
 my $pldflags = ldopts;
-my $ld = $Config{ld};
+my $ld = $Config{ld} || $Config{cc};
 my $cc = $Config{cc};
 my $f2c = File::Spec->catfile(".", "file2c.pl");
 my $par_pl = File::Spec->catfile('..', 'script', "par.pl");
@@ -29,7 +30,10 @@ my $par_exe = File::Spec->catfile('.', "par$exe");
 my $parl_exe = File::Spec->catfile('..', 'script', "parl$exe");
 my $lib_path = join(' ', map qq(-I"$_"), @INC);
 
-system($^X, $f2c, $par_pl, 'my_par_pl.c', 'load_me_2');
+$perl = Win32::GetShortPathName($perl)
+    if $perl =~ / / and defined &Win32::GetShortPathName;
+
+system($perl, $f2c, $par_pl, 'my_par_pl.c', 'load_me_2');
 
 print "Writing Makefile for the par$exe program\n";
 
@@ -69,7 +73,7 @@ else {
 
 RM=$rm
 MV=$mv
-PERL=$^X
+PERL=$perl
 LD=$ld
 CC=$cc
 CFLAGS=$cflags

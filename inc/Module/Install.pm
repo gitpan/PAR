@@ -1,8 +1,9 @@
+#line 1 "inc/Module/Install.pm - /usr/local/lib/perl5/site_perl/5.8.0/Module/Install.pm"
 # $File: //depot/cpan/Module-Install/lib/Module/Install.pm $ $Author: autrijus $
-# $Revision: #45 $ $Change: 1401 $ $DateTime: 2003/03/27 08:11:53 $ vim: expandtab shiftwidth=4
+# $Revision: #51 $ $Change: 1510 $ $DateTime: 2003/05/14 14:19:04 $ vim: expandtab shiftwidth=4
 
 package Module::Install;
-$VERSION = '0.19_95';
+$VERSION = '0.19_98';
 
 die <<END unless defined $INC{'inc/Module/Install.pm'};
 You must invoke Module::Install with:
@@ -17,24 +18,30 @@ END
 
 use strict 'vars';
 use File::Find;
+use File::Path;
 
 @inc::Module::Install::ISA = 'Module::Install';
+
+#line 124
 
 sub import {
     my $class = $_[0];
     my $self = $class->new(@_[1..$#_]);
 
-    unless (-f $self->{file}) {
+    if (not -f $self->{file}) {
         require "$self->{path}/$self->{dispatch}.pm";
-        ($self->{admin} ||=
-            "$self->{name}::$self->{dispatch}"->new(_top => $self)
-        )->init;
+        mkpath "$self->{prefix}/$self->{author}";
+        $self->{admin} = 
+          "$self->{name}::$self->{dispatch}"->new(_top => $self);
+        $self->{admin}->init;
         @_ = ($class, _self => $self);
         goto &{"$self->{name}::import"};
     }
 
     *{caller(0) . "::AUTOLOAD"} = $self->autoload;
 }
+
+#line 147
 
 sub autoload {
     my $self = shift;
@@ -46,6 +53,8 @@ sub autoload {
     };
 }
 
+#line 164
+
 sub new {
     my ($class, %args) = @_;
 
@@ -53,6 +62,7 @@ sub new {
 
     $args{dispatch} ||= 'Admin';
     $args{prefix}   ||= 'inc';
+    $args{author}   ||= '.author';
     $args{bundle}   ||= '_bundle';
 
     $class =~ s/^\Q$args{prefix}\E:://;
@@ -67,6 +77,8 @@ sub new {
     bless(\%args, $class);
 }
 
+#line 192
+
 sub call {
     my $self   = shift;
     my $method = shift;
@@ -75,6 +87,8 @@ sub call {
     unshift @_, $obj;
     goto &{$obj->can($method)};
 }
+
+#line 207
 
 sub load {
     my ($self, $method) = @_;
@@ -98,6 +112,8 @@ END
     $obj;
 }
 
+#line 237
+
 sub load_extensions {
     my ($self, $path, $top_obj) = @_;
 
@@ -114,6 +130,8 @@ sub load_extensions {
         push @{$self->{extensions}}, $pkg->new( _top => $top_obj );
     }
 }
+
+#line 261
 
 sub find_extensions {
     my ($self, $path) = @_;
@@ -136,3 +154,4 @@ sub find_extensions {
 
 __END__
 
+#line 550

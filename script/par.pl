@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #50 $ $Change: 4879 $ $DateTime: 2003/03/22 17:11:38 $ vim: expandtab shiftwidth=4
+# $Revision: #57 $ $Change: 5898 $ $DateTime: 2003/05/16 16:30:10 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -194,14 +194,24 @@ my ($start_pos, $data_pos);
                 binmode($out);
                 print $out $buf;
                 close $out;
+                chmod 0755, $filename;
             }
             $PAR::Heavy::DLCache{$filename}++;
             $PAR::Heavy::DLCache{$basename}   =
             $PAR::Heavy::FullCache{$fullname} = $filename;
             $PAR::Heavy::FullCache{$filename} = $fullname;
         }
+        elsif ( $fullname =~ m|^/?shlib/| and defined $ENV{PAR_TEMP} ) {
+            # should be moved to _tempfile()
+            $filename = "$ENV{PAR_TEMP}/$basename$ext";
+            open $out, '>', $filename or die $!;
+            binmode($out);
+            print $out $buf;
+            close $out;
+        }
         else {
-            $require_list{$fullname} = \"$buf";
+            $require_list{$fullname} =
+            $PAR::Heavy::ModuleCache{$fullname} = \"$buf";
         }
         read _FH, $buf, 4;
     }
@@ -283,13 +293,13 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
         $ARGV[0] =~ /^-([AIMOBbq])(.*)/ or last;
 
         if ($1 eq 'I') {
-            push @INC, $2;
+            unshift @INC, $2;
         }
         elsif ($1 eq 'M') {
             eval "use $2";
         }
         elsif ($1 eq 'A') {
-            push @par_args, $2;
+            unshift @par_args, $2;
         }
         elsif ($1 eq 'O') {
             $out = $2;
@@ -329,12 +339,12 @@ if ($out) {
     $/ = (defined $data_pos) ? \$data_pos : undef;
     seek _FH, 0, 0;
     my $loader = scalar <_FH>;
-    $loader =~ s/
-        ^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
-        ^=cut\b[^\n]*$
-        \n*
-    //smgx if !$ENV{PAR_VERBATIM} and $loader =~ /^(?:#!|\@rem)/;
-    print OUT $loader;
+    if (!$ENV{PAR_VERBATIM} and $loader =~ /^(?:#!|\@rem)/) {
+        print OUT pod_strip($loader, $0);
+    }
+    else {
+        print OUT $loader;
+    }
     $/ = undef;
     # }}}
 
@@ -360,6 +370,7 @@ if ($out) {
         $files{$_}++ for values %INC;
 
         my $lib_ext = $Config::Config{lib_ext};
+        my %written;
 
         foreach (sort keys %files) {
             my ($name, $file);
@@ -373,27 +384,37 @@ if ($out) {
                     ($file, $name) = ($1, $2);
                     last;
                 }
-                elsif (m!^/loader/[^/]+/(.*[^Cc])\Z! and -f "$dir/$1") {
-                    ($file, $name) = ("$dir/$1", $1);
-                    last;
+                elsif (m!^/loader/[^/]+/(.*[^Cc])\Z!) {
+                    if (my $ref = $PAR::Heavy::ModuleCache{$1}) {
+                        ($file, $name) = ($ref, $1);
+                        last;
+                    }
+                    elsif (-f "$dir/$1") {
+                        ($file, $name) = ("$dir/$1", $1);
+                        last;
+                    }
                 }
             }
 
-            next unless defined $name;
-            next if ( $file =~ /\.\Q$lib_ext\E$/ );
-            outs("Writing $file");
+            next unless defined $name and not $written{$name}++;
+            next if !ref($file) and $file =~ /\.\Q$lib_ext\E$/;
+            outs(qq(Packing "$file"...));
 
-            open FILE, "$file" or die "Can't open $file: $!";
-            binmode(FILE);
-            my $content = <FILE>;
-            $content =~ s/
-                ^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
-                ^=cut\b[^\n]*$
-                \n*
-            //smgx if !$ENV{PAR_VERBATIM} and lc($name) =~ /\.(?:pm|ix|al)$/i;
-            close FILE;
+            my $content;
+            if (ref($file)) {
+                $content = ${$file};
+            }
+            else {
+                open FILE, "$file" or die "Can't open $file: $!";
+                binmode(FILE);
+                $content = <FILE>;
+                close FILE;
 
-            outs(qq(Packing file "$name"...));
+                $content = pod_strip($content, $file)
+                    if !$ENV{PAR_VERBATIM} and lc($name) =~ /\.(?:pm|ix|al)$/i;
+            }
+
+            outs(qq(Written as "$name"));
             print OUT "FILE";
             print OUT pack('N', length($name) + 9);
             print OUT sprintf(
@@ -459,6 +480,20 @@ if ($out) {
 
     push @PAR::LibCache, $zip;
     $PAR::LibCache{$0} = $zip;
+
+    $quiet = !$ENV{PAR_DEBUG};
+    outs(qq(\$ENV{PAR_TEMP} = "$ENV{PAR_TEMP}"));
+
+    foreach my $member ( $zip->members ) {
+        my $member_name = $member->fileName;
+        if ( $member_name =~ m|^/?shlib/(.+)$| and $ENV{PAR_TEMP} ) {
+            my $extract_name = $1;
+            my $dest_name = File::Spec->catfile($ENV{PAR_TEMP}, $extract_name);
+            $member->extractToFileNamed($dest_name);
+            outs(qq(Extracting "$member_name" to "$dest_name", and loading the file));
+            my $libref = DynaLoader::dl_load_file($dest_name, 0x0); # $module->dl_load_flags);
+        }
+    }
     # }}}
 }
 # }}}
@@ -497,10 +532,11 @@ sub require_modules {
     require PAR::Heavy;
 }
 
+# N.B. we set PAR_TMP_DIR and PAR_TEMP in myldr/main.c
 my $tmpdir;
 sub tmpdir {
     return $tmpdir if defined $tmpdir;
-    my @dirlist = (@ENV{qw(TMPDIR TEMP TMP)}, qw(C:/temp /tmp /));
+    my @dirlist = (@ENV{qw(PAR_TMP_DIR TMPDIR TEMP TMP)}, qw(C:/temp /tmp /));
     {
         if (${"\cTAINT"}) { eval {
             require Scalar::Util;
@@ -550,6 +586,33 @@ sub _tempfile {
 END { unlink @tmpfiles if @tmpfiles }
 
 sub outs { warn("@_\n") unless $quiet }
+
+sub pod_strip {
+    my ($pl_text, $filename) = @_;
+
+    local $^W;
+    my $line = 1;
+    if ($pl_text =~ /^=(?:head\d|pod|begin|item|over|for|back|end)\b/) {
+        $pl_text = "\n$pl_text";
+        $line--;
+    }
+    $pl_text =~ s{(
+	(.*?\n)
+	=(?:head\d|pod|begin|item|over|for|back|end)\b
+	.*?\n
+	(?:=cut[\t ]*[\r\n]*?|\Z)
+	(\r?\n)?
+    )}{
+	my ($pre, $post) = ($2, $3);
+        "$pre#line " . (
+	    $line += ( () = ( $1 =~ /\n/g ) )
+	) . $post;
+    }gsex;
+    $pl_text = '#line 1 "' . ($filename) . "\"\n" . $pl_text
+        if length $filename;
+
+    return $pl_text;
+}
 
 ########################################################################
 # The main package for script execution
