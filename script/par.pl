@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #29 $ $Change: 2576 $ $DateTime: 2002/12/03 00:32:31 $
+# $Revision: #30 $ $Change: 2663 $ $DateTime: 2002/12/11 01:34:41 $
 
 package __par_pl;
 
@@ -120,6 +120,25 @@ to build a truly self-containing executable:
     % par -B -O./myapp myapp.par
 
 =cut
+
+# fix $0 if invoked from PATH
+unless (-f $0) {
+    $Config{path_sep} = ($^O =~ /^MSWin/ ? ';' : ':');
+    $Config{_exe} = ($^O =~ /^MSWin|OS2/ ? '.exe' : '');
+    $Config{_delim} = ($^O =~ /^MSWin|OS2/ ? '\\' : '/');
+
+    if (-f "$0$Config{_exe}") {
+        $0 = "$0$Config{_exe}";
+    }
+    else {
+        foreach my $dir (split /$Config{path_sep}/, $ENV{PATH}) {
+	    (($0 = "$dir$Config{_delim}$0$Config{_exe}"), last)
+		if -f "$dir$Config{_delim}$0$Config{_exe}";
+	    (($0 = "$dir$Config{_delim}$0"), last)
+		if -f "$dir$Config{_delim}$0";
+	}
+    }
+}
 
 # Magic string checking and extracting bundled modules {{{
 my ($start_pos, $data_pos);
@@ -258,24 +277,6 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
 	}
 
 	shift(@ARGV);
-    }
-}
-
-# fix $0 if invoked from PATH
-unless (-f $0) {
-    $Config{path_sep} = ($^O =~ /^MSWin/ ? ';' : ':');
-    $Config{_exe} = ($^O =~ /^MSWin|OS2/ ? '.exe' : '');
-    $Config{_delim} = ($^O =~ /^MSWin|OS2/ ? '\\' : '/');
-    if (-f "$0$Config{_exe}") {
-        $0 = "$0$Config{_exe}";
-    }
-    else {
-        foreach my $dir (split /$Config{path_sep}/, $ENV{PATH}) {
-	    (($0 = "$dir$Config{_delim}$0$Config{_exe}"), last)
-		if -f "$dir$Config{_delim}$0$Config{_exe}";
-	    (($0 = "$dir$Config{_delim}$0"), last)
-		if -f "$dir$Config{_delim}$0";
-	}
     }
 }
 

@@ -1,4 +1,14 @@
 ____________________________________________________________________________
+[  2663] By: autrijus                              on 2002/12/11  01:34:41
+        Log: * This be 0.51.
+             * Fixed incorrect PATH initialization problem on
+             Solaris, as reported by Markus Jansen.
+	   ! PAR.pm script/par.pl
+____________________________________________________________________________
+[  2578] By: autrijus                              on 2002/12/03  00:47:52
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  2577] By: autrijus                              on 2002/12/03  00:33:18
         Log: * This be 0.50, the 'thanks to Markus Jansen' edition.
 	   ! AUTHORS PAR.pm

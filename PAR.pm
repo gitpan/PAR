@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #49 $ $Change: 2577 $ $DateTime: 2002/12/03 00:33:18 $
+# $Revision: #50 $ $Change: 2663 $ $DateTime: 2002/12/11 01:34:41 $
 
 package PAR;
-$PAR::VERSION = '0.50';
+$PAR::VERSION = '0.51';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.50 of PAR, released December 3, 2002.
+This document describes version 0.51 of PAR, released December 11, 2002.
 
 =head1 SYNOPSIS
 
