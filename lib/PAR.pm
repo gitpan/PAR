@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #45 $ $Change: 9459 $ $DateTime: 2003/12/28 01:18:54 $ vim: expandtab shiftwidth=4
+# $Revision: #46 $ $Change: 9520 $ $DateTime: 2003/12/31 14:15:38 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.76_99';
+$PAR::VERSION = '0.77';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.76_99 of PAR, released December 28, 2003.
+This document describes version 0.77 of PAR, released January 1, 2004.
 
 =head1 SYNOPSIS
 
@@ -436,7 +436,7 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2002, 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2002, 2003, 2004 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

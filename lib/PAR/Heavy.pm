@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #13 $ $Change: 8328 $ $DateTime: 2003/10/05 07:07:53 $
+# $Revision: #14 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.06';
@@ -161,7 +161,7 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2002, 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2002, 2003, 2004 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

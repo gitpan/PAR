@@ -1,7 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR/Filter/PodStrip.pm $ $Author: autrijus $
-# $Revision: #3 $ $Change: 8554 $ $DateTime: 2003/10/26 02:34:27 $
+# $Revision: #4 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $
 
 package PAR::Filter::PodStrip;
+
 use strict;
 use base 'PAR::Filter';
 
@@ -71,7 +72,7 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2003, 2004 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

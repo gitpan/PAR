@@ -1,4 +1,76 @@
 ____________________________________________________________________________
+[  9525] By: autrijus                              on 2003/12/31  15:12:28
+        Log: * This be PAR 0.77.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  9521] By: autrijus                              on 2003/12/31  14:25:44
+        Log: * updates AUTHORS and last-minute changelog
+	   ! AUTHORS ChangeLog
+____________________________________________________________________________
+[  9520] By: autrijus                              on 2003/12/31  14:15:38
+        Log: * bump version, update build infrastucture
+	   - inc/Module/Install/Bundle.pm
+	   ! MANIFEST Makefile.PL inc/Module/Install.pm
+	   ! inc/Module/Install/Can.pm
+	   ! inc/Module/Install/PRIVATE.pm
+	   ! inc/Module/Install/PRIVATE/PAR.pm lib/PAR.pm
+____________________________________________________________________________
+[  9519] By: autrijus                              on 2003/12/31  14:14:46
+        Log: * README falsly stated we will ask user before
+             downloading nmake.exe.	We won't.
+	   ! README
+____________________________________________________________________________
+[  9518] By: autrijus                              on 2003/12/31  14:09:50
+        Log: * ditto for scripts.
+	   ! script/par.pl script/parl.pod script/pp
+	   ! script/tkpp
+____________________________________________________________________________
+[  9517] By: autrijus                              on 2003/12/31  14:04:33
+        Log: * update copyright strings to 2004.
+	   ! lib/PAR/FAQ.pod lib/PAR/Filter.pm
+	   ! lib/PAR/Filter/Bleach.pm
+	   ! lib/PAR/Filter/Bytecode.pm
+	   ! lib/PAR/Filter/Obfuscate.pm
+	   ! lib/PAR/Filter/PatchContent.pm
+	   ! lib/PAR/Filter/PodStrip.pm lib/PAR/Heavy.pm
+	   ! lib/PAR/Tutorial.pod
+____________________________________________________________________________
+[  9487] By: autrijus                              on 2003/12/30  02:18:42
+        Log: * work around utf8_heavy.pl swash bug in perl 5.6.x.
+	   ! lib/PAR/Filter/PatchContent.pm script/pp
+____________________________________________________________________________
+[  9486] By: autrijus                              on 2003/12/29  16:59:56
+        Log: * be less verbose during make.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  9485] By: autrijus                              on 2003/12/29  16:57:24
+        Log: * removed the ".out" part from the default
+             "a.out.par" and "a.out.pl" names.
+             * "pp -r" now works against -p and -P.
+	   ! script/pp
+____________________________________________________________________________
+[  9484] By: autrijus                              on 2003/12/29  16:56:24
+        Log: * redraw camel to improve edges contrast
+	   ! myldr/win32.res
+____________________________________________________________________________
+[  9467] By: autrijus                              on 2003/12/28  05:22:50
+        Log: * remove the gpg input box altogether.
+	   ! script/tkpp
+____________________________________________________________________________
+[  9466] By: autrijus                              on 2003/12/28  05:14:18
+        Log: * Patch from Alan Stewart to make tkpp
+             work against Tk800.024.
+	   ! script/tkpp
+____________________________________________________________________________
+[  9465] By: autrijus                              on 2003/12/28  05:01:09
+        Log: * use strcmpi() instead of the very kludgy
+             tolower() from ctype.h
+	   ! myldr/static.c
+____________________________________________________________________________
+[  9462] By: autrijus                              on 2003/12/28  02:28:50
+        Log: * changes.
+	   ! ChangeLog Changes
+____________________________________________________________________________
 [  9460] By: autrijus                              on 2003/12/28  02:00:30
         Log: * This be 0.76_99, for real.
 	   ! Makefile.PL myldr/Makefile.PL myldr/static.c

@@ -1,4 +1,4 @@
-#line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.1/Module/Install/PRIVATE/PAR.pm"
+#line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.2/Module/Install/PRIVATE/PAR.pm"
 # $File: //member/autrijus/Module-Install-PRIVATE/lib/Module/Install/PRIVATE/PAR.pm $ $Author: autrijus $
 # $Revision: #12 $ $Change: 9361 $ $DateTime: 2003/12/20 01:10:25 $ vim: expandtab shiftwidth=4
 

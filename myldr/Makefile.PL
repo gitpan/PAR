@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #53 $ $Change: 9460 $ $DateTime: 2003/12/28 02:00:30 $
+# $Revision: #54 $ $Change: 9486 $ $DateTime: 2003/12/29 16:59:56 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -154,7 +154,7 @@ my_par_pl.c:
 	\$(PERL) $f2c $par_pl \$@ load_me_2 $long_literal
 
 $parl_exe: $par
-	$par $lib_path -I../myldr/.. -I../blib/lib -B -O\$@
+	$par $lib_path -I../myldr/.. -I../blib/lib -q -B -O\$@
 
 disttest:
 	-\$(NOOP)
@@ -172,7 +172,7 @@ EOT
     print OUT << "EOT" if $dynperl;
 
 $parldyn_exe: $par_exe
-	$par_exe -I../myldr/.. -I../blib/lib $lib_path -B -O\$@
+	$par_exe -I../myldr/.. -I../blib/lib $lib_path -q -B -O\$@
 
 $static_exe: my_perl.c my_par.c static$o
 	\$(LD) static$o \$(PERL_LDFLAGS) $res $out$static_exe_link

@@ -1,7 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR/Filter/PatchContent.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 8554 $ $DateTime: 2003/10/26 02:34:27 $
+# $Revision: #6 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $
 
 package PAR::Filter::PatchContent;
+
 use strict;
 use base 'PAR::Filter';
 
@@ -49,7 +50,7 @@ sub PATCH_CONTENT () { {
              $dll =~ s!\\\\!/!g;
          } else { die $! }',
     ],
-    'SQL/Parser.pm'   => [
+    'SQL/Parser.pm'   	    => [
         'my @dialects;' =>
         'my @dialects = ();
          foreach my $member ( $PAR::LastAccessedPAR->members ) {
@@ -67,6 +68,12 @@ sub PATCH_CONTENT () { {
             PAR::read_file("lib/Pod/perldiag.pod") ||
             PAR::read_file("lib/pod/perldiag.pod")
         ) ',
+    ],
+    'utf8_heavy.pl'	    => [
+        '$list ||= eval { $caller->$type(); }'
+       	    => '$list = eval { $caller->$type(); }',
+	'|| croak("Can\'t find $encoding character property definition via $caller->$type or $file.pl")'
+	    => '|| croak("Can\'t find $encoding character property definition via $caller->$type or $file.pl") unless $list;'
     ],
 } };
 
@@ -99,7 +106,7 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2003, 2004 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

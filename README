@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #26 $ $Change: 8582 $ $DateTime: 2003/10/27 11:27:03 $
+# $Revision: #27 $ $Change: 9519 $ $DateTime: 2003/12/31 14:14:46 $
 
 This is the README file for PAR, a toolkit to use perl scripts and
 modules stored inside compressed .par files.
@@ -65,10 +65,10 @@ utility before installation. It's available at:
     http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/nmake15.exe
 
 If you are connected to the internet, "perl Makefile.PL" is capable
-of automatically fetch it, and install into your Perl/bin directory;
-all you have to do is to answer 'y' to this question:
+of automatically fetch it, and install into your Perl/bin directory.
+You will see a message like this:
 
-    Required executable 'nmake' not found. Install it? [Y/n]:
+    The required 'nmake' executable not found, fetching it...
 
 However, if you are not yet online, or wish to install 'nmake' into
 another directory, then please download the file manually, save it to
@@ -149,7 +149,7 @@ Please submit bug reports to <bug-par@rt.cpan.org>.
 
 * Copyright
 
-Copyright 2002, 2003 by Autrijus Tang <autrijus@autrijus.org>.
+Copyright 2002, 2003, 2004 by Autrijus Tang <autrijus@autrijus.org>.
 
 All rights reserved.  You can redistribute and/or modify
 this bundle under the same terms as Perl itself.

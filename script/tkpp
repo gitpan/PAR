@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/tkpp $ $Author: autrijus $
-# $Revision: #9 $ $Change: 9359 $ $DateTime: 2003/12/19 22:28:54 $ vim: expandtab shiftwidth=4
+# $Revision: #12 $ $Change: 9518 $ $DateTime: 2003/12/31 14:09:50 $ vim: expandtab shiftwidth=4
 
-our $VERSION = '1.1';
+our $VERSION = '1.11';
 
 =head1 NAME
 
@@ -38,14 +38,19 @@ accepts C<.ico> files.
 
 =head2 Add modules/files (--add)
 
-Adds the specified items into the package, along with their dependencies.
+Add the specified items into the package, along with their dependencies.
 Multiple items should be seperated by a comma (C<,>) or semicolon (C<;>).
 
 =head2 Exclude modules (--exclude)
 
-Excludes the given module from the dependency search path and from
+Exclude the given module from the dependency search path and from
 the package.  Multiple modules should be seperated by a comma (C<,>) or
 semicolon (C<;>).
+
+=head2 Scan dependencies (--compile, --execute, --noscan)
+
+Specify the dependency scanning method to use.  See L<pp> for explanations
+of the options.
 
 =head2 GUI (--gui)
 
@@ -105,6 +110,7 @@ my $dogui;
 my $dolog;
 my $doverbose;
 my $excludemodules;
+my $scanmethod;
 my $gpgpath;
 my $iconfile;
 my $logfile = File::Spec->catfile($homedir, "tkpp.log");
@@ -272,6 +278,21 @@ $frame2->Label(-text => "Exclude modules ")->grid(
     -pady => 2
 );
 
+$frame2->Label(-text => "Scan dependencies ")->grid(
+    my $scanmethodbox = $frame2->Optionmenu(
+        -options => [
+            ['static'           => undef],
+            ['compile + static' => ['--compile']],
+            ['execute + static' => ['--execute']],
+            ['compile only'     => ['--compile', '--noscan']],
+            ['execute only'     => ['--execute', '--noscan']],
+        ],
+        -variable => \$scanmethod,
+    ),
+    -padx => 1,
+    -pady => 2
+);
+
 $frame2balloon->attach(
     $addmoduleentry,
     -balloonposition => "mouse",
@@ -312,6 +333,7 @@ my $guicheck      = $frame3->Checkbutton(
     ),
     (   $verboselevelbox = $frame3->Optionmenu(
             -options => [ 5, 4, 3, 2, 1 ],
+            -variable => \$verboselevel,
         )
     )
   );
@@ -465,15 +487,13 @@ Please go to File -> Preferences to change the setting.
         $main->Busy();
         my @args = ("$pppath", "--output=$outputfile");
 
-        if ($outputfile =~ /\Q$Config{_exe}\E$/i) {
-        }
-        elsif ($outputfile =~ /\.par$/i) {
+        if ($outputfile =~ /\.par$/i) {
             push(@args, "--par");
         }
         elsif ($outputfile =~ /\.pl$/i) {
             push(@args, "--perlscript");
         }
-        else {
+        elsif ($outputfile !~ /\Q$Config{_exe}\E$/i) {
             showdialog("Invalid File Format", << ".", "error");
 You are trying to write your output file as an invalid file format.
 It must be either a $Config{_exe} or .par file.
@@ -482,8 +502,6 @@ It must be either a $Config{_exe} or .par file.
             $statusbar = "Ready";
             return ();
         }
-
-        push(@args, $sourcefile);
 
         if ($iconfile) {
             push(@args, "--icon=$iconfile");
@@ -495,7 +513,6 @@ It must be either a $Config{_exe} or .par file.
             push(@args, $dolog);
         }
         if ($doverbose) {
-            $verboselevel = $verboselevelbox->getSelectedValue();
             push(@args, "$doverbose$verboselevel");
         }
         if ($addmodules) {
@@ -510,9 +527,12 @@ It must be either a $Config{_exe} or .par file.
                 push(@args, "--exclude=$_");
             }
         }
+        if ($scanmethod) {
+            push @args, @$scanmethod;
+        }
 
         unlink($logfile);
-        system($^X, @args);
+        system($^X, @args, $sourcefile);
         if ($dolog) {
             open LOGFILE, ">>$logfile";
             print LOGFILE "Executed Command: @args\n";
@@ -613,26 +633,6 @@ sub editpreferences {
         -padx => 1,
         -pady => 2,
       );
-    $prefframe->Label(-text => "Path to gpg ")->grid(
-	(          $prefframe->Entry(
-		-textvariable => \$gpgpath,
-		-background   => "white",
-		-width        => 30
-	    )
-	),
-	(          $prefframe->Button(
-		-image   => $main->Getimage("openfold"),
-		-command => [     sub { &openfile },
-		    [                 [ "GPG",       ["gpg$Config{_exe}"] ],
-			[ "All Files", ["*"] ]
-		    ],
-		    \$gpgpath
-		]
-	    )
-	),
-	-padx => 1,
-	-pady => 2
-    ) if 0;
     $prefframe->pack();
     my $answer = $preferences->Show();
     if ($answer eq "OK") {
@@ -877,8 +877,8 @@ In the event this application breaks, you get both pieces ;)
 
 =head1 COPYRIGHT
 
-Copyright 2003 by Doug Gruber E<lt>doug(a)dougthug.comE<gt>,
-                  Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2003, 2004 by Doug Gruber E<lt>doug(a)dougthug.comE<gt>,
+Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 Neither this program nor the associated L<pp> program impose any
 licensing restrictions on files generated by their execution, in

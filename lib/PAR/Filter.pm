@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Filter.pm $ $Author: autrijus $
-# $Revision: #5 $ $Change: 9387 $ $DateTime: 2003/12/23 07:08:48 $
+# $Revision: #6 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $
 
 package PAR::Filter;
 $PAR::Filter::VERSION = '0.02';
@@ -92,7 +92,7 @@ Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2003, 2004 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or 
 modify it under the same terms as Perl itself.

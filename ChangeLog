@@ -1,9 +1,17 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #27 $ $Change: 9462 $ $DateTime: 2003/12/28 02:28:50 $
+# $Revision: #29 $ $Change: 9527 $ $DateTime: 2003/12/31 15:27:49 $
 
-[Changes for 0.77 (tentative)]
+[Changes for 0.77 - January 1, 2004]
 
 * New Features
+
+    - New "pp -c" and "pp -x" (--compile/--execute) commands run the
+      script with "perl -c" to check for dependencies.
+      
+    - Also, the new "pp -n" (--noscan) command skips the default
+      static scanning altogether.
+
+    - Added support for "pp -c/-x/-n" to tkpp.
 
     - For dynamically-built perls, pp-generated .exe files will now
       appear in the process table with the same name as it was launched,
@@ -19,6 +27,8 @@
     - External Zlib is no longer required to run pp-generated binaries.
 
 * Bug fixes
+
+    - Makefile.PL was failing if $Config{cc} contains spaces.
 
     - No longer needs setting "Windows 95 compatible mode" to run on WinXP.
 

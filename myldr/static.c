@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #15 $ $Change: 9460 $ $DateTime: 2003/12/28 02:00:30 $
+   $Revision: #16 $ $Change: 9465 $ $DateTime: 2003/12/28 05:01:09 $
    vim: expandtab shiftwidth=4
 */
 
@@ -9,7 +9,6 @@
 #   include <direct.h>
 #   include <errno.h>
 #   include <string.h>
-#   include <ctype.h>
 #   undef mkdir
 #   define mkdir(x, y) _mkdir(x)
 #   define W_OK 2
@@ -104,11 +103,8 @@ int main ( int argc, char **argv, char **env )
 #ifdef WIN32
 	i = strlen(my_file);
 	if (
-		(i < 4) ||
-		(		(*(my_file + i - 4)) != '.') ||
-		(tolower(*(my_file + i - 3)) != 'e') ||
-		(tolower(*(my_file + i - 2)) != 'x') ||
-		(tolower(*(my_file + i - 1)) != 'e')
+		(strlen(my_file) < 4) ||
+		(strcmpi((char *)(my_file + strlen(my_file) - 4), ".exe") != 0)
 	) {
 		strcat(my_file, ".exe");
 	}

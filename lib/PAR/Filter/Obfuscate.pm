@@ -1,14 +1,15 @@
 # $File: //member/autrijus/PAR/lib/PAR/Filter/Obfuscate.pm $ $Author: autrijus $
-# $Revision: #1 $ $Change: 9387 $ $DateTime: 2003/12/23 07:08:48 $
+# $Revision: #2 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $
 
 package PAR::Filter::Obfuscate;
+
 use strict;
 use base 'PAR::Filter';
-use File::Temp;
+use File::Temp ();
 
 =head1 NAME
 
-PAR::Filter::Obfuscate - Obfuscate filter
+PAR::Filter::Obfuscate - Obfuscating filter
 
 =head1 SYNOPSIS
 
@@ -60,7 +61,7 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2003, 2004 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

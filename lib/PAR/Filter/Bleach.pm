@@ -1,7 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR/Filter/Bleach.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 8583 $ $DateTime: 2003/10/27 11:27:17 $
+# $Revision: #5 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $
 
 package PAR::Filter::Bleach;
+
 use strict;
 use base 'PAR::Filter';
 
@@ -27,8 +28,7 @@ sub apply {
     $$ref = unpack("b*", $$ref);
     $$ref =~ tr/01/ \t/;
     $$ref =~ s/(.{9})/$1\n/g;
-    $$ref = q($_=<<'';y;\r\n;;d;s;;pack'b*',$_;ee;!$@||die$@).
-	    "\n$$ref\n\n";
+    $$ref = q($_=<<'';y;\r\n;;d;s;;pack'b*',$_;ee;!$@||die$@)."\n$$ref\n\n";
 }
 
 1;
@@ -49,7 +49,7 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2003, 2004 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
