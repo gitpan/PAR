@@ -1,4 +1,25 @@
 ____________________________________________________________________________
+[  2737] By: autrijus                              on 2002/12/17  11:26:03
+        Log: * This be 0.61, the 'emergency fix' edition.
+	   ! PAR.pm
+____________________________________________________________________________
+[  2736] By: autrijus                              on 2002/12/17  11:25:00
+        Log: * uptodateness of TODO.
+	   ! TODO
+____________________________________________________________________________
+[  2735] By: autrijus                              on 2002/12/17  11:23:57
+        Log: * Extraction of pp-generated scripts were broken due
+             to offset mismatch.  Oops.
+	   ! script/pp
+____________________________________________________________________________
+[  2732] By: autrijus                              on 2002/12/17  04:55:24
+        Log: * changes and signatures.	
+	   ! Changes SIGNATURE
+____________________________________________________________________________
+[  2731] By: autrijus                              on 2002/12/17  04:54:59
+        Log: * updated tests.
+	   ! AUTHORS t/1-basic.t
+____________________________________________________________________________
 [  2728] By: autrijus                              on 2002/12/17  03:40:38
         Log: * This be version 0.60.
              * Document the PAR_CLEARTEMP environment variable

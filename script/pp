@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #13 $ $Change: 2726 $ $DateTime: 2002/12/17 03:12:34 $
+# $Revision: #14 $ $Change: 2735 $ $DateTime: 2002/12/17 11:23:57 $
 
 use 5.006;
 use strict;
@@ -335,6 +335,7 @@ sub _can_run {
 
 sub _main_pl_multi {
     return << '__MAIN__';
+$PAR::__reading = 1;
 my $file = $0;
 my $zip = $PAR::LibCache{$0};
 $file =~ s/^.*[\/\\]//;
@@ -352,6 +353,7 @@ __MAIN__
 sub _main_pl_single {
     my $file = shift;
     return << "__MAIN__";
+\$PAR::__reading = 1;
 my \$zip = \$PAR::LibCache{\$0};
 my \$member = \$zip->memberNamed('$file')
     or die qq(Can't open perl script "$file": No such file or directory);

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/1-basic.t $ $Author: autrijus $
-# $Revision: #7 $ $Change: 1708 $ $DateTime: 2002/10/27 20:53:08 $
+# $Revision: #8 $ $Change: 2731 $ $DateTime: 2002/12/17 04:54:59 $
 
 use Test;
 BEGIN { plan tests => 8 }
