@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/internals.c $ $Author: autrijus $
-   $Revision: #7 $ $Change: 7520 $ $DateTime: 2003/08/14 08:14:03 $
+   $Revision: #10 $ $Change: 8540 $ $DateTime: 2003/10/23 04:42:43 $
    vim: expandtab shiftwidth=4
 */
 
@@ -59,7 +59,12 @@ XS(XS_Internals_PAR_BOOT) {
             sv_setpv(GvSV(tmpgv), fakeargv[0]);
 #endif
 #endif
+#if PERL_REVISION == 5 && PERL_VERSION == 8 && PERL_SUBVERSION == 1  
+        /* 5.8.1 is broken with fakeargv handling. */
+#else
         SvSETMAGIC(GvSV(tmpgv));
+        /* fakeargv[0] = savepv(SvPVX(GvSV(tmpgv))); restore argv[0] */
+#endif
     }
 
     TAINT_NOT;

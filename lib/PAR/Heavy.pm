@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #12 $ $Change: 7522 $ $DateTime: 2003/08/14 08:22:48 $
+# $Revision: #13 $ $Change: 8328 $ $DateTime: 2003/10/05 07:07:53 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.06';
@@ -110,7 +110,7 @@ sub _dl_extract {
     my ($fh, $filename);
 
     # fix borked tempdir from earlier versions
-    if (-e $ENV{PAR_TEMP} and !-d $ENV{PAR_TEMP}) {
+    if ($ENV{PAR_TEMP} and -e $ENV{PAR_TEMP} and !-d $ENV{PAR_TEMP}) {
 	unlink($ENV{PAR_TEMP});
 	mkdir($ENV{PAR_TEMP}, 0755);
     }

@@ -1,4 +1,4 @@
-#line 1 "inc/ExtUtils/AutoInstall.pm - /usr/local/lib/perl5/site_perl/5.8.0/ExtUtils/AutoInstall.pm"
+#line 1 "inc/ExtUtils/AutoInstall.pm - /usr/local/lib/perl5/site_perl/5.8.1/ExtUtils/AutoInstall.pm"
 # $File: //member/autrijus/ExtUtils-AutoInstall/lib/ExtUtils/AutoInstall.pm $ 
 # $Revision: #6 $ $Change: 8105 $ $DateTime: 2003/09/13 20:57:40 $
 

@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #33 $ $Change: 7864 $ $DateTime: 2003/09/04 15:19:49 $
+   $Revision: #34 $ $Change: 8309 $ $DateTime: 2003/10/01 08:58:16 $
    vim: expandtab shiftwidth=4
 */
 
@@ -66,6 +66,13 @@ int main ( int argc, char **argv, char **env )
     int exitstatus;
     int i;
 
+#ifdef PERL_GPROF_MONCONTROL
+    PERL_GPROF_MONCONTROL(0);
+#endif
+#ifdef PERL_SYS_INIT3
+    PERL_SYS_INIT3(&argc,&argv,&env);
+#endif
+
 #if (defined(USE_5005THREADS) || defined(USE_ITHREADS)) && defined(HAS_PTHREAD_ATFORK)
     /* XXX Ideally, this should really be happening in perl_alloc() or
      * perl_construct() to keep libperl.a transparently fork()-safe.
@@ -122,7 +129,7 @@ int main ( int argc, char **argv, char **env )
     fakeargv[argc + options_count - 1] = 0;
 
     exitstatus = perl_parse(my_perl, par_xs_init, argc + options_count - 1,
-                            fakeargv, (char **)NULL);
+                            fakeargv, env);
 
     if (exitstatus) {
         perl_destruct(my_perl);

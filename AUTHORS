@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #40 $ $Change: 8160 $ $DateTime: 2003/09/17 20:06:10 $
+# $Revision: #41 $ $Change: 8424 $ $DateTime: 2003/10/15 23:58:36 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -24,6 +24,7 @@ Germain Garand		(GGARAND)
 Glenn Mabbutt
 H. Wade Minter
 Hirosi Taguti
+Iain Cass
 Iain Truskett		(SPOON)
 Indy Singh
 Jan Dubois		(JDB)

@@ -1,13 +1,6 @@
 AUTHORS
 ChangeLog
 Changes
-MANIFEST			This list of files
-MANIFEST.SKIP
-META.yml
-Makefile.PL
-README
-SIGNATURE
-TODO
 contrib/file2resourceadder.c
 contrib/replaceicon.exe
 contrib/replaceicon.html
@@ -28,18 +21,26 @@ lib/App/Packer/PAR.pm
 lib/PAR.pm
 lib/PAR/Heavy.pm
 lib/PAR/Intro.pod
-myldr/Makefile.PL
+Makefile.PL
+MANIFEST			This list of files
+MANIFEST.SKIP
+META.yml
 myldr/file2c.pl
 myldr/internals.c
 myldr/main.c
+myldr/Makefile.PL
 myldr/mktmpdir.c
 myldr/parlsig.pl
 myldr/static.c
 myldr/win32.res
 package/parl.nsi
+README
 script/par.pl
 script/parl.pod
 script/pp
+script/tkpp
+SIGNATURE
 t/0-signature.t
 t/1-basic.t
 t/hello.par
+TODO

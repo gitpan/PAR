@@ -1,4 +1,63 @@
 ____________________________________________________________________________
+[  8540] By: autrijus                              on 2003/10/23  04:42:43
+        Log: * This be 0.75_99, stopgap release to fix 5.8.1
+	       compatibility.
+	   ! MANIFEST Makefile.PL lib/PAR.pm
+	   ! myldr/internals.c
+____________________________________________________________________________
+[  8510] By: autrijus                              on 2003/10/20  23:35:17
+        Log: * Implement "pp -P"/"pp --perlscript" to produce
+             stand-alone perl scripts.
+             * Add documentations for -N/--info.
+             * Add documentations for -f/--filter and -F/--modfilter.
+	   ! script/pp
+____________________________________________________________________________
+[  8509] By: autrijus                              on 2003/10/20  18:49:25
+        Log: * add sensible POD section to tkpp.
+	   ! script/tkpp
+____________________________________________________________________________
+[  8507] By: autrijus                              on 2003/10/20  16:57:49
+        Log: * tkpp, graphical pp frontend, contributed by Doug Gruber.
+	   + script/tkpp
+____________________________________________________________________________
+[  8491] By: autrijus                              on 2003/10/19  15:19:48
+        Log: * make par.pl pass use strict; although we can't use it
+	   ! script/par.pl
+____________________________________________________________________________
+[  8450] By: autrijus                              on 2003/10/17  10:41:19
+        Log: * change SvPV_nolen to SvPVX to avoid GET magic
+	   ! myldr/internals.c
+____________________________________________________________________________
+[  8424] By: autrijus                              on 2003/10/15  23:58:36
+        Log: * add Iain Cass to authors.
+	   ! AUTHORS
+____________________________________________________________________________
+[  8423] By: autrijus                              on 2003/10/15  23:58:19
+        Log: * Ian Cass notes that fakeargv[0] becomes garbled
+             after we execute the SET magic.  Try to compensate
+             it by getting it back.
+	   ! myldr/internals.c
+____________________________________________________________________________
+[  8326] By: autrijus                              on 2003/10/03  23:06:55
+        Log: * move the par temp directory from /tmp/par into ./_par/.
+             (on suggestion from brian ingerson.)
+             * add support for 'use lib "http://freepan.org/par.cgi?";'
+             so when the URI ends in /[?&;]/, "pm=$filename" is appended
+             to the request.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  8309] By: autrijus                              on 2003/10/01  08:58:16
+        Log: * add SYS_INIT3 and other stuff from the revised
+             perlembed.pod -- cargo cult at its best.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  8308] By: autrijus                              on 2003/09/30  12:26:10
+        Log: * remove spurious UTF8 BOM bytes that breaks
+             Jouke's pVoice modules.
+             * move patch_content before pod_strip and other
+             input filters in the future.
+	   ! script/pp
+____________________________________________________________________________
 [  8199] By: autrijus                              on 2003/09/21  10:45:03
         Log: * This be PAR, version 0.75.
              * On Win32, the PE info headers should no longer show

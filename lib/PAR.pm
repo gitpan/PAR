@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #39 $ $Change: 8193 $ $DateTime: 2003/09/20 19:22:31 $ vim: expandtab shiftwidth=4
+# $Revision: #41 $ $Change: 8540 $ $DateTime: 2003/10/23 04:42:43 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.75';
+$PAR::VERSION = '0.75_99';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.75 of PAR, released September 21, 2003.
+This document describes version 0.75_99 of PAR, released October 23, 2003.
 
 =head1 SYNOPSIS
 
@@ -217,10 +217,11 @@ sub find_par {
     my $scheme;
     foreach (@PAR_INC ? @PAR_INC : @INC) {
         my $path = $_;
-        if (!@PAR_INC and $path and $path =~ m!//! and $scheme and $scheme =~ /^\w+$/) {
-            $path = "$scheme:$path";
-        }
-        else {
+        if ($[ < 5.008001) {
+            # reassemble from "perl -Ischeme://path" autosplitting
+            $path = "$scheme:$path" if !@PAR_INC
+                and $path and $path =~ m!//!
+                and $scheme and $scheme =~ /^\w+$/;
             $scheme = $path;
         }
         my $rv = unpar($path, $file, $member_only, 1) or next;
@@ -274,15 +275,27 @@ sub unpar {
         if ($par =~ m!^\w+://!) {
             require File::Spec;
             require LWP::Simple;
-            $ENV{PAR_TEMP} ||= File::Spec->catdir(File::Spec->tmpdir, 'par');
-            mkdir $ENV{PAR_TEMP}, 0777;
+
+            # reflector support
+            $par .= "pm=$file" if $par =~ /[?&;]/;
+
+            $ENV{PAR_CACHE} ||= '_par';
+            mkdir $ENV{PAR_CACHE}, 0777;
+            if (!-d $ENV{PAR_CACHE}) {
+                $ENV{PAR_CACHE} = File::Spec->catdir(File::Spec->tmpdir, 'par');
+                mkdir $ENV{PAR_CACHE}, 0777;
+                return unless -d $ENV{PAR_CACHE};
+            }
 
             my $file = $par;
             if (!%escapes) {
                 $escapes{chr($_)} = sprintf("%%%02X", $_) for 0..255;
             }
-            $file =~ s/([^\w\.])/$escapes{$1}/g;
-            $file = File::Spec->catfile( $ENV{PAR_TEMP}, $file);
+            {
+                use bytes;
+                $file =~ s/([^\w\.])/$escapes{$1}/g;
+            }
+            $file = File::Spec->catfile( $ENV{PAR_CACHE}, $file);
             LWP::Simple::mirror( $par, $file );
             return unless -e $file;
             $par = $file;

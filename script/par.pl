@@ -1,17 +1,11 @@
 #!/usr/local/bin/perl
-
-eval 'exec /usr/local/bin/perl  -S $0 ${1+"$@"}'
-    if 0; # not running under some shell
-
-eval 'exec /usr/local/bin/perl  -S $0 ${1+"$@"}'
-    if 0; # not running under some shell
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #79 $ $Change: 7618 $ $DateTime: 2003/08/20 09:29:59 $ vim: expandtab shiftwidth=4
+# $Revision: #80 $ $Change: 8491 $ $DateTime: 2003/10/19 15:19:48 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
 # --- This script must not use any modules at compile time ---
-#use strict;
+# use strict;
 
 =head1 NAME
 
@@ -243,9 +237,9 @@ my ($start_pos, $data_pos);
         }
         elsif ( $fullname =~ m|^/?shlib/| and defined $ENV{PAR_TEMP} ) {
             # should be moved to _tempfile()
-            $filename = "$ENV{PAR_TEMP}/$basename$ext";
+            my $filename = "$ENV{PAR_TEMP}/$basename$ext";
             outs("SHLIB: $filename\n");
-            open $out, '>', $filename or die $!;
+            open my $out, '>', $filename or die $!;
             binmode($out);
             print $out $buf;
             close $out;
@@ -532,7 +526,14 @@ if ($out) {
     foreach my $member ( $zip->members ) {
         next if $member->isDirectory or !$ENV{PAR_TEMP};
         my $member_name = $member->fileName;
-        next unless $member_name =~ m{^/?shlib/(?:$Config::Config{version}/)?(?:$Config::Config{archname}/)?([^/]+)$};
+        next unless $member_name =~ m{
+            ^
+            /?shlib/
+            (?:$Config::Config{version}/)?
+            (?:$Config::Config{archname}/)?
+            ([^/]+)
+            $
+        }x;
         my $extract_name = $1;
         my $dest_name = File::Spec->catfile($ENV{PAR_TEMP}, $extract_name);
         $member->extractToFileNamed($dest_name);
@@ -687,10 +688,10 @@ die $@ if $@;
 
 };
 
-$__ERROR = $@ if $@;
+$::__ERROR = $@ if $@;
 }
 
-die $__ERROR if $__ERROR;
+die $::__ERROR if $::__ERROR;
 
 1;
 

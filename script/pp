@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #83 $ $Change: 8161 $ $DateTime: 2003/09/17 20:25:20 $ vim: expandtab shiftwidth=4
+# $Revision: #85 $ $Change: 8510 $ $DateTime: 2003/10/20 23:35:17 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -149,9 +149,9 @@ sub compile_par {
             open my $file, '<', $map{$pfile} or die $!;
             binmode($file);
             my $content = <$file>;
-            $content = pod_strip($content, $map{$pfile}) unless $verbatim;
 
             modify_content($pfile, \$content);
+            $content = pod_strip($content, $map{$pfile}) unless $verbatim;
 
             $size += length($content);
             $zip->addString( \$content => $root."lib/$pfile", %zip_args );
@@ -320,6 +320,8 @@ sub PATCH_CONTENT () { {
 
 sub modify_content {
     my ($file, $ref) = @_;
+    { use bytes; $$ref =~ s/^\xEF\xBB\xBF//; } # remove utf8 BOM
+
     my @rule = @{PATCH_CONTENT->{$file}||[]} or return;
     while (my ($from, $to) = splice(@rule, 0, 2)) {
         $$ref =~ s/\Q$from\E/$to/g;
@@ -329,11 +331,13 @@ sub modify_content {
 sub par_to_exe {
     my $parl = 'parl';
     $parl = 'parldyn' if (opt(d) and $dynperl);
-    $PARL ||= _can_run("$parl$Config{_exe}") or _die("Can't find par loader");
+    $parl .= $Config{_exe};
+    $parl = 'par.pl' if opt(P);
+    $PARL ||= _can_run($parl) or _die("Can't find par loader");
 
     my $orig_parl = $PARL;
     my $do_unlink;
-    if (opt(i) and $^O eq 'MSWin32' and Win32::IsWinNT() and
+    if (!opt(p) and opt(i) and $^O eq 'MSWin32' and Win32::IsWinNT() and
         my $replace_icon = _can_run("replaceicon.exe")
     ) {
         my $cfh;
@@ -367,9 +371,14 @@ sub par_to_exe {
         $do_unlink = 1;
     }
 
-    my @quiet = (opt(v) ? () : ('-q'));
-    vprint 0, "Running $PARL @quiet -B -O$Output $par_file";
-    system($PARL, @quiet, "-B", "-O$Output", $par_file);
+    my @args = ('-B', "-O$Output", $par_file);
+    unshift @args, '-q' if opt(v);
+    if (opt(P)) {
+        unshift @args, $PARL;
+        $PARL = $^X;
+    }
+    vprint 0, "Running $PARL @args";
+    system($PARL, @args);
 
     if (opt(g) and $^O eq 'MSWin32') {
         vprint 1, "Fixing $Output to remove its console window";
@@ -467,35 +476,41 @@ sub parse_argv {
 
     $Options = {};
     Getopt::Long::GetOptions( $Options,
-        'M|add:s@',     # Include modules
-        'B|bundle',     # Bundle core modules
-        'd|dependent',  # One-liner
-        'e|eval:s',     # One-liner
-        'X|exclude:s@', # Exclude modules
-        'g|gui',        # No console window
-        'h|help',       # Help me
-        'i|icon:s',     # Win32 .ico file
-        'I|lib:s@',     # Include directories (FOR PERL, NOT FOR C)
-        'l|link:s@',    # Include additional shared libraries
-        'L|log:s',      # Where to log packaging process information
-        'm|multiarch',  # Build multiarch PAR file
-        'o|output:s',   # Output file
-        'p|par',        # Generate PAR only
-        'r|run',        # Run the resulting executable
-        'S|save',       # Preserve PAR files
-        's|sign',       # Sign PAR files
-        'v|verbose:s',  # Verbosity level
-        'V|version',    # Show version
+        'M|add:s@',         # Include modules
+        'B|bundle',         # Bundle core modules
+        'd|dependent',      # Do not package libperl
+        'e|eval:s',         # Packing one-liner
+        'X|exclude:s@',     # Exclude modules
+        'f|filter:s@',      # Input filters for scripts
+        'g|gui',            # No console window
+        'h|help',           # Help me
+        'i|icon:s',         # Icon file
+        'N|info',           # Executable header info
+        'I|lib:s@',         # Include directories (for perl)
+        'l|link:s@',        # Include additional shared libraries
+        'L|log:s',          # Where to log packaging process information
+        'F|modfilter:s@',   # Input filter for perl modules
+        'm|multiarch',      # Build multiarch PAR file
+        'o|output:s',       # Output file
+        'p|par',            # Generate PAR only
+        'P|perlscript',     # Generate perl script
+        'r|run',            # Run the resulting executable
+        'S|save',           # Preserve intermediate PAR files
+        's|sign',           # Sign PAR files
+        'v|verbose:s',      # Verbosity level
+        'V|version',        # Show version
     );
 
     $Options->{p} = 1 if opt('m');
     $Options->{v} = 1 if exists $Options->{v} and $Options->{v} eq '';
-    $Options->{B} = 1 unless opt(p) and !opt(o);
+    $Options->{B} = 1 unless opt(p) or opt(P);
 
     helpme() if opt(h); # And exit
     show_version() if opt(V); # And exit
 
-    $Output = opt(o) || ( 'a' . ($Config{_exe} || '.out') );
+    $Output = opt(o) || (
+	'a' . ($Config{_exe} || '.out') . (opt(P) ? '.pl' : '')
+    );
     open $logfh, '>>', opt(L) or die ("XXX: Cannot open log: $!") if (opt(L));
 
     if (opt(e)) {
@@ -757,6 +772,8 @@ B<pp> S<[ B<-BILMSVXdeghilmoprsv> ]> S<[ I<parfile> | I<scriptfile> ]>...
 
     % pp -p -o out.par file     # Creates 'out.par' from 'file'
     % pp -B -p -o out.par file  # same as above, but bundles core modules
+    % pp -P -o out.pl file      # Creates 'out.pl' from 'file'
+    % pp -B -p -o out.pl file   # same as above, but bundles core modules
                                 # (-B is assumed when making executables)
 
     % pp -e 'print q//'         # Pack a one-liner into 'a.out'
@@ -824,7 +841,7 @@ C</lib/> inside the PAR file.
 =item B<-B>, B<--bundle>
 
 Bundles core modules in the resulting package.  This option is enabled
-by default, except when C<-p> is specified and C<-o> is unspecified.
+by default, except when C<-p> or C<-P> is specified.
 
 =item B<-d>, B<--dependent>
 
@@ -842,6 +859,11 @@ Package a one-liner, much the same as C<perl -e '...'>
 Excludes the given module from the dependency search patch and from the
 package.
 
+=item B<-f>, B<--filter>=I<MODULE>
+
+Filter source script(s) with a module.  This feature is currently
+unimplemented.
+
 =item B<-g>, B<--gui>
 
 Build an executable that does not have a console window. This option is
@@ -855,6 +877,20 @@ Shows basic usage information.
 
 Specify an icon file for the executable. This option is ignored on
 non-MSWin32 platforms or when C<-p> is specified.
+
+=item B<-N>, B<--info>=I<KEY=VAL>
+
+Add additional information for the packed file, both in C<META.yml>
+and in the executable header (if applicable).  The name/value pair is
+separated by C<=>.  You may specify C<-N> multiple times.
+
+For Win32 executables, these special C<KEY> names are recognized:
+
+    Comments        CompanyName     FileDescription FileVersion
+    InternalName    LegalCopyright  LegalTrademarks OriginalFilename
+    ProductName     ProductVersion
+
+This feature is currently unimplemented.
 
 =item B<-I>, B<--lib>=I<DIR>
 
@@ -871,6 +907,11 @@ C<-l /usr/local/lib/libncurses.so> in most Unixes.
 
 Log the output of packaging to a file rather than to stdout.
 
+=item B<-F>, B<--modfilter>=I<MODULE>
+
+Filter included perl modules with a module.  This feature is
+currently unimplemented.
+
 =item B<-m>, B<--multiarch>
 
 Build a multi-architecture PAR file.  Implies B<-p>.
@@ -882,6 +923,10 @@ Specifies the file name for the final packaged executable.
 =item B<-p>, B<--par>
 
 Create PAR archives only; do not package to a standalone binary.
+
+=item B<-P>, B<--perlscript>
+
+Create stand-alone perl script; do not package to a standalone binary.
 
 =item B<-r>, B<--run>
 
@@ -935,15 +980,13 @@ different expected settings:
 
 =item Perl interpreter only, without core modules:
 
-    % pp -B -p source.pl                # makes source.par
-    % par.pl -B -Opacked.pl source.par  # makes packed.pl
-    # Now, deploy 'packed.pl' to target machine...
+    % pp -B -P -o packed.pl source.pl   # makes packed.exe
+    # Now, deploy 'packed.exe' to target machine...
     $ perl packed.pl                    # run it
 
 =item Perl with core module installed:
 
-    % pp -p source.pl                   # makes source.par
-    % par.pl -b -Opacked.pl source.par  # makes packed.pl
+    % pp -P -o packed.pl source.pl      # makes packed.exe
     # Now, deploy 'packed.pl' to target machine...
     $ perl packed.pl                    # run it
 
