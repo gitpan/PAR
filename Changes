@@ -1,4 +1,24 @@
 ____________________________________________________________________________
+[  1593] By: autrijus                              on 2002/10/21  17:10:15
+        Log: * Version 0.13.
+             * Implemented suggestion from Nicholas Clark: on PerlIO
+             environments, return PerlIO::scalar in the @INC hook,
+             instead of line-by-line filtering.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1592] By: autrijus                              on 2002/10/21  17:08:24
+        Log: * added -B to par.pl to allow packaging of shared objects.
+             * that completed one of the many TODOs.
+	   ! TODO script/par.pl
+____________________________________________________________________________
+[  1574] By: autrijus                              on 2002/10/20  19:05:20
+        Log: * experimental support for embedded .so files for full self-bootstrapping.
+	   ! PAR.pm script/par.pl
+____________________________________________________________________________
+[  1570] By: autrijus                              on 2002/10/20  12:46:06
+        Log: * changes and signature.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1569] By: autrijus                              on 2002/10/20  12:45:22
         Log: * oops. should require Archive::Zip explicitly lest it fails loading.
 	   ! PAR.pm

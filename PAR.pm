@@ -1,13 +1,12 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #13 $ $Change: 1569 $ $DateTime: 2002/10/20 12:45:22 $
+# $Revision: #15 $ $Change: 1593 $ $DateTime: 2002/10/21 17:10:15 $
 
 package PAR;
-$PAR::VERSION = '0.12';
+$PAR::VERSION = '0.13';
 
 use 5.006;
 use strict;
 use Config ();
-use Archive::Zip ();
 
 =head1 NAME
 
@@ -15,7 +14,7 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.12 of PAR, released October 20, 2002.
+This document describes version 0.13 of PAR, released October 20, 2002.
 
 =head1 SYNOPSIS
 
@@ -115,16 +114,16 @@ my $ver		= sprintf("%vd", $^V);
 my $arch	= $Config::Config{archname};
 my $dl_dlext	= $Config::Config{dlext};
 
-my $Reentrant;			# flag to avoid recursive import
+my $_reentrant;			# flag to avoid recursive import
 sub import {
     my $class = shift;
-    return if !@_ and $Reentrant++;
+    return if !@_ and $_reentrant++;
 
     foreach my $par (@_) {
 	push @PAR_INC, $par if unpar($par);
     }
 
-    push @INC, \&incpar unless grep { $_ eq \&incpar } @INC;
+    push @INC, \&find_par unless grep { $_ eq \&find_par } @INC;
 
     _init_dynaloader();
 
@@ -164,10 +163,10 @@ sub import {
 	exit;
     }
 
-    $Reentrant-- if !@_;
+    $_reentrant-- if !@_;
 }
 
-sub incpar {
+sub find_par {
     my ($self, $file, $member_only) = @_;
 
     foreach my $path (@PAR_INC ? @PAR_INC : @INC) {
@@ -205,7 +204,9 @@ sub unpar {
 	    return unless -e $par;
 	}
 
+	require Compress::Zlib;
 	require Archive::Zip;
+
 	$zip = Archive::Zip->new;
 	next unless $zip->read($par) == Archive::Zip::AZ_OK();
 
@@ -224,26 +225,32 @@ sub unpar {
 
     return $member if $member_only;
 
-    my @lines = map "$_\n", split("\n", scalar $member->contents);
+    # If lucky enough to have PerlIO, use it instead of ugly filtering.
+    if (eval { require PerlIO::scalar; 1 }) {
+	open my $fh, '<:scalar', \(scalar $member->contents);
+	return $fh;
+    }
 
     # You did not see this undocumented super-jenga piece.
+    my @lines = split(/(?<=\n)/, scalar $member->contents);
+
     return (sub {
 	$_ = shift(@lines);
-	if ($_ eq "__DATA__\n" or $_ eq "__END__\n") {
+	if (/^__(END|DATA)__$/) {
 	    $DATACache{$par} = join('', @lines);
 	    @lines = ();
-	    $_ = _wrap_data($par);
+	    $_ = _wrap_data($par, 1);
 	}
 	return length $_;
     });
 }
 
 sub _wrap_data {
-    my $key = shift;
+    my ($key, $skip_perlio) = @_;
 
-    if (eval {require PerlIO::scalar; 1}) {
+    if (!$skip_perlio and eval {require PerlIO::scalar; 1}) {
 	return "use PAR (".
-	       "    open(*DATA, '<', \\\$PAR::DATACache{'$key'}) ? () : ()".
+	       "    open(*DATA, '<:scalar', \\\$PAR::DATACache{'$key'}) ? () : ()".
 	       ");\n"; 
     }
     elsif (eval {require IO::Scalar; 1}) {
@@ -277,6 +284,8 @@ sub _init_dynaloader {
 }
 
 sub _dl_findfile {
+    # print "Finding $_[-1]. DLCache reads ", %DLCache, "\n";
+
     return $DLCache{$_[-1]} if exists $DLCache{$_[-1]};
     return $dl_findfile->(@_);
 }
@@ -287,7 +296,7 @@ sub _bootstrap {
     my (@dirs, $file);
 
     if ($module) {
-	my @modparts = split(/::/,$module);
+	my @modparts = split(/::/, $module);
 	my $modfname = $modparts[-1];
 
 	$modfname = &DynaLoader::mod2fname(\@modparts)
@@ -297,14 +306,16 @@ sub _bootstrap {
 	    $modfname = substr($modfname, 0, 8);
 	}
 
-	my $modpname = join((($^O eq 'MacOS') ? ':' : '/'),@modparts);
+	my $modpname = join((($^O eq 'MacOS') ? ':' : '/'), @modparts);
 	my $file = "auto/$modpname/$modfname.$dl_dlext";
 
-	if (my $member = incpar(undef, $file, 1)) {
+	# print "Trying to load $file with DLCache $DLCache{$file}\n";
+
+	if (!$DLCache{$file}++ and my $member = find_par(undef, $file, 1)) {
 	    require File::Temp;
 
 	    my ($fh, $filename) = File::Temp::tempfile(
-		SUFFIX	=> $dl_dlext,
+		SUFFIX	=> ".$dl_dlext",
 		UNLINK	=> 1
 	    );
 
@@ -319,11 +330,14 @@ sub _bootstrap {
 }
 
 
+### STUB __DATA__ FILEHANDLE ##########################################
+
 package PAR::_data;
 
 sub TIEHANDLE { bless {}, shift }
 sub AUTOLOAD {
-    die "Cannot use __DATA__ sections in .par files; please install IO::Scalar first!\n"
+    die "Cannot use __DATA__ sections in .par files; ".
+        "please install IO::Scalar first!\n";
 }
 sub DESTROY {}
 
@@ -342,7 +356,8 @@ L<PerlIO::scalar>, L<IO::Saclar>
 =head1 ACKNOWLEDGMENTS
 
 Nicholas Clark for pointing out the mad source filter hook within the
-(also mad) coderef C<@INC> hook.
+(also mad) coderef C<@INC> hook, as well as (even madder) tricks one
+can play with PerlIO to avoid source filtering.
 
 Ton Hospel for convincing me to ditch the C<Filter::Simple>
 implementation.

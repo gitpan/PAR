@@ -3,16 +3,8 @@
 package __par_pl;
 
 use strict;
-use PAR ((
-    eval { require PerlIO::scalar; 1 } or
-    eval { require IO::Scalar; 1 } or
-    1
-) ? () : ());
-
 use Config ();
 use File::Temp ();
-use IO::File ();
-use Archive::Zip ();
 
 =head1 NAME
 
@@ -36,10 +28,16 @@ Run F<test.pl> or F<script/test.pl> from F<foo.par>:
     % par.pl foo.par test.pl	# only when $ARGV[0] ends in '.par'
     % par.pl foo.par		# looks for 'main.pl' by default
 
-You can also make a self-reading script containing a PAR file :
+You can also make a self-containing script containing a PAR file :
 
     % par.pl -O./foo.pl foo.par
     % ./foo.pl test.pl		# same as above
+
+To embed the necessary shared objects for PAR's execution (like
+C<Zlib>, C<IO>, C<Cwd>, etc), use the B<-B> flag:
+
+    % par.pl -B -O./foo.pl foo.par
+    % ./foo.pl test.pl		# takes care of XS dependencies
 
 =head1 DESCRIPTION
 
@@ -71,9 +69,31 @@ option makes a stand-alone binary from a PAR file:
     % ./myapp -Omyap3 myap3.par	# makes another app with different PAR
 
 The format for the stand-alone executable is simply concatenating the
-PAR file after F<par> or F<par.pl>, followed by the PAR file's length,
-packed in 4 bytes as an unsigned long number in network order (i.e.
-C<pack('N')>), then the magic string "\x0APAR.pm\x0A".
+following elements:
+
+=over 4
+
+=item * The executable itself
+
+Either in plain-text (F<par.pl>) or native executable format (F<par>
+or F<par.exe>).
+
+=item * Any number of embedded shared objects
+
+These are typically used for bootstrapping PAR's various XS dependencies.
+Each section begins with the magic string "C<FILE>", length of file name
+in C<pack('N')> format, file name (F<auto/.../>), file length in
+C<pack('N')>, and the file's content (not compressed).
+
+=item * One PAR file
+
+This is just a zip file beginning with the magic string "C<PK\003\004>".
+
+=item * Ending magic string
+
+Finally there must be a 8-bytes magic string: "C<\012PAR.pm\012>".
+
+=back
 
 =head1 NOTES
 
@@ -92,10 +112,17 @@ Afterwards, you can generate self-executable PAR files by:
     # put a main.pl inside myapp.par to run it automatically
     % par -O./myapp myapp.par
 
+The C<-B> flag described earlier is particularly useful here,
+to build a truly self-containing executable:
+
+    # bundle all needed shared objects (or F<.dll>s)
+    % par -B -O./myapp myapp.par
+
 =cut
 
 my @par_args;
-my $out;
+
+my ($out, $bundle);
 
 while (@ARGV) {
     $ARGV[0] =~ /^-([AIMO])(.*)/ or last;
@@ -112,17 +139,22 @@ while (@ARGV) {
     elsif ($1 eq 'O') {
 	$out = $2;
     }
+    elsif ($1 eq 'B') {
+	$bundle = $2;
+    }
 
     shift(@ARGV);
 }
 
 my $fh;
-my $start_pos;
+my ($start_pos, $data_pos);
 
 {
+    require IO::File;
     $fh = IO::File->new;
-    binmode($fh);
     last unless $fh->open($0);
+
+    binmode($fh);
 
     my $buf;
     $fh->seek(-8, 2);
@@ -133,6 +165,32 @@ my $start_pos;
     $fh->read($buf, 4);
     $fh->seek(-12 - unpack("N", $buf), 2);
     $fh->read($buf, 4);
+
+    $data_pos = $fh->tell - 4;
+
+    while ($buf eq "FILE") {
+	$fh->read($buf, 4);
+	$fh->read($buf, unpack("N", $buf));
+
+	my ($basename, $ext) = ($buf =~ m|.*/(.*)(\..*)|);
+	my ($out, $filename) = File::Temp::tempfile(
+	    SUFFIX	=> $ext,
+	    UNLINK	=> 1
+	);
+
+	$PAR::DLCache{$buf}++;
+	$PAR::DLCache{$basename} = $filename;
+
+	# print "Basename: $basename($ext) as $buf into $filename\n";
+
+	$fh->read($buf, 4);
+	$fh->read($buf, unpack("N", $buf));
+	print $out $buf;
+	close $out;
+
+	$fh->read($buf, 4);
+    }
+
     last unless $buf eq "PK\003\004";
     
     $start_pos = $fh->tell - 4;
@@ -142,20 +200,48 @@ if ($out) {
     my $par = shift(@ARGV);
 
     open PAR, '<', $par or die $!;
-    open OUT, '>', $out or die $!;
-
     binmode(PAR);
+
+    local $/ = \4;
+    die "$par is not a PAR file" unless <PAR> eq "PK\003\004";
+
+    open OUT, '>', $out or die $!;
     binmode(OUT);
 
-    local $/;
-
-    $/ = \$start_pos if defined $start_pos;
+    $/ = (defined $start_pos) ? \$start_pos : undef;
     $fh->seek(0, 0);
     print OUT scalar $fh->getline;
     $/ = undef;
 
+    my $data_len = 0;
+    if (!defined $start_pos and ((stat($0))[7] > 8.192)) {
+	require PAR; PAR::_init_dynaloader();
+
+	eval { require PerlIO::scalar; 1 } or
+	eval { require IO::Scalar; 1 };
+
+	require IO::File;
+	require Compress::Zlib;
+	require Archive::Zip;
+
+	foreach (sort keys %::) {
+	    $::{$_} =~ /_<(.*)(\bauto\/.*\.$Config::Config{dlext})$/ or next;
+
+	    $data_len += 12 + length($2) + (stat($1.$2))[7];
+
+	    print OUT "FILE";
+	    print OUT pack('N', length($2));
+	    print OUT $2;
+	    print OUT pack('N', (stat($1.$2))[7]);
+	    open FILE, $1.$2 or die $!;
+	    print OUT <FILE>;
+	    close FILE;
+	}
+    }
+
+    print OUT "PK\003\004";
     print OUT <PAR>;
-    print OUT pack('N', (stat($par))[7]);
+    print OUT pack('N', $data_len + (stat($par))[7]);
     print OUT "\nPAR.pm\n";
 
     chmod 0755, $out;
@@ -178,6 +264,9 @@ if ($out) {
 	return $tell_ref->(@_) - $start_pos;
     };
 
+    require PAR; PAR::_init_dynaloader();
+    require Archive::Zip;
+
     my $zip = Archive::Zip->new;
     $zip->readFromFileHandle($fh) == Archive::Zip::AZ_OK() or last;
 
@@ -193,9 +282,8 @@ Usage: $0 [-Alib.par] [-Idir] [-Mmodule] [src.par] program.pl
     $0 = shift(@ARGV)
 }
 
-
 package main;
-
+require PAR;
 PAR->import(@par_args);
 
 die qq(Can't open perl script "$0": No such file or directory\n)

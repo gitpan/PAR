@@ -1,11 +1,8 @@
 # $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #1 $ $Change: 1559 $ $DateTime: 2002/10/19 21:38:12 $
+# $Revision: #2 $ $Change: 1592 $ $DateTime: 2002/10/21 17:08:24 $
 
 - Use Archive::Any and Archive::Tar to get rid of the only XS module
   dependency (Compress::Zlib), or implement inflate algorithm in perl.
-
-- Before that happens, tweak script/par.pl so it can write the Zlib.so
-  (or Zlib.dll, etc) in the currently directly during a BEGIN block.
 
 - Consequently, script/par.pl -O should take another flag that simply
   in-lines all required perl modules (PAR.pm, IO/Scalar.pm, etc -- but
