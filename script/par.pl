@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #57 $ $Change: 5898 $ $DateTime: 2003/05/16 16:30:10 $ vim: expandtab shiftwidth=4
+# $Revision: #61 $ $Change: 6083 $ $DateTime: 2003/05/25 17:55:55 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -132,6 +132,7 @@ followed by a 8-bytes magic string: "C<\012PAR.pm\012>".
 
 =cut
 
+$ENV{PAR_CLEARTEMP} = 1 unless exists $ENV{PAR_CLEARTEMP};
 my $quiet = !$ENV{PAR_DEBUG};
 
 # fix $0 if invoked from PATH
@@ -204,6 +205,7 @@ my ($start_pos, $data_pos);
         elsif ( $fullname =~ m|^/?shlib/| and defined $ENV{PAR_TEMP} ) {
             # should be moved to _tempfile()
             $filename = "$ENV{PAR_TEMP}/$basename$ext";
+            print "SHLIB: $filename\n";
             open $out, '>', $filename or die $!;
             binmode($out);
             print $out $buf;
@@ -490,8 +492,7 @@ if ($out) {
             my $extract_name = $1;
             my $dest_name = File::Spec->catfile($ENV{PAR_TEMP}, $extract_name);
             $member->extractToFileNamed($dest_name);
-            outs(qq(Extracting "$member_name" to "$dest_name", and loading the file));
-            my $libref = DynaLoader::dl_load_file($dest_name, 0x0); # $module->dl_load_flags);
+            outs(qq(Extracting "$member_name" to "$dest_name"));
         }
     }
     # }}}
@@ -536,7 +537,7 @@ sub require_modules {
 my $tmpdir;
 sub tmpdir {
     return $tmpdir if defined $tmpdir;
-    my @dirlist = (@ENV{qw(PAR_TMP_DIR TMPDIR TEMP TMP)}, qw(C:/temp /tmp /));
+    my @dirlist = (@ENV{qw(PAR_TEMP PAR_TMP_DIR TMPDIR TEMP TMP)}, qw(C:/temp /tmp /));
     {
         if (${"\cTAINT"}) { eval {
             require Scalar::Util;

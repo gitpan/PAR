@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #49 $ $Change: 5898 $ $DateTime: 2003/05/16 16:30:10 $ vim: expandtab shiftwidth=4
+# $Revision: #51 $ $Change: 6081 $ $DateTime: 2003/05/25 16:03:59 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -170,11 +170,12 @@ sub compile_par {
 
     push @manifest, "script/main.pl";
 
-    my $manifest    = join("\n", @manifest);
+    my $dist_name = (opt(p) ? $par_file : $Output);
+    my $manifest    = join("\n", '    <!-- accessible as jar:file:///NAME.par!/MANIFEST in compliant browsers -->', (sort @manifest), q(    # <html><body onload="var X=document.body.innerHTML.split(/\n/);var Y='<iframe src=&quot;META.yml&quot; style=&quot;float:right;height:40%;width:40%&quot;></iframe><ul>';for(var x in X){if(!X[x].match(/^\s*#/)&&X[x].length)Y+='<li><a href=&quot;'+X[x]+'&quot;>'+X[x]+'</a>'}document.body.innerHTML=Y">));
     my $meta_yaml   = << "YAML";
 build_requires: {}
 conflicts: {}
-dist_name: $Output
+dist_name: $dist_name
 distribution_type: par
 dynamic_config: 0
 generated_by: 'Perl Packager version $VERSION'

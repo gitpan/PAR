@@ -1,10 +1,15 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #15 $ $Change: 5902 $ $DateTime: 2003/05/16 17:12:13 $
+   $Revision: #17 $ $Change: 6082 $ $DateTime: 2003/05/25 16:37:26 $
    vim: expandtab shiftwidth=4
 */
 
+#ifndef PAR_MKTMPDIR
+#define PAR_MKTMPDIR 1
+#endif
+
 #include "EXTERN.h"
 #include "perl.h"
+#include "mktmpdir.c"
 #include "XSUB.h"
 #include "my_par_pl.c"
 #include "perlxsi.c"
@@ -53,103 +58,19 @@ S_procself_val(pTHX_ SV *sv, char *arg0)
 #endif /* HAS_PROCSELFEXE */
 
 
-int main( int argc, char **argv, char **env )
+int main ( int argc, char **argv, char **env )
 {
     int exitstatus;
     int i;
     char **fakeargv;
     GV* tmpgv;
     int options_count;
-
-    char *envtmp;
-    const char *ld_library_path  = "LD_LIBRARY_PATH=";
-    const char *par_tmp_dir      = "PAR_TMP_DIR=";
-    const char *par_priv_tmp_dir = "PAR_TEMP=";
-    const char *tmpval;
-    const char *tmpdir;
-    char *ltmpdir;
-    char *ptmpdir;
-    char *privptmpdir;
-    char *stmpdir;
-    char *cur_ld_library_path;
-    Pid_t procid;
     DIR *partmp_dirp;
     Direntry_t *dp;
     char *subsubdir;
 
-    const char *tmpenv[4] = { "TMPDIR", "TEMP", "TMP", "" };
-    const char *knowntmp[4] = { "C:\\TEMP", "/tmp", "/", "" };
-
-    const char *subdirbuf_prefix = "par_priv.";
-    const char *subdirbuf_suffix = ".tmp";
-    int maxlen_procid;
-
-    tmpdir = NULL;
-    maxlen_procid = 12; /* should suffice a while */
-
-#ifndef WIN32
-    for ( i = 0 ; tmpdir == NULL && strlen(tmpval = tmpenv[i]) > 0 ; i++ ) {
-        /* fprintf(stderr, "%s: testing env var %s.\n", argv[0], tmpval); */
-        if ( envtmp = PerlEnv_getenv(tmpval) )
-        {
-            if ( lstat(envtmp, &PL_statbuf) == 0 &&
-                 ( S_ISDIR(PL_statbuf.st_mode) ||
-                   S_ISLNK(PL_statbuf.st_mode) ) &&
-                 access(envtmp, W_OK) == 0 ) {
-                tmpdir = envtmp;
-            }
-        }
-    }
-
-    for ( i = 0 ; tmpdir == NULL && strlen(tmpval = knowntmp[i]) > 0 ; i++ ) {
-        /* fprintf(stderr, "%s: testing env var %s.\n", argv[0], tmpval); */
-        if ( lstat(tmpval, &PL_statbuf) == 0 &&
-             ( S_ISDIR(PL_statbuf.st_mode) ||
-               S_ISLNK(PL_statbuf.st_mode) ) &&
-             access(tmpval, W_OK) == 0 ) {
-            tmpdir = tmpval;
-        }
-    }
-
-    if ( tmpdir == NULL ) {
-        fprintf(stderr, "%s: no suitable temporary directory found - aborting.\n", argv[0]);
-        return 2;
-    }
-    else {
-        /* fprintf(stderr, "%s: found tmpdir %s.\n", argv[0], tmpdir); */
-
-        ptmpdir = (char *)malloc(strlen(par_tmp_dir) + strlen(tmpdir) + 1);
-        strcpy(ptmpdir, par_tmp_dir);
-        strcat(ptmpdir, tmpdir);
-        /* fprintf(stderr, "%s\n", ptmpdir) */;
-        putenv(ptmpdir);
-
-        /* construct our private temporary directory under the newly found tmp dir */
-        procid = getpid();
-        stmpdir = (char *)malloc(strlen(ptmpdir) + strlen(subdirbuf_prefix) + strlen(subdirbuf_suffix) + maxlen_procid + 2);
-        sprintf(stmpdir, "%s/%s%u%s", tmpdir, subdirbuf_prefix, procid, subdirbuf_suffix); /* Unix */
-
-        privptmpdir = (char *)malloc(strlen(par_priv_tmp_dir) + strlen(stmpdir) + 1);
-        strcpy(privptmpdir, par_priv_tmp_dir);
-        strcat(privptmpdir, stmpdir);
-        /* fprintf(stderr, "%s\n", privptmpdir) */;
-        putenv(privptmpdir);
-
-        if ( ( cur_ld_library_path = getenv("LD_LIBRARY_PATH") ) == NULL ) {
-            cur_ld_library_path = "";
-        }
-        if ( strlen(cur_ld_library_path) == 0 ) {
-            ltmpdir = (char *)malloc(strlen(ld_library_path) + strlen(stmpdir) + 1);
-            sprintf(ltmpdir, "%s%s", ld_library_path, stmpdir, cur_ld_library_path);
-        }
-        else {
-            ltmpdir = (char *)malloc(strlen(ld_library_path) + strlen(stmpdir) + strlen(cur_ld_library_path) + 2);
-            sprintf(ltmpdir, "%s%s:%s", ld_library_path, stmpdir, cur_ld_library_path);
-        }
-        /* fprintf(stderr, "%s\n", ltmpdir) */;
-        putenv(ltmpdir);
-    }
-
+#ifdef PAR_MKTMPDIR
+    char *stmpdir = par_mktmpdir( argv );
 #endif
 
 #if (defined(USE_5005THREADS) || defined(USE_ITHREADS)) && defined(HAS_PTHREAD_ATFORK)
@@ -243,7 +164,7 @@ int main( int argc, char **argv, char **env )
     /* PL_main_cv = PL_compcv; */
     PL_compcv = 0;
 
-#ifndef WIN32
+#ifdef PAR_MKTMPDIR
     /* create temporary PAR directory */
     if ( (stmpdir != NULL) && (mkdir(stmpdir, S_IRWXU) != 0) ) {
         fprintf(stderr, "%s: creation of private temporary subdirectory %s failed - aborting.\n", argv[0], stmpdir);
@@ -253,13 +174,11 @@ int main( int argc, char **argv, char **env )
 
     exitstatus = perl_run( my_perl );
     perl_destruct( my_perl );
-    perl_free( my_perl );
 
-    PERL_SYS_TERM();
-
-#ifndef WIN32
+#ifdef PAR_MKTMPDIR
     /* remove temporary PAR directory */
     partmp_dirp = opendir(stmpdir);
+
     if ( partmp_dirp != NULL )
     {
         /* fprintf(stderr, "%s: removing private temporary subdirectory %s.\n", argv[0], stmpdir); */
@@ -278,6 +197,9 @@ int main( int argc, char **argv, char **env )
         rmdir(stmpdir);
     }
 #endif
+
+    perl_free( my_perl );
+    PERL_SYS_TERM();
 
     return exitstatus;
 }

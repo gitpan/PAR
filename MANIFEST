@@ -25,6 +25,7 @@ META.yml
 myldr/file2c.pl
 myldr/main.c
 myldr/Makefile.PL
+myldr/mktmpdir.c
 package/parl.nsi
 README
 script/par.pl

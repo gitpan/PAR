@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #9 $ $Change: 5905 $ $DateTime: 2003/05/16 17:17:49 $ vim: expandtab shiftwidth=4
+# $Revision: #12 $ $Change: 6085 $ $DateTime: 2003/05/25 18:32:18 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.67_89';
+$PAR::VERSION = '0.68';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.67_89 of PAR, released May 17, 2003.
+This document describes version 0.68 of PAR, released May 26, 2003.
 
 =head1 SYNOPSIS
 
@@ -106,11 +106,6 @@ and F<pp> may also be used as F<.par> archives:
 Please see L</SYNOPSIS> for most typical use cases.
 
 =head1 NOTES
-
-Since version 0.60, all files and data are extracted into a temporary
-directory, with the same name as its CRC32 checksum, to speed up the
-loading time of the next round.  To inhibit this behavior, set the
-C<PAR_CLEARTEMP> environment to a true value.
 
 In the next few releases, it is expected that the F<META.yml> packed
 inside the PAR file will control the default behavior of temporary file

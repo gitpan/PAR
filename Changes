@@ -1,4 +1,53 @@
 ____________________________________________________________________________
+[  6085] By: autrijus                              on 2003/05/25  18:32:18
+        Log: * This be PAR, 0.68.
+	   ! ChangeLog MANIFEST lib/PAR.pm
+____________________________________________________________________________
+[  6084] By: autrijus                              on 2003/05/25  18:06:55
+        Log: * minor style tweaks suggested by gcc.
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[  6083] By: autrijus                              on 2003/05/25  17:55:55
+        Log: * "pp -l" works on Win32!
+	   ! myldr/Makefile.PL myldr/mktmpdir.c
+	   ! script/par.pl
+____________________________________________________________________________
+[  6082] By: autrijus                              on 2003/05/25  16:37:26
+        Log: * shlib loading now works via "execv(argv[0], argv);".
+	   ! myldr/main.c myldr/mktmpdir.c script/par.pl
+____________________________________________________________________________
+[  6081] By: autrijus                              on 2003/05/25  16:03:59
+        Log: * trying to fix shlib loading.
+	   ! inc/Module/Install/Metadata.pm
+	   ! inc/Module/Install/PAR.pm lib/PAR.pm
+	   ! myldr/mktmpdir.c script/par.pl script/pp
+____________________________________________________________________________
+[  6080] By: autrijus                              on 2003/05/25  15:30:28
+        Log: * shlib.diff ported to win32.
+	   + myldr/mktmpdir.c
+	   ! myldr/main.c script/par.pl
+____________________________________________________________________________
+[  6073] By: autrijus                              on 2003/05/24  19:54:08
+        Log: * up to Module::Install 0.19_99.
+             * bump version in antitipation of imminent release.
+             * pp-generated PAR file may now be browsed via Gecko-based
+             browsers as jar:file:///path/to/FILE.par!/MANIFEST
+	   ! inc/Module/Install.pm
+	   ! inc/Module/Install/PAR.pm lib/PAR.pm script/pp
+____________________________________________________________________________
+[  5961] By: autrijus                              on 2003/05/19  02:25:40
+        Log: * Sisyphus reported that on ActivePerl 626 $Config{ld} is
+	       mysteriously gone.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  5908] By: autrijus                              on 2003/05/16  17:26:55
+        Log: * update to newer EU::AI.
+	   ! inc/ExtUtils/AutoInstall.pm
+____________________________________________________________________________
+[  5907] By: autrijus                              on 2003/05/16  17:21:03
+        Log: * changes.
+	   ! Changes
+____________________________________________________________________________
 [  5905] By: autrijus                              on 2003/05/16  17:17:49
         Log: * 0.67_89, experimental release.
              * shlib.diff is merged and thus deleted.

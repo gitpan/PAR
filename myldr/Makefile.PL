@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #20 $ $Change: 5836 $ $DateTime: 2003/05/14 03:45:50 $
+# $Revision: #22 $ $Change: 6083 $ $DateTime: 2003/05/25 17:55:55 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -14,7 +14,7 @@ use ExtUtils::Embed;
 
 xsinit(undef);
 
-my $debug = 0;
+my $debug = 1;
 
 my $perl = $^X;
 my $exe = $Config{_exe};
@@ -22,13 +22,13 @@ my $o = $Config{obj_ext};
 my $gccversion = $Config{gccversion};
 my $pccflags = ccopts;
 my $pldflags = ldopts;
-my $ld = $Config{ld} || $Config{cc};
+my $ld = $Config{ld} || (($^O eq 'MSWin32') ? 'link.exe' : $Config{cc});
 my $cc = $Config{cc};
 my $f2c = File::Spec->catfile(".", "file2c.pl");
 my $par_pl = File::Spec->catfile('..', 'script', "par.pl");
 my $par_exe = File::Spec->catfile('.', "par$exe");
 my $parl_exe = File::Spec->catfile('..', 'script', "parl$exe");
-my $lib_path = join(' ', map qq(-I"$_"), @INC);
+my $lib_path = join(' ', map qq(-I"$_"), map { $^O eq 'MSWin32' ? Win32::GetShortPathName($_) : $_ } @INC);
 
 $perl = Win32::GetShortPathName($perl)
     if $perl =~ / / and defined &Win32::GetShortPathName;
