@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/script/parl.pod $ $Author: autrijus $
-# $Revision: #2 $ $Change: 3303 $ $DateTime: 2003/01/07 12:02:36 $
+# $Revision: #3 $ $Change: 4103 $ $DateTime: 2003/02/06 00:30:50 $
 
 =head1 NAME
 
@@ -67,8 +67,12 @@ option makes a stand-alone binary from a PAR file:
 
     % parl -B -Omyapp myapp.par
     % ./myapp			# run it anywhere without perl binaries
-    % ./myapp -Omyap2 myapp.par	# makes a ./myap2, identical to ./myapp
-    % ./myapp -Omyap3 myap3.par	# makes another app with different PAR
+
+With the C<--par-options> flag, generated binaries can act as C<parl>
+to generate new binaries: 
+
+    % ./myapp --par-options -Omyap2 myapp.par	# identical to ./myapp
+    % ./myapp --par-options -Omyap3 myap3.par	# now with different PAR
 
 For an explanation of stand-alone executable format, please see L<par.pl>.
 

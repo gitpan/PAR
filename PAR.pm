@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #57 $ $Change: 3302 $ $DateTime: 2003/01/07 12:01:26 $
+# $Revision: #58 $ $Change: 4103 $ $DateTime: 2003/02/06 00:30:50 $
 
 package PAR;
-$PAR::VERSION = '0.62';
+$PAR::VERSION = '0.63';
 
 use 5.006;
 use strict;

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #10 $ $Change: 2731 $ $DateTime: 2002/12/17 04:54:59 $
+# $Revision: #11 $ $Change: 4101 $ $DateTime: 2003/02/05 23:45:02 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -17,6 +17,7 @@ Iain Truskett		(SPOON)
 Indy Singh
 Jan Dubois		(JDB)
 Jeff Goff		(JGOFF)
+Jerry Veldhuis
 Jesse Vincent		(JESSE)
 Markus Jansen
 Mattia Barbon		(MBARBON)

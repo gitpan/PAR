@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #35 $ $Change: 3302 $ $DateTime: 2003/01/07 12:01:26 $
+# $Revision: #37 $ $Change: 4103 $ $DateTime: 2003/02/06 00:30:50 $
 
 package __par_pl;
 
@@ -76,8 +76,12 @@ option makes a stand-alone binary from a PAR file:
 
     % parl -B -Omyapp myapp.par
     % ./myapp			# run it anywhere without perl binaries
-    % ./myapp -Omyap2 myapp.par	# makes a ./myap2, identical to ./myapp
-    % ./myapp -Omyap3 myap3.par	# makes another app with different PAR
+
+With the C<--par-options> flag, generated binaries can act as C<parl>
+to generate new binaries: 
+
+    % ./myapp --par-options -Omyap2 myapp.par	# identical to ./myapp
+    % ./myapp --par-options -Omyap3 myap3.par	# now with different PAR
 
 =head2 Stand-alone executable format
 
@@ -339,9 +343,14 @@ if ($out) {
 	foreach (sort keys %files) {
 	    my ($path, $file);
 	    foreach my $dir (@inc) {
-		/^(\Q$dir\E\/)(.*[^Cc])$/ or next;
-		($path, $file) = ($1, $2);
-		last;
+		if (/^(\Q$dir\E\/)(.*[^Cc])\Z/) {
+		    ($path, $file) = ($1, $2);
+		    last;
+		}
+		elsif (m!^/loader/[^/]+/(.*[^Cc])\Z! and -f "$dir/$1") {
+		    ($path, $file) = ("$dir/", $1);
+		    last;
+		}
 	    }
 
 	    next unless defined $file;
@@ -429,6 +438,8 @@ Usage: $0 [ -Alib.par ] [ -Idir ] [ -Mmodule ] [ src.par ] [ program.pl ]
 # }}}
 
 sub require_modules {
+    require lib;
+    require DynaLoader;
     require integer;
     require strict;
     require warnings;

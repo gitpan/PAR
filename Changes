@@ -1,4 +1,38 @@
 ____________________________________________________________________________
+[  4103] By: autrijus                              on 2003/02/06  00:30:50
+        Log: * 0.63.
+             * also from Jerry Veldhuis: document --par-options.
+	   ! PAR.pm script/par.pl script/parl.pod
+____________________________________________________________________________
+[  4101] By: autrijus                              on 2003/02/05  23:45:02
+        Log: * Jerry Veldhuis points out that the -B option of 'parl' is
+	       broken.
+	   ! AUTHORS script/par.pl
+____________________________________________________________________________
+[  3652] By: autrijus                              on 2003/01/19  14:54:34
+        Log: * mention various resource for par.
+	   ! README
+____________________________________________________________________________
+[  3353] By: autrijus                              on 2003/01/09  10:55:08
+        Log: * signatures.
+	   ! MANIFEST.SKIP SIGNATURE
+____________________________________________________________________________
+[  3309] By: autrijus                              on 2003/01/07  13:30:13
+        Log: * hm.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  3308] By: autrijus                              on 2003/01/07  13:24:51
+        Log: * don't use libs please.
+	   ! PAR/Heavy.pm
+____________________________________________________________________________
+[  3307] By: autrijus                              on 2003/01/07  13:15:04
+        Log: * errata.
+	   ! Makefile.PL myldr/Makefile.PL
+____________________________________________________________________________
+[  3305] By: autrijus                              on 2003/01/07  12:26:18
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  3304] By: autrijus                              on 2003/01/07  12:23:04
         Log: * This be 0.62, the 'parl' edition.
 	   ! package/parl.nsi
