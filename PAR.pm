@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #46 $ $Change: 2105 $ $DateTime: 2002/11/13 11:00:51 $
+# $Revision: #48 $ $Change: 2323 $ $DateTime: 2002/11/23 14:21:11 $
 
 package PAR;
-$PAR::VERSION = '0.48';
+$PAR::VERSION = '0.49';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.48 of PAR, released November 13, 2002.
+This document describes version 0.49 of PAR, released November 23, 2002.
 
 =head1 SYNOPSIS
 
@@ -41,7 +41,7 @@ The search path for the above two examples are:
     /lib/
     /arch/
     /i386-freebsd/		# i.e. $Config{archname}
-    /5.8.0/			# i.e. Perl version number
+    /5.8.0/			# i.e. $Config{version}
     /5.8.0/i386-freebsd/	# both of the above
 
 Run F<test.pl> or F<script/test.pl> from F<foo.par>:
@@ -109,7 +109,7 @@ next time, but if you need the functionality, just mail me. ;-)
 use vars qw(@PAR_INC);			# explicitly stated PAR library files
 use vars qw(@LibCache %LibCache);	# I really miss pseudohash.
 
-my $ver	 = ($^V ? sprintf("%vd", $^V) : $]);
+my $ver	 = $Config::Config{version};
 my $arch = $Config::Config{archname};
 
 my $_reentrant;				# flag to avoid recursive import

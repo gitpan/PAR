@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.19.
+signed via the Module::Signature module, version 0.21.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -15,26 +15,26 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 3621714a6f4f8184a042ab6bb023a1ba93c4a6ec AUTHORS
-SHA1 824ade6c461090bd61c11c6766727c110f773d2d Changes
+SHA1 183afe53d7e90c078a47f5de62835aa93f675d9f Changes
 SHA1 e1c15ba6bde94849ab60be67cde23eab41a414b8 MANIFEST
 SHA1 4b1a8ff192a110cd8476eccc12e16502efba32ca MANIFEST.SKIP
-SHA1 01ef83bcb70834b902f30d7297189b35ecdf0bdd Makefile.PL
-SHA1 a686e5c9996648217f33af9fde13c5a2843f04c1 PAR.pm
+SHA1 328ca2e63ce8ac2c7d7c481651d19186ca3f31a1 Makefile.PL
+SHA1 54f65e00577dfa696030e1411ee7bed014a2b7ee PAR.pm
 SHA1 c4a4891da8f5a281a4e64a360eeafc25e22e458d PAR/Heavy.pm
 SHA1 b66a5617f950764e8bc8c53596f3c1b962e3d043 README
-SHA1 0d4b350a76988bf1a53959eda22088eb7ef6dcb0 TODO
+SHA1 7d91086bd21bdef9c1068a5077808f1fad08671c TODO
 SHA1 fade4747186e69937bf4bba063b59568b0f9b078 myldr/Makefile.PL
 SHA1 5d2ed9736d81206c1f61d295f6953063ff4221af myldr/file2c.pl
 SHA1 a85d95907a33c8e02e63dbeae053580102488c06 myldr/main.c
 SHA1 b8689d8c7387db9afa7975238f225e072ff64549 script/par.pl
-SHA1 d7559a2b4335b62ef2c8dcdb37d364d14a98932f script/pp
+SHA1 d669a7821e2abe151caf622a76f756fc6748c4c1 script/pp
 SHA1 e11741ba1b7768e6679991875b177fcfdb7d6e70 t/0-signature.t
 SHA1 64304026a1886c779f58dd19e4525d22e8f53607 t/1-basic.t
 SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.0 (FreeBSD)
 
-iD8DBQE90jVytLPdNzw1AaARAlsKAKCg+MfelShw50HsdBp2Flk/bpE2KQCdFTDF
-y5k454G4WY8i45n+awe86BE=
-=4LEt
+iD8DBQE935QJtLPdNzw1AaARAoArAJwNUuQQG75Sd8clsCdj4zair+HB7QCfdk8k
+lKDKOAR9ikoIXnuZGhNWn9Y=
+=KTeM
 -----END PGP SIGNATURE-----

@@ -1,11 +1,13 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #17 $ $Change: 2052 $ $DateTime: 2002/11/08 14:35:33 $
+# $Revision: #19 $ $Change: 2193 $ $DateTime: 2002/11/15 17:58:13 $
 
 use 5.006;
 use Config;
 use File::Spec;
 use ExtUtils::MakeMaker;
+
+check_nmake();
 
 my $have_cc  = _can_run($Config{cc});
 warn "No compiler found, won't generate 'script/par$Config{_exe}'!\n"
@@ -68,3 +70,112 @@ sub _can_run {
 
     return;
 }
+
+# determine if the user needs nmake, and download it if needed
+sub check_nmake {
+    return unless (
+        $Config{make} =~ /^nmake\b/i and
+        $^O eq 'MSWin32'             and
+        !_can_run('nmake')
+    );
+
+    print "The required 'nmake' executable not found, fetching it...\n";
+
+    use File::Basename;
+    my $rv = get_file(
+	url	    => 'ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe',
+	local_dir   => dirname($^X),
+	size	    => 51928,
+	run	    => 'nmake15.exe /o > nul',
+	check_for   => 'nmake.exe',
+	remove	    => 1,
+    );
+
+    if (!$rv) {
+	die << '.';
+
+========================================================================
+
+Since you are using Microsoft Windows, you will need the 'nmake' utility
+before installation. It's available at:
+
+    ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe
+
+Please download the file manually, save it to a directory in %PATH (e.g.
+C:\WINDOWS\COMMAND), then launch the MS-DOS command line shell, "cd" to
+that directory, and run "nmake15.exe" from there; that will create the
+'nmake.exe' file needed by this module.
+
+You may then resume the installation process described in README.
+
+========================================================================
+.
+    }
+}
+
+# fetch nmake from Microsoft's FTP site
+sub get_file {
+    my %args = @_;
+
+    my ($scheme, $host, $path, $file) = 
+	$args{url} =~ m|^(\w+)://([^/]+)(.+)/(.+)| or return;
+
+    return unless $scheme eq 'ftp';
+
+    unless (eval { require Socket; Socket::inet_aton($host) }) {
+        print "Cannot fetch 'nmake'; '$host' resolve failed!\n";
+        return;
+    }
+
+    use Cwd;
+    my $dir = getcwd;
+    chdir $args{local_dir} or return if exists $args{local_dir};
+
+    $|++;
+    print "Fetching '$file' from $host. It may take a few minutes... ";
+
+    if (eval { require Net::FTP; 1 }) {
+        # use Net::FTP to get pass firewall
+        my $ftp = Net::FTP->new($host, Passive => 1, Timeout => 600);
+        $ftp->login("anonymous", 'anonymous@example.com');
+        $ftp->cwd($path);
+        $ftp->binary;
+        $ftp->get($file) or die $!;
+        $ftp->quit;
+    }
+    elsif (_can_run('ftp')) {
+        # no Net::FTP, fallback to ftp.exe
+        require FileHandle;
+        my $fh = FileHandle->new;
+
+        local $SIG{CHLD} = 'IGNORE';
+        unless ($fh->open("|ftp.exe -n")) {
+            warn "Couldn't open ftp: $!";
+            chdir $dir; return;
+        }
+
+        my @dialog = split(/\n/, << ".");
+open $host
+user anonymous anonymous\@example.com
+cd $path
+binary
+get $file $file
+quit
+.
+        foreach (@dialog) { $fh->print("$_\n") }
+        $fh->close;
+    }
+    else {
+        print "Cannot fetch '$file' without a working 'ftp' executable!\n";
+        chdir $dir; return;
+    }
+
+    return if exists $args{size} and -s $file != $args{size};
+    system($args{run}) if exists $args{run};
+    unlink($file) if $args{remove};
+
+    print (((!exists $args{check_for} or -e $args{check_for})
+	? "done!" : "failed! ($!)"), "\n");
+    chdir $dir; return !$?;
+}
+

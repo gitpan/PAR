@@ -1,6 +1,15 @@
 # $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #6 $ $Change: 2055 $ $DateTime: 2002/11/08 14:37:59 $
+# $Revision: #7 $ $Change: 2146 $ $DateTime: 2002/11/14 00:22:12 $
 
+- Installation on Win32 and other hard-to-get-compiler-working platforms
+  - merge cpanplus's nmake.exe-fetching magic
+  - have pre-compiled par.exe for each $VERSION-$^V-{archname}
+    combination (maybe also {cc} and {osvers}?) hosted at
+    aut.dyndns.org and downloadable when there's no $have_cc.
+  - optionally, if $have_cc and built successful, ask user if we
+    can send the compiled par.exe back to the mothership.
+    (truly evil!)
+  
 - Use Archive::Any and Archive::Tar to get rid of the only XS module
   dependency (Compress::Zlib), or implement inflate algorithm in perl.
 

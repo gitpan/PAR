@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #10 $ $Change: 2103 $ $DateTime: 2002/11/13 10:58:51 $
+# $Revision: #11 $ $Change: 2322 $ $DateTime: 2002/11/23 14:20:39 $
 
 use 5.006;
 use strict;
@@ -83,7 +83,7 @@ sub compile_par {
 
     $map{$_} = $map{$_}{file} for keys %map;
 
-    my @manifest = ('MANIFEST', 'META.yaml');
+    my @manifest = ('MANIFEST', 'META.yml');
     my $size = 0;
     my $zip = Archive::Zip->new;
     foreach (sort grep length $map{$_}, keys %map) {
@@ -106,19 +106,21 @@ sub compile_par {
     my $manifest    = join("\n", @manifest);
     my $meta_yaml   = << "YAML";
 --- #YAML:1.0
+build_requires: {}
 conflicts: {}
 dist_name: $Output
 distribution_type: par
 dynamic_config: 0
 generated_by: 'Perl Packager version $VERSION'
+license: unknown
 name: $Input
 YAML
 
     $size += length($_) for ($manifest, $meta_yaml);
-    vprint 2, "... making $_" for qw(MANIFEST META.yaml);
+    vprint 2, "... making $_" for qw(MANIFEST META.yml);
 
     $zip->addString($manifest	=> 'MANIFEST');
-    $zip->addString($meta_yaml	=> 'META.yaml');
+    $zip->addString($meta_yaml	=> 'META.yml');
     $zip->writeToFileNamed($par_file);
 
     my $newsize = -s $par_file;
