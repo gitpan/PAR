@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #69 $ $Change: 7232 $ $DateTime: 2003/07/29 03:55:38 $ vim: expandtab shiftwidth=4
+# $Revision: #72 $ $Change: 7299 $ $DateTime: 2003/08/02 10:18:26 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -149,6 +149,14 @@ followed by a 8-bytes magic string: "C<\012PAR.pm\012>".
 
 =cut
 
+my ($tmpfile, @tmpfiles);
+END { unlink @tmpfiles if @tmpfiles }
+
+BEGIN {
+    Internals::PAR::BOOT() if defined &Internals::PAR::BOOT;
+
+    eval {
+
 $ENV{PAR_CLEARTEMP} = 1 unless exists $ENV{PAR_CLEARTEMP};
 my $quiet = !$ENV{PAR_DEBUG};
 
@@ -175,6 +183,8 @@ elsif (!-s $0) {
 # Magic string checking and extracting bundled modules {{{
 my ($start_pos, $data_pos);
 {
+    local $SIG{__WARN__} = sub {};
+
     # Check file type, get start of data section {{{
     open _FH, $0 or last;
     binmode(_FH);
@@ -543,7 +553,7 @@ unless ($PAR::LibCache{$0}) {
 Usage: $0 [ -Alib.par ] [ -Idir ] [ -Mmodule ] [ src.par ] [ program.pl ]
        $0 [ -B|-b ] [-Ooutfile] src.par
 .
-    $0 = shift(@ARGV)
+    $0 = shift(@ARGV);
 }
 # }}}
 
@@ -592,7 +602,6 @@ sub tmpdir {
     return $tmpdir;
 }
 
-my ($tmpfile, @tmpfiles);
 sub _tempfile {
     my ($ext, $crc) = @_;
     my ($fh, $filename);
@@ -623,7 +632,6 @@ sub _tempfile {
     binmode($fh);
     return ($fh, $filename);
 }
-END { unlink @tmpfiles if @tmpfiles }
 
 sub outs { warn("@_\n") unless $quiet }
 
@@ -678,6 +686,14 @@ die qq(Can't open perl script "$0": No such file or directory\n)
 do $0;
 die $@ if $@;
 exit;
+
+};
+
+$__ERROR = $@ if $@;
+}
+
+die $__ERROR if $__ERROR;
+
 
 =head1 SEE ALSO
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #35 $ $Change: 7210 $ $DateTime: 2003/07/28 14:05:30 $
+# $Revision: #40 $ $Change: 7306 $ $DateTime: 2003/08/02 12:53:31 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -15,7 +15,7 @@ use ExtUtils::Embed;
 xsinit(undef);
 
 my $debug = 0;
-
+my $chunk_size = 30000;
 my $perl = $^X;
 my $exe = $Config{_exe};
 my $o = $Config{obj_ext};
@@ -34,10 +34,11 @@ my $parl_exe = File::Spec->catfile('..', 'script', "parl$exe");
 my $parldyn_exe = File::Spec->catfile('..', 'script', "parldyn$exe");
 my $lib_path = join(' ', map qq(-I"$_"), map { $^O eq 'MSWin32' ? Win32::GetShortPathName($_) : $_ } @INC);
 
-my $libperl = File::Spec->catfile($Config{bin}, $Config{libperl});
+my $so = $Config{libperl};
+$so = "libperl.$Config{so}" if $so eq 'libper'; # workaround Red Hat bug
+my $libperl = File::Spec->catfile($Config{bin}, $so);
 $libperl =~ s/\.[^.]*$/.$Config{so}/;
-$libperl = File::Spec->catfile($Config{archlibexp}, 'CORE', $Config{libperl})
-    unless -e $libperl;
+$libperl = File::Spec->catfile($Config{archlibexp}, 'CORE', $so) unless -e $libperl;
 
 my $par = ($dynperl ? $static_exe : $par_exe);
 my $all = ($dynperl ? "$parl_exe $parldyn_exe" : $parl_exe);
@@ -53,7 +54,7 @@ my( $out, $ccdebug, $lddebug, $warn, $rm, $mv, $res, $long_literal );
 
 if( $cc =~ m/^cl\b/ ) {
     $out = '-out:';
-    $ccdebug = $debug ? '-Zi -Zm1000' : '-Zm1000';
+    $ccdebug = $debug ? '-Zi' : '';
     $lddebug = $debug ? '-debug ' : '-release ';
     $warn = $debug ? '-W3' : '';
     $res = 'win32.res';
@@ -150,13 +151,13 @@ $parldyn_exe: $par_exe
 
 $static_exe: my_perl.c my_par.c static$o
 	\$(LD) static$o $res $out\$@
-	\$(PERL) parlsig.pl $static_exe $par_exe $dynperl
+	\$(PERL) parlsig.pl $static_exe $par_exe $dynperl $chunk_size
 
 my_perl.c:
-	\$(PERL) $f2c $libperl \$@ load_me_0 $long_literal
+	\$(PERL) $f2c $libperl \$@ load_me_0 $long_literal $chunk_size
 
 my_par.c: $par_exe
-	\$(PERL) $f2c $par_exe \$@ load_me_1 $long_literal
+	\$(PERL) $f2c $par_exe \$@ load_me_1 $long_literal $chunk_size
 
 EOT
 }

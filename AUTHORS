@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #33 $ $Change: 7242 $ $DateTime: 2003/07/29 14:29:24 $
+# $Revision: #34 $ $Change: 7305 $ $DateTime: 2003/08/02 10:46:54 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -52,3 +52,4 @@ Tim Conrow
 Tina Mueller		(TINITA)
 Ton Hospel		(THOSPEL)
 Uri Guttman		(URI)
+Vladimir Yu. Tereshchenko

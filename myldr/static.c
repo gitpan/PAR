@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #6 $ $Change: 7184 $ $DateTime: 2003/07/28 08:21:28 $
+   $Revision: #8 $ $Change: 7301 $ $DateTime: 2003/08/02 10:29:58 $
    vim: expandtab shiftwidth=4
 */
 
@@ -42,9 +42,10 @@ extern char load_me_0[];
 extern char load_me_1[];
 */
 
-char * my_mkfile (char* argv0, char* stmpdir, const char* name, unsigned long size, const char* data) {
+static char *my_file;
+
+int my_mkfile (char* argv0, char* stmpdir, const char* name) {
     int i;
-    char *my_file;
 
     my_file = (char *)malloc(strlen(stmpdir) + strlen(name) + 1);
 #ifdef WIN32
@@ -56,20 +57,16 @@ char * my_mkfile (char* argv0, char* stmpdir, const char* name, unsigned long si
 #endif
     if (i == -1) {
         fprintf(stderr, "%s: creation of %s failed - aborting with %i.\n", argv0, my_file, errno);
-        return NULL;
+        return 0;
     }
-    write(i, data, (size_t)size);
-    close(i);
 
-    chmod(my_file, 0755);
-    return my_file;
+    return i;
 }
 
 int main ( int argc, char **argv, char **env )
 {
     int i;
     char *stmpdir;
-    char *my_par;
 
     par_mktmpdir( argv );
     stmpdir = (char *)getenv("PAR_TEMP");
@@ -81,13 +78,20 @@ int main ( int argc, char **argv, char **env )
         }
     }
 
-    i = 2;
-    my_mkfile( argv[0], stmpdir, name_load_me_0, size_load_me_0, load_me_0 ) &&
-    (my_par = (char *)my_mkfile( argv[0], stmpdir, name_load_me_1, size_load_me_1, load_me_1 )) &&
+    i = my_mkfile( argv[0], stmpdir, name_load_me_0 );
+    if (!i) return 2;
+    WRITE_load_me_0(i);
+    close(i); chmod(my_file, 0755);
+
+    i = my_mkfile( argv[0], stmpdir, name_load_me_1 );
+    if (!i) return 2;
+    WRITE_load_me_1(i);
+    close(i); chmod(my_file, 0755);
+
 #ifdef WIN32
-    (i = spawnvp(P_WAIT, my_par, argv));
+    i = spawnvp(P_WAIT, my_file, argv);
 #else
-    execvp(my_par, argv);
+    execvp(my_file, argv);
     return 2;
 #endif
 

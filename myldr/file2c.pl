@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #13 $ $Change: 7237 $ $DateTime: 2003/07/29 07:19:11 $
+# $Revision: #16 $ $Change: 7306 $ $DateTime: 2003/08/02 12:53:31 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -9,18 +9,20 @@
 
 use File::Basename;
 use strict;
+
 my $give_help = 0;
 my $pl_file = shift;
 my $c_file = shift;
 my $c_var = shift;
 my $long_literal = shift;
+my $chunk_size = shift;
 
 $give_help ||= ( !defined $pl_file or
                 !defined $c_file or
                 !defined $c_var );
 $pl_file ||= '';
 $c_file ||= '';
-$give_help ||= !-f $pl_file;
+$give_help ||= !-e $pl_file;
 if( $give_help ) {
   print <<EOT;
 Usage: $0 file.pl file.c c_variable
@@ -39,28 +41,51 @@ my $pl_text = <IN>;
 close IN;
 
 $pl_text = pod_strip($pl_text, basename($pl_file)) if -e $pl_file and $pl_file =~ /\.p[lm]/i;
-$pl_text = reverse $pl_text;
 
 #  make a c-array
 
 print OUT "const char * name_$c_var = \"" . basename($pl_file) . "\";\n";
-print OUT "unsigned long size_$c_var = " . length($pl_text) . ";\n";
-print OUT "const char $c_var\[" . (length($pl_text) + 1) . "] = ";
-print OUT $long_literal ? '"' : '{';
 
-my $i;
-for (1..length($pl_text)) {
-    if ($long_literal) {
-	print OUT sprintf '\%03o', ord(chop($pl_text));
-    }
-    else {
-	print OUT sprintf "'\\%03o',", ord(chop($pl_text));
-	print OUT "\n" unless $i++ % 16;
-    }
+if (!$chunk_size) {
+    print_chunk($pl_text, '');
+    print OUT "#define WRITE_$c_var(i) write(i, $c_var, (size_t)size_$c_var);\n";
 }
+else {
+    my $chunk_count = int(length($pl_text) / $chunk_size) + 1;
 
-print OUT $long_literal ? "\";\n" : "0\n};\n";
+    for (1 .. $chunk_count) {
+	print_chunk( substr($pl_text, ($_ - 1) * $chunk_size, $chunk_size), "_$_" );
+    }
+
+    print OUT "#define WRITE_$c_var(i)";
+    for (1 .. $chunk_count) {
+	print OUT " write(i, ${c_var}_$_, (size_t)size_${c_var}_$_);";
+    }
+    print OUT "\n";
+}
 close OUT;
+
+sub print_chunk {
+    my $text = reverse($_[0]);
+    my $suffix = $_[1];
+
+    print OUT "unsigned long size_$c_var$suffix = " . length($text) . ";\n";
+    print OUT "const char $c_var$suffix\[" . (length($text) + 1) . "] = ";
+    print OUT $long_literal ? '"' : '{';
+
+    my $i;
+    for (1 .. length($text)) {
+	if ($long_literal) {
+	    print OUT sprintf '\%03o', ord(chop($text));
+	}
+	else {
+	    print OUT sprintf "'\\%03o',", ord(chop($text));
+	    print OUT "\n" unless $i++ % 16;
+	}
+    }
+
+    print OUT $long_literal ? "\";\n" : "0\n};\n";
+}
 
 sub pod_strip {
     my ($pl_text, $filename) = @_;

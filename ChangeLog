@@ -1,5 +1,25 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #13 $ $Change: 7266 $ $DateTime: 2003/07/30 13:33:07 $
+# $Revision: #14 $ $Change: 7305 $ $DateTime: 2003/08/02 10:46:54 $
+
+[Changes for 0.72 - Augest 2, 2003]
+
+* New Features
+
+    - CHECK and INIT blocks in programs inside PAR are now supported.
+
+* Bug fixes
+
+    - Two debug statements were mistakenly left in the source,
+      resulting in "trying to get rid of /tmp/par_priv.xxxx.tmp"
+      messages.
+
+    - Building on Linux with GCC 3.2.2 was failing due to massive
+      heap required for my_perl.c.  Fixed by splitting it into 3k
+      chunks.
+
+    - Depends on Module::ScanDeps 0.21; it supports utf8 on Perl 5.6.1
+      and can significantly reduce executable file size by eliminating
+      unneccessary shared libraries.
 
 [Changes for 0.71 - July 30, 2003]
 

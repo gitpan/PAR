@@ -1,7 +1,7 @@
-# $File: //member/autrijus/.vimrc $ $Author: autrijus $
-# $Revision: #14 $ $Change: 4137 $ $DateTime: 2003/02/08 11:41:59 $
+# $File: //member/autrijus/PAR/myldr/parlsig.pl $ $Author: autrijus $
+# $Revision: #2 $ $Change: 7306 $ $DateTime: 2003/08/02 12:53:31 $
 
-my ($parl_exe, $par_exe, $dynperl) = @ARGV;
+my ($parl_exe, $par_exe, $dynperl, $chunk_size) = @ARGV;
 exit unless $dynperl;
 
 local $/;
@@ -13,7 +13,8 @@ open _FH, $parl_exe or die $!;
 binmode _FH;
 my $output_exe = <_FH>;
 close _FH;
-my $offset = index($output_exe, $input_exe);
+my $offset = rindex($output_exe, substr($input_exe, 0, $chunk_size));
+die "Impossible: Can't find $par_exe inside $parl_exe" if $offset == -1;
 open _FH, '>>', $parl_exe or die $!;
 binmode _FH;
 print _FH pack('N', $offset);

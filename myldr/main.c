@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #25 $ $Change: 7242 $ $DateTime: 2003/07/29 14:29:24 $
+   $Revision: #27 $ $Change: 7297 $ $DateTime: 2003/08/02 09:55:38 $
    vim: expandtab shiftwidth=4
 */
 
@@ -25,14 +25,11 @@ extern char * name_load_me_2;
 extern unsigned long size_load_me_2;
 extern char load_me_2[];
 
-#include "mktmpdir.c"
-
-#ifdef PAR_CLEARSTACK
-XS(XS_Internals_PAR_CLEARSTACK) {
-    dounwind(0); ENTER;
-    SAVEDESTRUCTOR(exit, NULL); ENTER;
-}
+#ifdef PAR_MKTMPDIR
+static char *stmpdir;
 #endif
+static int options_count;
+static char **fakeargv;
 
 #ifdef HAS_PROCSELFEXE
 /* This is a function so that we don't hold on to MAXPATHLEN
@@ -69,16 +66,13 @@ S_procself_val(pTHX_ SV *sv, char *arg0)
 }
 #endif /* HAS_PROCSELFEXE */
 
+#include "mktmpdir.c"
+#include "internals.c"
+
 int main ( int argc, char **argv, char **env )
 {
     int exitstatus;
     int i;
-    char **fakeargv;
-    GV* tmpgv;
-    int options_count;
-#ifdef PAR_MKTMPDIR
-    char *stmpdir;
-#endif
 
 #if (defined(USE_5005THREADS) || defined(USE_ITHREADS)) && defined(HAS_PTHREAD_ATFORK)
     /* XXX Ideally, this should really be happening in perl_alloc() or
@@ -132,7 +126,7 @@ int main ( int argc, char **argv, char **env )
         fakeargv[i + options_count - 1] = argv[i];
     fakeargv[argc + options_count - 1] = 0;
 
-    exitstatus = perl_parse(my_perl, xs_init, argc + options_count - 1,
+    exitstatus = perl_parse(my_perl, par_xs_init, argc + options_count - 1,
                             fakeargv, (char **)NULL);
 
     if (exitstatus) {
@@ -142,64 +136,7 @@ int main ( int argc, char **argv, char **env )
         exit( exitstatus );
     }
 
-    TAINT;
-
-    if ((tmpgv = gv_fetchpv("\030",TRUE, SVt_PV))) {/* $^X */
-#ifdef WIN32
-        sv_setpv(GvSV(tmpgv),"perl.exe");
-#else
-        sv_setpv(GvSV(tmpgv),"perl");
-#endif
-        SvSETMAGIC(GvSV(tmpgv));
-    }
-
-    if ((tmpgv = gv_fetchpv("0", TRUE, SVt_PV))) {/* $0 */
-#ifdef PAR_MKTMPDIR
-        if ( ( stmpdir = getenv("PAR_TEMP") ) ) {
-            sv_setpv(GvSV(tmpgv), argv[0]);
-        }
-        else
-#endif
-#ifdef HAS_PROCSELFEXE
-            S_procself_val(aTHX_ GvSV(tmpgv), argv[0]);
-#else
-#ifdef OS2
-            sv_setpv(GvSV(tmpgv), os2_execname(aTHX));
-#else
-            sv_setpv(GvSV(tmpgv), argv[0]);
-#endif
-#endif
-        SvSETMAGIC(GvSV(tmpgv));
-    }
-
-    TAINT_NOT;
-
-    /* PL_main_cv = PL_compcv; */
-    PL_compcv = 0;
-
-#ifdef PAR_MKTMPDIR
-    /* create temporary PAR directory */
-    stmpdir = getenv("PAR_TEMP");
-    if ( stmpdir == NULL ) {
-        stmpdir = par_mktmpdir( argv );
-#ifndef WIN32
-        i = execvp(SvPV_nolen(GvSV(tmpgv)), argv);
-        PerlIO_printf(PerlIO_stderr(), "%s: execution of %s failed - aborting with %i.\n", argv[0], SvPV_nolen(GvSV(tmpgv)), i);
-        return 2;
-#endif
-    }
-
-    i = PerlDir_mkdir(stmpdir, 0755);
-    if ( (i != 0) && (i != EEXIST) && (i != -1) ) {
-        PerlIO_printf(PerlIO_stderr(), "%s: creation of private temporary subdirectory %s failed - aborting with %i.\n", argv[0], stmpdir, i);
-        return 2;
-    }
-#endif
-
-#ifdef PAR_CLEARSTACK
-    newXSproto("Internals::PAR_CLEARSTACK", XS_Internals_PAR_CLEARSTACK, "", "");
-#endif
-    exitstatus = perl_run( my_perl );
+    perl_run( my_perl );
     perl_destruct( my_perl );
 
 #ifdef PAR_MKTMPDIR

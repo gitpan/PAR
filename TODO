@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #16 $ $Change: 7238 $ $DateTime: 2003/07/29 07:22:42 $
+# $Revision: #17 $ $Change: 7268 $ $DateTime: 2003/07/30 14:01:04 $
 
 - Implement inflate algorithm in perl, xor implement Archive::Zip,
   Compress::Zlib and friends in C.
@@ -15,4 +15,7 @@
   of the current calling stacks.  Currently there's a workaround
   as PAR_CLEARSTACK in myldr/main.c, but it segfaults and hence
   is commented out by default.
+
+- make CHECK blocks work by perl_parse the code instead of
+  eval"". this should clenaly solve the above problem as well.
 

@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #12 $ $Change: 7267 $ $DateTime: 2003/07/30 13:43:29 $
+   $Revision: #13 $ $Change: 7279 $ $DateTime: 2003/07/30 16:08:05 $
    vim: expandtab shiftwidth=4
 */
 
@@ -70,7 +70,7 @@ char* par_mktmpdir ( char **argv ) {
     }
 
     if ( tmpdir == NULL ) {
-        fprintf(stderr, "no suitable temporary directory found - aborting.\n");
+        /* fprintf(stderr, "no suitable temporary directory found - aborting.\n"); */
         return NULL;
     }
     else {
@@ -166,7 +166,6 @@ void par_rmtmpdir ( char *stmpdir ) {
     Direntry_t *dp;
     char *subsubdir;
 
-    fprintf(stderr, "trying to get rid of %s\n", stmpdir);
     /* remove temporary PAR directory */
     partmp_dirp = opendir(stmpdir);
 
@@ -179,7 +178,6 @@ void par_rmtmpdir ( char *stmpdir ) {
             {
                 subsubdir = malloc(strlen(stmpdir) + strlen(dp->d_name) + 2);
                 sprintf(subsubdir, "%s/%s", stmpdir, dp->d_name);
-                fprintf(stderr, "unlinking %s\n", subsubdir);
                 unlink(subsubdir);
                 free(subsubdir);
                 subsubdir = NULL;
