@@ -1,0 +1,27 @@
+# $File: //member/autrijus/PAR/README $ $Author: autrijus $
+# $Revision: #1 $ $Change: 1518 $ $DateTime: 2002/10/18 21:59:19 $
+
+This is the README file for PAR, a module to use perl scripts
+and modules stored inside compressed .par files.
+
+Please see the PAR.pm for typical uses, and script/par.pl for an
+alternative perl packaging utility.
+
+* Installation
+
+PAR uses the standard perl module install process:
+
+cpansign -v		# see SIGNATURE for details
+perl Makefile.PL
+make
+make test
+make install
+
+* Copyright
+
+Copyright 2002 by Autrijus Tang <autrijus@autrijus.org>.
+
+All rights reserved.  You can redistribute and/or modify
+this bundle under the same terms as Perl itself.
+
+See <http://www.perl.com/perl/misc/Artistic.html>.

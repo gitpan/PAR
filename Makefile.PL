@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #2 $ $Change: 1514 $ $DateTime: 2002/10/18 20:49:57 $
+# $Revision: #4 $ $Change: 1519 $ $DateTime: 2002/10/18 22:00:34 $
 
 use 5.006;
 use ExtUtils::MakeMaker;
@@ -12,6 +12,7 @@ WriteMakefile(
     VERSION_FROM	=> 'PAR.pm', 
     DISTNAME		=> 'PAR',
     BINARY_LOCATION	=> 'x86/PAR.tar.gz',
+    EXE_FILES		=> [ 'script/par.pl' ],
 
     PREREQ_PM		=> {
 	'Archive::Zip'	=> 0,

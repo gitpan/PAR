@@ -2,7 +2,9 @@ Changes
 MANIFEST			This list of files
 Makefile.PL
 PAR.pm
+README
 SIGNATURE
+script/par.pl
 t/0-signature.t
 t/1-basic.t
 t/hello.par

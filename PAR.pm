@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #3 $ $Change: 1516 $ $DateTime: 2002/10/18 20:52:38 $
+# $Revision: #4 $ $Change: 1518 $ $DateTime: 2002/10/18 21:59:19 $
 
 package PAR;
-$PAR::VERSION = '0.02';
+$PAR::VERSION = '0.03';
 
 use 5.006;
 use strict;
@@ -13,17 +13,17 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.02 of PAR.
+This document describes version 0.03 of PAR.
 
 =head1 SYNOPSIS
 
 Following examples assume a F<foo.par> file in Zip format;
 support for compressed gzip (F<*.tgz>) format is planned.
 
-To use F<Hello.pm>, F<lib/Hello.pm> or F<lib/arch/Hello.pm> from F<foo.par>:
+To use F<Hello.pm>, F<lib/Hello.pm> or F<lib/arch/Hello.pm> from F<./foo.par>:
 
-    % perl -MPAR=foo.par -MHello
-    % perl -MPAR=foo -MHello		# the .par part is optional
+    % perl -MPAR=./foo.par -MHello
+    % perl -MPAR=./foo -MHello		# the .par part is optional
 
 Same thing, but search F<foo.par> in the F<@INC>;
 
@@ -168,6 +168,8 @@ sub unpar {
 1;
 
 =head1 SEE ALSO
+
+L<par.pl>
 
 L<Archive::Zip>, L<perlfunc/require>
 

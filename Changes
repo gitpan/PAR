@@ -1,4 +1,19 @@
 ____________________________________________________________________________
+[  1519] By: autrijus                              on 2002/10/18  22:00:34
+        Log: * oops.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  1518] By: autrijus                              on 2002/10/18  21:59:19
+        Log: * 0.03.
+             * added par.pl, a stand-alone invocation utility for PAR.
+             * added README.
+	   + README script/par.pl
+	   ! MANIFEST Makefile.PL PAR.pm
+____________________________________________________________________________
+[  1517] By: autrijus                              on 2002/10/18  20:53:38
+        Log: * changes and signature.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1516] By: autrijus                              on 2002/10/18  20:52:38
         Log: * Officially 0.02.
 	   ! PAR.pm
