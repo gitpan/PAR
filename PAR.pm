@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #50 $ $Change: 2663 $ $DateTime: 2002/12/11 01:34:41 $
+# $Revision: #54 $ $Change: 2728 $ $DateTime: 2002/12/17 03:40:38 $
 
 package PAR;
-$PAR::VERSION = '0.51';
+$PAR::VERSION = '0.60';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.51 of PAR, released December 11, 2002.
+This document describes version 0.60 of PAR, released December 17, 2002.
 
 =head1 SYNOPSIS
 
@@ -23,7 +23,7 @@ This document describes version 0.51 of PAR, released December 11, 2002.
 data files, please consult L<pp> instead.)
 
 Following examples assume a F<foo.par> file in Zip format; support for
-compressed gzip (F<*.tgz>) format is under consideration.
+compressed tar (F<*.tgz>/F<*.tbz2>) format is under consideration.
 
 To use F<Hello.pm> from F<./foo.par>:
 
@@ -70,6 +70,10 @@ Use in a program:
 This module lets you easily bundle a typical F<blib/> tree into a zip
 file, called a Perl Archive, or C<PAR>.
 
+It supports loading XS modules by overriding B<DynaLoader> boostrapping
+methods; it writes shared object file to a temporary file at the time
+it is needed.
+
 To generate a F<.par> file, all you have to do is compress the modules
 under F<arch/> and F<lib/>, e.g.:
 
@@ -98,11 +102,13 @@ Please see L</SYNOPSIS> for most typical use cases.
 
 =head1 NOTES
 
-Since version 0.10, this module supports loading XS modules by overriding
-B<DynaLoader> boostrapping methods; it writes shared object file to a
-temporary file at the time it is needed, and removes it when the program
-terminates.  Currently there are no plans to leave them around for the
-next time, but if you need the functionality, just mail me. ;-)
+Since version 0.60, all files and data are extracted into a temporary
+directory, with the same name as its CRC32 checksum, to speed up
+the loading time of the next round.  To inhibit this behaviour,
+set the C<PAR_CLEARTEMP> environment to a true value.
+
+If you object to this feature, or think that only shared object
+files should be left for the next round, just mail me. :-)
 
 =cut
 
@@ -130,34 +136,44 @@ sub import {
 	$PAR::__reading = 1;
 	push @PAR_INC, $0;
 
-	my $file;
 	my $zip = $LibCache{$0};
 	my $member = $zip->memberNamed("main.pl")
 		  || $zip->memberNamed("script/main.pl");
 
-	if ($member) {
-	    $file = 'main.pl';
+	# finally take $ARGV[0] as the hint for file to run
+	if (defined $ARGV[0] and !$member) {
+	    $member  = $zip->memberNamed($ARGV[0])
+		    || $zip->memberNamed("$ARGV[0].pl")
+		    || $zip->memberNamed("script/$ARGV[0]")
+		    || $zip->memberNamed("script/$ARGV[0].pl")
+		or die qq(Can't open perl script "$ARGV[0]": No such file or directory);
+	    shift @ARGV;
 	}
-	else {
-	    die "Usage: $0 script_file_name.\n" unless @ARGV;
-
-	    $file = shift(@ARGV);
-	    $member = $zip->memberNamed($file)
-		   || $zip->memberNamed("script/$file")
-		or die qq(Can't open perl script "$file": No such file or directory);
+	elsif (!$member) {
+	    die "Usage: $0 script_file_name.\n";
 	}
 
-	my $fh = _tmpfile();
-	print $fh "package main; shift \@INC;\n#line 1 \"$file\"\n";
-	$member->extractToFileHandle($fh);
-	seek ($fh, 0, 0);
-	unshift @INC, sub { $fh };
-
-	$PAR::__reading = 0;
-	{ do 'main'; die $@ if $@; exit }
+	_run_member($member);
     }
 
     $_reentrant-- if !@_;
+}
+
+sub _run_member {
+    my $member = shift;
+    my ($fh, $is_new) = _tmpfile($member->crc32String . ".pl");
+
+    if ($is_new) {
+	my $file = $member->fileName;
+	print $fh "package main; shift \@INC;\n#line 1 \"$file\"\n";
+	$member->extractToFileHandle($fh);
+	seek ($fh, 0, 0);
+    }
+
+    unshift @INC, sub { $fh };
+
+    $PAR::__reading = 0;
+    { do 'main'; die $@ if $@; exit }
 }
 
 sub find_par {
@@ -220,10 +236,13 @@ sub unpar {
 
     return $member if $member_only;
 
-    my $fh = _tmpfile();
+    my ($fh, $is_new) = _tmpfile($member->crc32String . ".pm");
     die "Bad Things Happened..." unless $fh;
-    $member->extractToFileHandle($fh);
-    seek ($fh, 0, 0);
+
+    if ($is_new) {
+	$member->extractToFileHandle($fh);
+	seek ($fh, 0, 0);
+    }
 
     return $fh;
 }
@@ -238,17 +257,29 @@ sub _tmpfile {
     # at the time File::Temp calls unlink, there is still an open handle around,
     # and Win32 can't delete opened files...
     #
-    my $fh = IO::File->new_tmpfile;
-    unless( $fh ) {
-	require File::Temp;
+    if ($ENV{PAR_CLEARTEMP}) {
+	my $fh = IO::File->new_tmpfile;
+	unless( $fh ) {
+	    require File::Temp;
 
-	# under Win32, the file is created with O_TEMPORARY,
-	# and will be deleted by the C runtime; having File::Temp
-	# delete it has the only effect of giving an ugly warnings
-	$fh = File::Temp::tempfile( UNLINK => ($^O ne 'MSWin32') )
-	    or die "Cannot create temporary file: $!";
+	    # under Win32, the file is created with O_TEMPORARY,
+	    # and will be deleted by the C runtime; having File::Temp
+	    # delete it has the only effect of giving an ugly warnings
+	    $fh = File::Temp::tempfile( UNLINK => ($^O ne 'MSWin32') )
+		or die "Cannot create temporary file: $!";
+	}
+	return ($fh, 1);
     }
-    return $fh;
+
+    require File::Spec;
+    my $filename = File::Spec->catfile( File::Spec->tmpdir, $_[0] );
+    if (-r $filename) {
+	open my $fh, '<', $filename or die $!;
+	return ($fh, 0);
+    }
+
+    open my $fh, '+>', $filename or die $!;
+    return ($fh, 1);
 }
 
 1;

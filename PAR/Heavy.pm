@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 2054 $ $DateTime: 2002/11/08 14:37:27 $
+# $Revision: #6 $ $Change: 2720 $ $DateTime: 2002/12/15 16:31:20 $
 
 package PAR::Heavy;
-$PAR::Heavy::VERSION = '0.02';
+$PAR::Heavy::VERSION = '0.03';
 
 =head1 NAME
 
@@ -69,16 +69,31 @@ sub _bootstrap {
 	    defined &PAR::find_par and
 	    my $member = PAR::find_par(undef, $file, 1)
 	) {
+	    require File::Spec;
 	    require File::Temp;
 
-	    my ($fh, $filename) = File::Temp::tempfile(
-		SUFFIX	=> ".$dl_dlext",
-		UNLINK	=> 1
-	    );
+	    my ($fh, $filename);
 
-	    local $PAR::__reading = 1;
-	    print $fh $member->contents;
-	    close $fh;
+	    if ($ENV{PAR_CLEARTEMP}) {
+		($fh, $filename) = File::Temp::tempfile(
+		    SUFFIX	=> ".$dl_dlext",
+		    UNLINK	=> 1,
+		);
+	    }
+	    else {
+		$filename = File::Spec->catfile(
+		    File::Spec->tmpdir,
+		    $member->crc32String . ".$dl_dlext"
+		);
+
+		open $fh, '>', $filename or die $! unless -r $filename;
+	    }
+
+	    if ($fh) {
+		local $PAR::__reading = 1;
+		print $fh $member->contents;
+		close $fh;
+	    }
 
 	    $DLCache{$modfname} = $filename;
 	}

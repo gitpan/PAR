@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #5 $ $Change: 2575 $ $DateTime: 2002/12/03 00:31:38 $
+# $Revision: #6 $ $Change: 2725 $ $DateTime: 2002/12/17 03:11:34 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -22,6 +22,7 @@ my $pldflags = ldopts;
 my $ld = $Config{ld};
 my $cc = $Config{cc};
 my $f2c = "./file2c.pl";
+
 system($^X, $f2c, qw(../script/par.pl my_par_pl.c load_me_2));
 
 print "Writing Makefile for the par$exe program\n";
@@ -30,17 +31,21 @@ open OUT, "> Makefile" or die "open 'Makefile': $!";
 
 my( $out, $ccdebug, $lddebug, $warn, $rm, $mv );
 
-my $is_MSVC = $cc =~ m/^cl/;
-if( $is_MSVC ) {
-  $out = '-out:';
-  $ccdebug = $debug ? '-Zi ' : '';
-  $lddebug = $debug ? '-debug ' : '-release ';
-  $warn = $debug ? '-W3' : '';
+if( $cc =~ m/^cl/ ) {
+    $out = '-out:';
+    $ccdebug = $debug ? '-Zi ' : '';
+    $lddebug = $debug ? '-debug ' : '-release ';
+    $warn = $debug ? '-W3' : '';
+} elsif ($cc =~ m/^gcc/) {
+    $out = '-o ';
+    $ccdebug = $debug ? '-g ' : '';
+    $lddebug = $debug ? '' : '-s ';
+    $warn = $debug ? '-Wall -Wno-comments ' : '';
 } else {
-  $out = '-o ';
-  $ccdebug = $debug ? '-g ' : '';
-  $lddebug = $debug ? '' : '-s ';
-  $warn = $debug ? '-Wall -Wno-comments ' : '';
+    $out = '-o ';
+    $ccdebug = '';
+    $lddebug = '';
+    $warn = '';
 }
 
 $rm = $^O eq 'MSWin32' ? '$(PERL) -MExtUtils::Command -e rm_f' : 'rm';

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #30 $ $Change: 2663 $ $DateTime: 2002/12/11 01:34:41 $
+# $Revision: #33 $ $Change: 2727 $ $DateTime: 2002/12/17 03:33:08 $
 
 package __par_pl;
 
@@ -28,8 +28,8 @@ Same thing, but search F<foo.par> in the F<@INC>;
 
 Run F<test.pl> or F<script/test.pl> from F<foo.par>:
 
-    % par.pl foo.par test.pl	# only when $ARGV[0] ends in '.par'
-    % par.pl foo.par		# looks for 'main.pl' by default
+    % par.pl foo.par test.pl	# looks for 'main.pl' by default,
+				# otherwise run 'test.pl' 
 
 To make a self-containing script containing a PAR file :
 
@@ -89,9 +89,25 @@ or F<par.exe>).
 =item * Any number of embedded files
 
 These are typically used for bootstrapping PAR's various XS dependencies.
-Each section begins with the magic string "C<FILE>", length of file name
-in C<pack('N')> format, file name (F<auto/.../>), file length in
-C<pack('N')>, and the file's content (not compressed).
+Each section contains:
+
+=over 4
+
+=item The magic string "C<FILE>"
+
+=item Length of file name in C<pack('N')> format plus 9
+
+=item 8 bytes of hex-encoded CRC32 of file content
+
+=item A single slash ("C</>")
+
+=item The file name (without path)
+
+=item File length in C<pack('N')> format
+
+=item The file's content (not compressed)
+
+=back
 
 =item * One PAR file
 
@@ -167,16 +183,19 @@ my ($start_pos, $data_pos);
 	read _FH, $buf, unpack("N", $buf);
 
 	my $fullname = $buf;
+	my $crc = ( $fullname =~ s|^([a-f\d]{8})/|| ) ? $1 : undef;
 	my ($basename, $ext) = ($buf =~ m|(?:.*/)?(.*)(\..*)|);
 
 	read _FH, $buf, 4;
 	read _FH, $buf, unpack("N", $buf);
 
 	if (defined($ext) and $ext !~ /\.(?:pm|ix|al)$/i) {
-	    my ($out, $filename) = _tempfile($ext);
-	    binmode($out);
-	    print $out $buf;
-	    close $out;
+	    my ($out, $filename) = _tempfile($ext, $crc);
+	    if ($out) {
+		binmode($out);
+		print $out $buf;
+		close $out;
+	    }
 	    $PAR::Heavy::DLCache{$filename}++;
 	    $PAR::Heavy::DLCache{$basename} = $filename;
 	}
@@ -210,9 +229,11 @@ my ($start_pos, $data_pos);
 	}
 	else {
 	    my ($out, $name) = _tempfile('.pm');
-	    binmode($out);
-	    print $out $$filename;
-	    close $out;
+	    if ($out) {
+		binmode($out);
+		print $out $$filename;
+		close $out;
+	    }
 	    open my $fh, $name or die $!;
 	    binmode($fh);
 	    return $fh;
@@ -335,16 +356,16 @@ if ($out) {
 	    print "$path$file\n" unless $quiet;
 	    open FILE, "$path$file" or die "$file$path: $!";
 	    binmode(FILE);
-
-	    print OUT "FILE";
-	    print OUT pack('N', length($file));
-	    print OUT $file;
-	    print OUT pack('N', (stat("$path$file"))[7]);
-
-	    print OUT <FILE>;
+	    my $content = <FILE>;
 	    close FILE;
 
-	    $data_len += 12 + length($file) + (stat("$path$file"))[7];
+	    print OUT "FILE";
+	    print OUT pack('N', length($file) + 9);
+	    print OUT sprintf("%08x/%s", Archive::Zip::computeCRC32($content), $file);
+	    print OUT pack('N', (stat("$path$file"))[7]);
+	    print OUT $content;
+
+	    $data_len += 12 + length($file) + 9 + (stat("$path$file"))[7];
 	}
     }
     # }}}
@@ -453,8 +474,16 @@ sub tmpdir {
 
 my ($tmpfile, @tmpfiles);
 sub _tempfile {
-    my $ext = shift;
+    my ($ext, $crc) = @_;
     
+    if (defined $crc and !$ENV{PAR_CLEARTEMP}) {
+	my $filename = tmpdir() . "/$crc$ext";
+	return (undef, $filename) if (-r $filename);
+
+	open my $fh, '>', $filename or die $!;
+	return ($fh, $filename);
+    }
+
     if (defined &File::Temp::tempfile) {
 	# under Win32, the file is created with O_TEMPORARY,
 	# and will be deleted by the C runtime; having File::Temp
@@ -482,6 +511,7 @@ END { unlink @tmpfiles if @tmpfiles }
 package main;
 
 require PAR;
+unshift @INC, \&PAR::find_par;
 PAR->import(@par_args);
 
 die qq(Can't open perl script "$0": No such file or directory\n)

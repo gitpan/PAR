@@ -5,6 +5,8 @@
 use Test;
 BEGIN { plan tests => 8 }
 
+$ENV{PAR_CLEARTEMP} = 1;
+
 ok(
     `$^X -Mblib -MPAR -It/hello -MHello -e Hello::hello`,
     "Hello, world!\n",

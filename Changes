@@ -1,4 +1,60 @@
 ____________________________________________________________________________
+[  2728] By: autrijus                              on 2002/12/17  03:40:38
+        Log: * This be version 0.60.
+             * Document the PAR_CLEARTEMP environment variable
+             and its implications.
+             * Refactor the $0 execution code into _run_member().
+	   ! PAR.pm
+____________________________________________________________________________
+[  2727] By: autrijus                              on 2002/12/17  03:33:08
+        Log: * POD nits.
+             * For self-contained executables, use the .pm files
+             inside PAR by default, instead of external ones.
+	   ! script/par.pl
+____________________________________________________________________________
+[  2726] By: autrijus                              on 2002/12/17  03:12:34
+        Log: * implement and document multiple input program
+             support for pp.
+	   ! script/pp
+____________________________________________________________________________
+[  2725] By: autrijus                              on 2002/12/17  03:11:34
+        Log: * Fix compilation on darwin, as reported by
+             Randal L. Schwartz.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  2721] By: autrijus                              on 2002/12/15  16:40:41
+        Log: * CRC32-based temp file for all files inside .par,
+             unless $ENV{PAR_CLEARTEMP} is true.
+	   ! PAR.pm
+____________________________________________________________________________
+[  2720] By: autrijus                              on 2002/12/15  16:31:20
+        Log: * implement persistent tempfile for .so inside PARs.
+	   ! PAR/Heavy.pm
+____________________________________________________________________________
+[  2719] By: autrijus                              on 2002/12/15  16:30:29
+        Log: * Add CRC of FILE into the associated sections.
+             (this is backward-compatible because of '/' as separator)
+             * unless $ENV{PAR_CLEARTEMP} is set, the .so (or .dll)
+	       files
+             will *not* be cleared away now.
+	   ! script/par.pl
+____________________________________________________________________________
+[  2718] By: autrijus                              on 2002/12/15  15:14:51
+        Log: * changed script/* invocation from $ARGV[0] to
+             $0, as suggested by Chia-Liang Kao.
+             * starting to implement CRC-based temp file
+             persistence, as suggested by Bill Atkins.
+	   ! AUTHORS PAR.pm PAR/Heavy.pm script/par.pl
+	   ! script/pp
+____________________________________________________________________________
+[  2691] By: autrijus                              on 2002/12/12  06:50:05
+        Log: * minor typo.
+	   ! PAR.pm
+____________________________________________________________________________
+[  2664] By: autrijus                              on 2002/12/11  01:51:43
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  2663] By: autrijus                              on 2002/12/11  01:34:41
         Log: * This be 0.51.
              * Fixed incorrect PATH initialization problem on

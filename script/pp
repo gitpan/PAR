@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #11 $ $Change: 2322 $ $DateTime: 2002/11/23 14:20:39 $
+# $Revision: #13 $ $Change: 2726 $ $DateTime: 2002/12/17 03:12:34 $
 
 use 5.006;
 use strict;
@@ -19,7 +19,7 @@ sub is_win32();
 sub vprint($@);
 
 our ($Options);
-our ($Input => $Output);
+our (@Input, $Output);
 our ($logfh);
 our ($par_file);
 
@@ -44,10 +44,10 @@ sub compile_par {
 
     if (opt(S) || opt(p)) {
         # We need to keep it.
-        if (opt(e) or !$Input) {
+        if (opt(e) or !@Input) {
             $par_file = "a.out.par";
         } else {
-            $par_file = $Input;
+            $par_file = $Input[0];
             # File off extension if present
             # hold on: plx is executable; also, careful of ordering!
             $par_file =~ s/\.(?:p(?:lx|l|h)|m)\z//i;
@@ -72,7 +72,7 @@ sub compile_par {
 	rv	=> \%map,
 	files	=> [
 	    (map Module::ScanDeps::_find_in_inc($_), @modules),
-	    ($Input ? $Input : ()),
+	    (@Input ? @Input : ()),
 	],
 	recurse	=> 1,
     );
@@ -97,11 +97,25 @@ sub compile_par {
 	push @manifest, "lib/$_";
     }
 
-    if ($Input and $Input !~ /\.pm\z/i) {
-	$size += -s $Input;
-	$zip->addFile($Input => "script/main.pl");
-	push @manifest, "script/main.pl";
+    @Input = grep !/\.pm\z/i, @Input;
+
+    foreach my $input (@Input) {
+	my $name = $input;
+	$size += -s $input;
+
+	$zip->addFile($input => "script/$input");
+	push @manifest, "script/$input";
+
     }
+
+    if (@Input == 1) {
+	$zip->addString(_main_pl_single("script/$Input[0]") => "script/main.pl");
+    }
+    else {
+	$zip->addString(_main_pl_multi() => "script/main.pl");
+    }
+
+    push @manifest, "script/main.pl";
 
     my $manifest    = join("\n", @manifest);
     my $meta_yaml   = << "YAML";
@@ -113,7 +127,6 @@ distribution_type: par
 dynamic_config: 0
 generated_by: 'Perl Packager version $VERSION'
 license: unknown
-name: $Input
 YAML
 
     $size += length($_) for ($manifest, $meta_yaml);
@@ -144,7 +157,7 @@ sub par_to_exe {
 }
 
 sub generate_code { 
-    vprint 0, "Compiling $Input";
+    vprint 0, "Compiling @Input";
     compile_par();
     exit(0) if (!opt('r'));
 }
@@ -202,14 +215,14 @@ sub parse_argv {
         my ($fh, $fake_input) = tempfile("ppXXXXX", SUFFIX => ".pl", UNLINK => 1); 
 	print $fh $Options->{e};
 	close $fh;
-	$Input = $fake_input;
+	@Input = $fake_input;
     }
     else {
-        $Input = shift @ARGV;
-        _usage_and_die("$0: No input file specified\n") unless $Input or opt(M);
-        warn "$0: using $Input as input file, ignoring @ARGV\n" if @ARGV and !opt(r);
-        check_read($Input) if $Input;
-        check_perl($Input) if $Input;
+        @Input = shift @ARGV;
+        _usage_and_die("$0: No input file specified\n") unless @Input or opt(M);
+	push @Input, @ARGV if @ARGV and !opt(r);
+        check_read(@Input) if @Input;
+        check_perl(@Input) if @Input;
         sanity_check();
     }
 }
@@ -221,8 +234,8 @@ sub opt(*) {
 
 sub sanity_check {
     # Check the input and output files make sense, are read/writable.
-    if ($Input eq $Output) {
-        if ($Input eq 'a.out') {
+    if ("@Input" eq $Output) {
+        if ("@Input" eq 'a.out') {
             _die("$0: Compiling a.out is probably not what you want to do.\n");
             # You fully deserve what you get now. No you *don't*. typos happen.
         } else {
@@ -234,31 +247,33 @@ sub sanity_check {
 }
 
 sub check_read { 
-    my $file = shift;
-    unless (-r $file) {
-        _die("$0: Input file $file is a directory, not a file\n") if -d _;
-        unless (-e _) {
-            _die("$0: Input file $file was not found\n");
-        } else {
-            _die("$0: Cannot read input file $file: $!\n");
-        }
+    foreach my $file (@_) {
+	unless (-r $file) {
+	    _die("$0: Input file $file is a directory, not a file\n") if -d _;
+	    unless (-e _) {
+		_die("$0: Input file $file was not found\n");
+	    } else {
+		_die("$0: Cannot read input file $file: $!\n");
+	    }
+	}
+	unless (-f _) {
+	    # XXX: die?  don't try this on /dev/tty
+	    warn "$0: WARNING: input $file is not a plain file\n";
+	} 
     }
-    unless (-f _) {
-        # XXX: die?  don't try this on /dev/tty
-        warn "$0: WARNING: input $file is not a plain file\n";
-    } 
 }
 
 sub check_write {
-    my $file = shift;
-    if (-d $file) {
-        _die("$0: Cannot write on $file, is a directory\n");
-    }
-    if (-e _) {
-        _die("$0: Cannot write on $file: $!\n") unless -w _;
-    } 
-    unless (-w cwd()) { 
-        _die("$0: Cannot write in this directory: $!\n");
+    foreach my $file (@_) {
+	if (-d $file) {
+	    _die("$0: Cannot write on $file, is a directory\n");
+	}
+	if (-e _) {
+	    _die("$0: Cannot write on $file: $!\n") unless -w _;
+	} 
+	unless (-w cwd()) { 
+	    _die("$0: Cannot write in this directory: $!\n");
+	}
     }
 }
 
@@ -318,6 +333,33 @@ sub _can_run {
     return;
 }
 
+sub _main_pl_multi {
+    return << '__MAIN__';
+my $file = $0;
+my $zip = $PAR::LibCache{$0};
+$file =~ s/^.*[\/\\]//;
+$file =~ s/\.[^.]*$//i ;
+my $member  = $zip->memberNamed($file)
+	|| $zip->memberNamed("$file.pl")
+	|| $zip->memberNamed("script/$file")
+	|| $zip->memberNamed("script/$file.pl")
+    or die qq(Can't open perl script "$file": No such file or directory);
+PAR::_run_member($member);
+
+__MAIN__
+}
+
+sub _main_pl_single {
+    my $file = shift;
+    return << "__MAIN__";
+my \$zip = \$PAR::LibCache{\$0};
+my \$member = \$zip->memberNamed('$file')
+    or die qq(Can't open perl script "$file": No such file or directory);
+PAR::_run_member(\$member);
+
+__MAIN__
+}
+
 END {
     unlink $par_file if ($par_file && !opt(S) && !opt(p));
 }
@@ -332,6 +374,11 @@ pp - Perl Packager
 
     % pp hello			# Packages 'hello' into executable 'a.out'
     % pp -o hello hello.pl	# Packages 'hello.pl' into executable 'hello'
+
+    % pp -o foo foo.pl bar.pl	# Packages 'foo.pl' and 'bar.pl' into 'foo'
+    % ./foo			# Executes the 'foo.pl' inside 'foo'
+    % mv foo bar; ./bar		# Executes the 'bar.pl' inside 'foo'
+    % mv bar baz; ./baz		# Error: Can't open perl script "baz"
 
     % pp -p file		# Creates a PAR file, 'file.par'
     % pp -S -o hello file	# Creates a PAR file, 'file.par',
@@ -366,6 +413,12 @@ It does not provide the compilation-step acceleration provided
 by F<perlcc> (although a ByteLoader variant of F<pp> is entirely
 possible), but makes up for it with better reliability, smaller
 executable size, and full retrieval of original source code.
+
+If a single input program is specified, the resulting executable will
+behave identically as that program.  However, when multiple programs
+are packaged, the produced executable will run the one that has the
+same basename as C<$0> (i.e. the filename used to invoke it).  If
+nothing matches, it dies with the error C<Can't open perl script "$0">.
 
 On Microsoft Windows platforms, F<a.exe> is used instead of F<a.out>
 as the default executable name.
