@@ -1,13 +1,13 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #48 $ $Change: 9581 $ $DateTime: 2004/01/03 16:18:29 $ vim: expandtab shiftwidth=4
+# $Revision: #54 $ $Change: 9609 $ $DateTime: 2004/01/04 20:20:53 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.77_98';
+$PAR::VERSION = '0.77_99';
 
 use 5.006;
 use strict;
 use warnings;
-use Config ();
+use Config '%Config';
 
 =head1 NAME
 
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.77_98 of PAR, released January 4, 2004.
+This document describes version 0.77_99 of PAR, released January 5, 2004.
 
 =head1 SYNOPSIS
 
@@ -125,7 +125,7 @@ Currently, F<pp>-generated PAR files will attach four such PAR-specific
 attributes in F<META.yml>:
 
     par:
-      cleartemp: 0      # default value of PAR_CLEARTEMP
+      clean: 0          # default value of PAR_CLEAN
       signature: ''     # key ID of the SIGNATURE file
       verbatim: 0       # were packed prerequisite's PODs preserved?
       version: x.xx     # PAR.pm version that generated this PAR
@@ -140,11 +140,15 @@ use vars qw(%PAR_INC);  # sets {$par}{$file} for require'd modules
 use vars qw(@LibCache %LibCache);       # I really miss pseudohash.
 use vars qw($LastAccessedPAR);
 
-my $ver  = $Config::Config{version};
-my $arch = $Config::Config{archname};
+my $ver  = $Config{version};
+my $arch = $Config{archname};
+my ($par_temp, $progname);
 
 sub import {
     my $class = shift;
+
+    _set_progname();
+    _set_par_temp();
 
     foreach my $par (@_) {
         if ($par =~ /[?*{}\[\]]/) {
@@ -167,6 +171,7 @@ sub import {
     PAR::Heavy::_init_dynaloader();
 
     if (unpar($0)) {
+        # XXX - handle META.yml here!
         push @PAR_INC, unpar($0, undef, undef, 1);
 
         my $zip = $LibCache{$0};
@@ -193,7 +198,7 @@ sub import {
 sub _run_member {
     my $member = shift;
     my $clear_stack = shift;
-    my ($fh, $is_new) = _tmpfile($member->crc32String . ".pl");
+    my ($fh, $is_new) = _tempfile($member->crc32String . ".pl");
 
     if ($is_new) {
         my $file = $member->fileName;
@@ -301,7 +306,7 @@ sub unpar {
             $par = $file;
         }
         elsif (ref($par) eq 'SCALAR') {
-            my ($fh) = _tmpfile();
+            my ($fh) = _tempfile();
             print $fh $$par;
             $par = $fh;
         }
@@ -323,7 +328,7 @@ sub unpar {
         $LibCache{$_[0]} = $zip;
 
         foreach my $member ( $zip->members(
-            "^par/(?:$Config::Config{version}/)?(?:$Config::Config{archname}/)?"
+            "^par/(?:$Config{version}/)?(?:$Config{archname}/)?"
         ) ) {
             next if $member->isDirectory;
             my $content = $member->contents();
@@ -345,7 +350,7 @@ sub unpar {
 
     return $member if $member_only;
 
-    my ($fh, $is_new) = _tmpfile($member->crc32String . ".pm");
+    my ($fh, $is_new) = _tempfile($member->crc32String . ".pm");
     die "Bad Things Happened..." unless $fh;
 
     if ($is_new) {
@@ -356,37 +361,59 @@ sub unpar {
     return $fh;
 }
 
-sub _tmpfile {
-    # From Mattia Barbon <MBARBON@cpan.org>:
-    # Under Win32, IO::File->new_tmpfile uses the C function tmpfile(),
-    # but the implementation provided by MS creates the temporary files in the
-    # root directory, which is likely not to be writable by ordinary users.
-    # using File::Temp::tempfile solves the problem *except* for files containing
-    # a __DATA__/__END__ <guess>since perl copies(dups?) the filehandle,
-    # at the time File::Temp calls unlink, there is still an open handle around,
-    # and Win32 can't delete opened files...
-    #
-    if ($ENV{PAR_CLEARTEMP} or !@_) {
-        require IO::File;
-        my $fh = IO::File->new_tmpfile;
-        unless( $fh ) {
-            require File::Temp;
+# The C version of this code appears in myldr/mktmpdir.c
+sub _set_par_temp {
+    if ($ENV{PAR_TEMP} and $ENV{PAR_TEMP} =~ /(.+)/) {
+        $par_temp = $1;
+        return;
+    }
 
-            # under Win32, the file is created with O_TEMPORARY,
-            # and will be deleted by the C runtime; having File::Temp
-            # delete it has the only effect of giving an ugly warnings
-            $fh = File::Temp::tempfile( UNLINK => ($^O ne 'MSWin32') )
-                or die "Cannot create temporary file: $!";
+    require File::Spec;
+
+    foreach my $path (
+        (map $ENV{$_}, qw( TMPDIR TEMP TMP )),
+        qw( "C:\\TEMP /tmp . )
+    ) {
+        next unless $path and -d $path and -w $path;
+        my $username = defined(&Win32::LoginName)
+            ? &Win32::LoginName()
+            : $ENV{USERNAME} || $ENV{USER} || 'SYSTEM';
+
+        my $stmpdir = File::Spec->catdir($path, "par-$username");
+        mkdir $stmpdir, 0755;
+        if (!$ENV{PAR_CLEAN} and my $mtime = (stat($progname))[9]) {
+            $stmpdir = File::Spec->catdir($stmpdir, "cache-$mtime");
         }
+        else {
+            $ENV{PAR_CLEAN} = 1;
+            $stmpdir = File::Spec->catdir($stmpdir, "temp-$$");
+        }
+
+        $ENV{PAR_TEMP} = $stmpdir;
+        mkdir $stmpdir, 0755;
+        last;
+    }
+
+    $par_temp = $1 if $ENV{PAR_TEMP} and $ENV{PAR_TEMP} =~ /(.+)/;
+}
+
+sub _tempfile {
+    if ($ENV{PAR_CLEAN} or !@_) {
+        require File::Temp;
+
+        # under Win32, the file is created with O_TEMPORARY,
+        # and will be deleted by the C runtime; having File::Temp
+        # delete it has the only effect of giving an ugly warnings
+        my $fh = File::Temp::tempfile(
+            DIR     => $par_temp,
+            UNLINK  => ($^O ne 'MSWin32'),
+        ) or die "Cannot create temporary file: $!";
         binmode($fh);
         return ($fh, 1);
     }
 
     require File::Spec;
-    my $filename = File::Spec->catfile(
-        $ENV{PAR_TEMP} || File::Spec->tmpdir,
-        $_[0],
-    );
+    my $filename = File::Spec->catfile( $par_temp, $_[0] );
     if (-r $filename) {
         open my $fh, '<', $filename or die $!;
         binmode($fh);
@@ -396,6 +423,29 @@ sub _tmpfile {
     open my $fh, '+>', $filename or die $!;
     binmode($fh);
     return ($fh, 1);
+}
+
+sub _set_progname {
+    require File::Spec;
+
+    if ($ENV{PAR_PROGNAME} and $ENV{PAR_PROGNAME} =~ /(.+)/) {
+        $progname = $1;
+    }
+    return if -s ($progname ||= $0);
+
+    if (-s "$progname$Config{_exe}") {
+        $ENV{PAR_PROGNAME} = $progname = "$progname$Config{_exe}";
+        return $progname;
+    }
+
+    foreach my $dir (split /\Q$Config{path_sep}\E/, $ENV{PATH}) {
+        my $name = File::Spec->catfile($dir, "$progname$Config{_exe}");
+        if (-s $name) { $progname = $name; last }
+        $name = File::Spec->catfile($dir, "$progname");
+        if (-s $name) { $progname = $name; last }
+    }
+
+    $ENV{PAR_PROGNAME} = $progname;
 }
 
 1;

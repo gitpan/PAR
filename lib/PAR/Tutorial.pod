@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Tutorial.pod $
-# $Revision: #4 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $ vim: expandtab shiftwidth=4
+# $Revision: #5 $ $Change: 9605 $ $DateTime: 2004/01/04 19:20:58 $ vim: expandtab shiftwidth=4
 
 =head1 NAME
 
@@ -439,7 +439,7 @@ L<http://aut.dyndns.org/par-tutorial/>.
  generated_by: 'Perl Packager version 0.03'
  license: unknown
  par:
-   cleartemp: 0
+   clean: 0
    signature: ''
    verbatim: 0
    version: 0.68

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #48 $ $Change: 9521 $ $DateTime: 2003/12/31 14:25:44 $
+# $Revision: #49 $ $Change: 9604 $ $DateTime: 2004/01/04 18:08:49 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -64,6 +64,7 @@ Phil Sallee
 PodMaster		(PODMASTER)
 Randal L. Schwartz	(MERLYN)
 Randy Carpenter
+Randy W. Sims		(RANDYS)
 Reini Urban
 Richard Soderberg	(RSOD)
 Rob Casey		(ROBAU)

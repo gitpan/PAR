@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #19 $ $Change: 9549 $ $DateTime: 2004/01/02 17:29:36 $
+   $Revision: #25 $ $Change: 9608 $ $DateTime: 2004/01/04 20:17:28 $
    vim: expandtab shiftwidth=4
 */
 
@@ -13,13 +13,11 @@
 #   define mkdir(x, y) _mkdir(x)
 #   define W_OK 2
 #   define S_ISDIR(x) 1
-#   define ISSLASH(C) ((C) == '\\')
 #else
 #   include <unistd.h>
 #   include <sys/errno.h>
 #   include <dirent.h>
     typedef struct dirent Direntry_t;
-#   define ISSLASH(C) ((C) == '/')
 #endif
 
 typedef int Pid_t;
@@ -73,24 +71,15 @@ int my_mkfile (char* argv0, char* stmpdir, const char* name) {
     return i;
 }
 
-char *_basename (const char *name) {
-    const char *base = name;
-    const char *p;
-
-    for (p = name; *p; p++) {
-        if (ISSLASH (*p)) base = p + 1;
-    }
-
-    return (char *)base;
-}
-
 int main ( int argc, char **argv, char **env )
 {
     int i;
     char *stmpdir;
     char *buf = (char *)malloc(127);
 
+    par_init_env();
     par_mktmpdir( argv );
+
     stmpdir = (char *)getenv("PAR_TEMP");
     if ( stmpdir != NULL ) {
         i = mkdir(stmpdir, 0755);
@@ -107,7 +96,7 @@ int main ( int argc, char **argv, char **env )
         close(i); chmod(my_file, 0755);
     }
 
-    my_file = _basename(findprog(argv[0], getenv("PATH")));
+    my_file = par_basename(par_findprog(argv[0], getenv("PATH")));
 
     i = my_mkfile( argv[0], stmpdir, my_file );
     if ( !i ) return 2;
@@ -124,17 +113,18 @@ int main ( int argc, char **argv, char **env )
         putenv(buf);
     }
 
+    putenv("PAR_INITIALIZED=1");
 #ifdef WIN32
-    sprintf(buf, "PAR_SPAWNED=1");
-    putenv(buf);
+    putenv("PAR_SPAWNED=1");
     i = spawnvp(P_WAIT, my_file, argv);
 #else
     execvp(my_file, argv);
     return 2;
 #endif
 
-    if ( getenv("PAR_CLEARTEMP") != NULL ) {
+    if ( (getenv("PAR_CLEAN") != NULL) && (strlen(getenv("PAR_CLEAN")) > 0) ) {
         par_rmtmpdir(stmpdir);
+        par_rmtmpdir(par_dirname(stmpdir));
     }
     return i;
 }

@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #88 $ $Change: 9561 $ $DateTime: 2004/01/03 04:22:17 $ vim: expandtab shiftwidth=4
+# $Revision: #94 $ $Change: 9608 $ $DateTime: 2004/01/04 20:17:28 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -150,8 +150,13 @@ followed by a 8-bytes magic string: "C<\012PAR.pm\012>".
 
 =cut
 
-my @tmpfiles;
-END { if (@tmpfiles) { unlink @tmpfiles; rmdir $par_temp } }
+my ($par_temp, $progname, @tmpfile);
+END { if (@tmpfile) {
+    unlink @tmpfile;
+    rmdir $par_temp;
+    $par_temp =~ s{[^\\/]*$}{};
+    rmdir $par_temp;
+} }
 
 BEGIN {
     Internals::PAR::BOOT() if defined &Internals::PAR::BOOT;
@@ -163,7 +168,6 @@ if ($ENV{PAR_ARGV_0}) {
     $0 = $ENV{PAR_ARGV_0};
 }
 
-my $progname = $0;
 my $quiet = !$ENV{PAR_DEBUG};
 
 # fix $progname if invoked from PATH
@@ -173,19 +177,8 @@ my %Config = (
     _delim      => ($^O =~ /^MSWin|OS2/ ? '\\' : '/'),
 );
 
-if (-s "$progname$Config{_exe}") {
-    $progname = "$progname$Config{_exe}";
-}
-elsif (!-s $progname) {
-    foreach my $dir (split /\Q$Config{path_sep}\E/, $ENV{PATH}) {
-        $dir =~ s/\Q$Config{_delim}\E$//;
-        (($progname = "$dir$Config{_delim}$progname$Config{_exe}"), last)
-            if -s "$dir$Config{_delim}$progname$Config{_exe}";
-        (($progname = "$dir$Config{_delim}$progname"), last)
-            if -s "$dir$Config{_delim}$progname";
-    }
-}
-
+_par_init_env();
+_set_progname();
 _set_par_temp();
 
 # Magic string checking and extracting bundled modules {{{
@@ -232,8 +225,6 @@ my ($start_pos, $data_pos);
                 close $out;
                 chmod 0755, $filename;
             }
-            $PAR::Heavy::DLCache{$filename}++;
-            $PAR::Heavy::DLCache{$basename}   =
             $PAR::Heavy::FullCache{$fullname} = $filename;
             $PAR::Heavy::FullCache{$filename} = $fullname;
         }
@@ -273,7 +264,7 @@ my ($start_pos, $data_pos);
 
         $INC{$module} = "/loader/$filename/$module";
 
-        if ($ENV{PAR_CLEARTEMP} and defined(&IO::File::new)) {
+        if ($ENV{PAR_CLEAN} and defined(&IO::File::new)) {
             my $fh = IO::File->new_tmpfile or die $!;
             binmode($fh);
             print $fh $filename->{buf};
@@ -380,7 +371,18 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
 
 # Output mode (-O) handling {{{
 if ($out) {
+    require IO::File;
+    require Archive::Zip;
+
     my $par = shift(@ARGV);
+    my $zip = Archive::Zip->new($par) if defined($par);
+    my %env = do {
+        if ($zip and my $meta = $zip->contents('META.yml')) {
+            $meta =~ s/.*^par:$//ms;
+            $meta =~ s/^\S.*//ms;
+            $meta =~ /^  ([^:]+): (.+)$/mg;
+        }
+    };
 
     # Open input and output files {{{
     local $/ = \4;
@@ -391,8 +393,6 @@ if ($out) {
         die "$par is not a PAR file" unless <PAR> eq "PK\003\004";
     }
 
-    require IO::File;
-    require Archive::Zip;
     my $fh = IO::File->new(
 	$out,
 	IO::File::O_CREAT() | IO::File::O_WRONLY() | IO::File::O_TRUNC(),
@@ -406,6 +406,15 @@ if ($out) {
     if (!$ENV{PAR_VERBATIM} and $loader =~ /^(?:#!|\@rem)/) {
         require PAR::Filter::PodStrip;
         PAR::Filter::PodStrip->new->apply(\$loader, $0)
+    }
+    foreach my $key (sort keys %env) {
+        my $val = $env{$key} or next;
+        $val = eval $val if $val =~ /^['"]/;
+        my $magic = "__ENV_PAR_" . uc($key) . "__";
+        my $set = "PAR_" . uc($key) . "=$val";
+        $loader =~ s{$magic( +)}{
+            $magic . $set . (' ' x (length($1) - length($set)))
+        }eg;
     }
     $fh->print($loader);
     $/ = undef;
@@ -492,10 +501,7 @@ if ($out) {
     # }}}
 
     # Now write out the PAR and magic strings {{{
-    if (defined($par)) {
-        my $zip = Archive::Zip->new($par);
-        $zip->writeToFileHandle($fh);
-    }
+    $zip->writeToFileHandle($fh) if $zip;
 
     $fh->print(pack('N', $fh->tell - length($loader)));
     $fh->print("\nPAR.pm\n");
@@ -601,11 +607,11 @@ sub _set_par_temp {
 
         my $stmpdir = "$path$Config{_delim}par-$username";
         mkdir $stmpdir, 0755;
-        if (!$ENV{PAR_CLEARTEMP} and my $mtime = (stat($progname))[9]) {
+        if (!$ENV{PAR_CLEAN} and my $mtime = (stat($progname))[9]) {
             $stmpdir .= "$Config{_delim}cache-$mtime";
         }
         else {
-            $ENV{PAR_CLEARTEMP} = 1;
+            $ENV{PAR_CLEAN} = 1;
             $stmpdir .= "$Config{_delim}temp-$$";
         }
 
@@ -623,9 +629,9 @@ sub _tempfile {
     
     $filename = "$par_temp/$crc$ext";
 
-    if ($ENV{PAR_CLEARTEMP}) {
+    if ($ENV{PAR_CLEAN}) {
         unlink $filename if -e $filename;
-        push @tmpfiles, $filename;
+        push @tmpfile, $filename;
     }
     else {
         return (undef, $filename) if (-r $filename);
@@ -634,6 +640,42 @@ sub _tempfile {
     open $fh, '>', $filename or die $!;
     binmode($fh);
     return($fh, $filename);
+}
+
+sub _set_progname {
+    if ($ENV{PAR_PROGNAME} and $ENV{PAR_PROGNAME} =~ /(.+)/) {
+        $progname = $1;
+    }
+    return if -s ($progname ||= $0);
+
+    if (-s "$progname$Config{_exe}") {
+        $ENV{PAR_PROGNAME} = $progname = "$progname$Config{_exe}";
+        return $progname;
+    }
+
+    foreach my $dir (split /\Q$Config{path_sep}\E/, $ENV{PATH}) {
+        $dir =~ s/\Q$Config{_delim}\E$//;
+        (($progname = "$dir$Config{_delim}$progname$Config{_exe}"), last)
+            if -s "$dir$Config{_delim}$progname$Config{_exe}";
+        (($progname = "$dir$Config{_delim}$progname"), last)
+            if -s "$dir$Config{_delim}$progname";
+    }
+
+    $ENV{PAR_PROGNAME} = $progname;
+}
+
+sub _par_init_env {
+    return if $ENV{PAR_INITIALIZED}++;
+
+    my $par_clean = "__ENV_PAR_CLEAN__               ";
+
+    if ($ENV{PAR_TEMP}) {
+        delete $ENV{PAR_CLEAN};
+    }
+    elsif (!$ENV{PAR_CLEAN}) {
+        my $value = substr($par_clean, 12 + length("CLEAN"));
+        $ENV{PAR_CLEAN} = $1 if $value =~ /^PAR_CLEAN=(\S+)/;
+    }
 }
 
 sub outs { warn("@_\n") unless $quiet }

@@ -1,11 +1,34 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #29 $ $Change: 9527 $ $DateTime: 2003/12/31 15:27:49 $
+# $Revision: #30 $ $Change: 9607 $ $DateTime: 2004/01/04 19:44:20 $
+
+[Changes for 0.78 (tentative)]
+
+* New Features
+
+    - By default, "pp" generated executables will now store
+      extracted files in cache directories.  You may override
+      this by setting the PAR_CLEAN environment variable to "1",
+      or generate executables using "pp -C".
+
+    - New "pp -C" (--clean) option to make the generated executable
+      clean up temporary directories after each run.
+
+    - PAR_CLEARTEMP is now renamed to PAR_CLEAN by observing this
+      popular misspelling.
+
+* Bug fixes
+
+    - On Win32, temporary directories containing shared libraries
+      was not being properly cleaned up.
+
+    - If no suitable temporary directories are found, use the current
+      directory (".") instead of the root directory ("/").
 
 [Changes for 0.77 - January 1, 2004]
 
 * New Features
 
-    - New "pp -c" and "pp -x" (--compile/--execute) commands run the
+    - New "pp -c" and "pp -x" (--compile/--execute) options run the
       script with "perl -c" to check for dependencies.
       
     - Also, the new "pp -n" (--noscan) command skips the default

@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #24 $ $Change: 9558 $ $DateTime: 2004/01/02 18:50:23 $
+   $Revision: #26 $ $Change: 9604 $ $DateTime: 2004/01/04 18:08:49 $
    vim: expandtab shiftwidth=4
 */
 
@@ -75,9 +75,9 @@ char *par_mktmpdir ( char **argv ) {
     sprintf(stmpdir, "%s%s%s%s", tmpdir, dir_sep, subdirbuf_prefix, username);
     mkdir(stmpdir, 0755);
 
-    progname = findprog(argv[0], getenv("TEMP"));
+    progname = par_findprog(argv[0], getenv("TEMP"));
 
-    if ( (!getenv("PAR_CLEARTEMP")) && (par_lstat(progname, &PL_statbuf) == 0)) {
+    if ( (!getenv("PAR_CLEAN")) && (par_lstat(progname, &PL_statbuf) == 0)) {
         /* "$TEMP/par-$USER/cache-$MTIME" */
 
         sprintf(
@@ -89,7 +89,7 @@ char *par_mktmpdir ( char **argv ) {
     else {
         /* "$TEMP/par-$USER/temp-$PID" */
 
-        putenv("PAR_CLEARTEMP=1");
+        putenv("PAR_CLEAN=1");
         sprintf(
             stmpdir,
             "%s%stemp-%u%s",
@@ -127,6 +127,7 @@ char *par_mktmpdir ( char **argv ) {
 
     return(stmpdir);
 }
+
 
 #ifdef WIN32
 void par_rmtmpdir ( char *stmpdir ) {

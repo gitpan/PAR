@@ -1,11 +1,11 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/1-basic.t $ $Author: autrijus $
-# $Revision: #10 $ $Change: 9533 $ $DateTime: 2004/01/01 06:52:55 $
+# $Revision: #11 $ $Change: 9604 $ $DateTime: 2004/01/04 18:08:49 $
 
 use Test;
 BEGIN { plan tests => 8 }
 
-$ENV{PAR_CLEARTEMP} = 1;
+$ENV{PAR_CLEAN} = 1;
 
 ok(
     `"$^X" -Mblib -MPAR -It/hello -MHello -e Hello::hello`,

@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #36 $ $Change: 9543 $ $DateTime: 2004/01/01 17:25:29 $
+   $Revision: #42 $ $Change: 9608 $ $DateTime: 2004/01/04 20:17:28 $
    vim: expandtab shiftwidth=4
 */
 
@@ -136,9 +136,11 @@ int main ( int argc, char **argv, char **env )
 
     perl_destruct( my_perl );
 
-    if ( getenv("PAR_CLEARTEMP") != NULL ) {
-        if ( getenv("PAR_SPAWNED") == NULL ) {
+    par_init_env();
+    if ( getenv("PAR_SPAWNED") == NULL ) {
+        if ( (getenv("PAR_CLEAN") != NULL) && (strlen(getenv("PAR_CLEAN")) > 0) ) {
             par_rmtmpdir(stmpdir);
+            par_rmtmpdir(par_dirname(stmpdir));
         }
     }
 

@@ -40,5 +40,5 @@ static const char *path_sep = ":";
 static struct stat PL_statbuf;
 #endif
 
-#include "which.c"
+#include "utils.c"
 
