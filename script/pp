@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #7 $ $Change: 2062 $ $DateTime: 2002/11/08 20:36:23 $
+# $Revision: #8 $ $Change: 2071 $ $DateTime: 2002/11/09 22:42:14 $
 
 use 5.006;
 use strict;
@@ -138,7 +138,7 @@ YAML
 sub par_to_exe { 
     my $PAR = _can_run("par$Config{_exe}") or _die("can't find par executable");
     vprint 0, "Running $PAR -q -B -O$Output $par_file";
-    system($PAR, "-q", "-B", "-O$Output", $par_file);
+    system($PAR, "-B", "-O$Output", $par_file);
 }
 
 sub generate_code { 
@@ -457,6 +457,10 @@ different expected settings:
     % pp -Opacked.exe source.pl		# makes packed.exe
     (now deploy 'packed.exe' to target machine)
     $ packed.exe			# run it
+
+Note that if your perl was built as a shared library, the
+'Clean setup' above will still need a separate F<perl5x.dll> or
+F<libperl.so> to function correctly.
 
 =back
 

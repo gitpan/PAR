@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #24 $ $Change: 2054 $ $DateTime: 2002/11/08 14:37:27 $
+# $Revision: #26 $ $Change: 2070 $ $DateTime: 2002/11/09 22:35:42 $
 
 package __par_pl;
 
@@ -207,6 +207,7 @@ my ($start_pos, $data_pos);
 
 	if (defined($ext) and $ext !~ /\.(?:pm|ix|al)$/i) {
 	    my ($out, $filename) = _tempfile($ext);
+	    binmode($out);
 	    print $out $buf;
 	    close $out;
 	    $PAR::Heavy::DLCache{$filename}++;
@@ -235,15 +236,18 @@ my ($start_pos, $data_pos);
 
 	if (defined(&IO::File::new)) {
 	    my $fh = IO::File->new_tmpfile or die $!;
+	    binmode($fh);
 	    print $fh $$filename;
 	    seek($fh, 0, 0);
 	    return $fh;
 	}
 	else {
 	    my ($out, $name) = _tempfile($ext);
+	    binmode($out);
 	    print $out $$filename;
 	    close $out;
 	    open my $fh, $name or die $!;
+	    binmode($fh);
 	    return $fh;
 	}
 
@@ -311,10 +315,14 @@ if ($out) {
 	     $_ ne $Config::Config{privlibexp});
 	} @INC;
 
-	foreach (sort keys %::) {
+	my %files;
+	/^_<(.+)$/ and $files{$1}++ for keys %::;
+	$files{$_}++ for values %INC;
+
+	foreach (sort keys %files) {
 	    my ($path, $file);
 	    foreach my $dir (@inc) {
-		$::{$_} =~ /_<(\Q$dir\E\/)(.*[^Cc])$/ or next;
+		/^(\Q$dir\E\/)(.*[^Cc])$/ or next;
 		($path, $file) = ($1, $2);
 		last;
 	    }
@@ -417,6 +425,7 @@ sub require_modules {
     require Compress::Zlib;
     require Archive::Zip;
     require PAR;
+    require PAR::Heavy;
 }
 
 my $tmpdir;

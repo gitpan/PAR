@@ -1,4 +1,25 @@
 ____________________________________________________________________________
+[  2071] By: autrijus                              on 2002/11/09  22:42:14
+        Log: * This be 0.46, the 'Win32 standalone exe works' edition.
+             * Updates information about a shared Perl58.dll (or
+	       Perl56.dll)
+             is still needed for stand-alone binaries on Win32.
+	   ! PAR.pm README script/pp
+____________________________________________________________________________
+[  2070] By: autrijus                              on 2002/11/09  22:35:42
+        Log: * some missing binmode() for win32.
+	   ! script/par.pl
+____________________________________________________________________________
+[  2069] By: autrijus                              on 2002/11/09  22:31:04
+        Log: * fix for Win32 where %:: doesn't contain the .pm
+             files needed to bundle modules in par.pl -B.
+             (Reported by Glenn Mabbutt)
+	   ! script/par.pl
+____________________________________________________________________________
+[  2068] By: autrijus                              on 2002/11/09  09:04:42
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  2063] By: autrijus                              on 2002/11/08  20:39:30
         Log: * Version 0.45.
              * Add Tim Conrow to AUTHORS.

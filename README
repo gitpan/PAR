@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #12 $ $Change: 2055 $ $DateTime: 2002/11/08 14:37:59 $
+# $Revision: #13 $ $Change: 2071 $ $DateTime: 2002/11/09 22:42:14 $
 
 This is the README file for PAR, a toolkit to use perl scripts
 and modules stored inside compressed .par files.
@@ -54,11 +54,15 @@ settings:
     (now deploy 'packed.pl' to target machine)
     $ perl packed.pl			# run it
 
-- Clean setup:
+- Clean setup
 
     % pp -Opacked.exe source.pl		# makes packed.exe
     (now deploy 'packed.exe' to target machine)
     $ packed.exe			# run it
+
+Note that if your perl was built as a shared library, the
+'Clean setup' above will still need a separate perl5x.dll or
+libperl.so to function correctly.
 
 Please consult the documentation of 'pp' for more information.
 
