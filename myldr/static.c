@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #16 $ $Change: 9465 $ $DateTime: 2003/12/28 05:01:09 $
+   $Revision: #19 $ $Change: 9549 $ $DateTime: 2004/01/02 17:29:36 $
    vim: expandtab shiftwidth=4
 */
 
@@ -51,15 +51,21 @@ extern char load_me_0[];
 extern char load_me_1[];
 */
 
-static char *my_file;
+char *my_file;
 
 int my_mkfile (char* argv0, char* stmpdir, const char* name) {
     int i;
+#ifndef PL_statbuf
+    struct stat PL_statbuf;
+#endif
 
-    my_file = (char *)malloc(strlen(stmpdir) + strlen(name) + 1);
+    my_file = (char *)malloc(strlen(stmpdir) + strlen(name) + 5);
     sprintf(my_file, "%s/%s", stmpdir, name);
+
     i = open(my_file, O_CREAT | O_WRONLY | OPEN_O_BINARY);
+
     if (i == -1) {
+        if ( par_lstat(my_file, &PL_statbuf) == 0 ) return -2;
         fprintf(stderr, "%s: creation of %s failed - aborting with %i.\n", argv0, my_file, errno);
         return 0;
     }
@@ -82,7 +88,7 @@ int main ( int argc, char **argv, char **env )
 {
     int i;
     char *stmpdir;
-    char *buf;
+    char *buf = (char *)malloc(127);
 
     par_mktmpdir( argv );
     stmpdir = (char *)getenv("PAR_TEMP");
@@ -95,26 +101,21 @@ int main ( int argc, char **argv, char **env )
     }
 
     i = my_mkfile( argv[0], stmpdir, name_load_me_0 );
-    if (!i) return 2;
-    WRITE_load_me_0(i);
-    close(i); chmod(my_file, 0755);
+    if ( !i ) return 2;
+    if ( i != -2 ) {
+        WRITE_load_me_0(i);
+        close(i); chmod(my_file, 0755);
+    }
 
-	my_file = _basename(argv[0]);
-#ifdef WIN32
-	i = strlen(my_file);
-	if (
-		(strlen(my_file) < 4) ||
-		(strcmpi((char *)(my_file + strlen(my_file) - 4), ".exe") != 0)
-	) {
-		strcat(my_file, ".exe");
-	}
-#endif
-    i = my_mkfile( argv[0], stmpdir, my_file);
-    if (!i) return 2;
-    WRITE_load_me_1(i);
-    close(i); chmod(my_file, 0755);
+    my_file = _basename(findprog(argv[0], getenv("PATH")));
 
-    buf = (char *)malloc(127);
+    i = my_mkfile( argv[0], stmpdir, my_file );
+    if ( !i ) return 2;
+    if ( i != -2 ) {
+        WRITE_load_me_1(i);
+        close(i); chmod(my_file, 0755);
+    }
+
     sprintf(buf, "PAR_ARGC=%i", argc);
     putenv(buf);
     for (i = 0; i < argc; i++) {
@@ -124,7 +125,7 @@ int main ( int argc, char **argv, char **env )
     }
 
 #ifdef WIN32
-	sprintf(buf, "PAR_SPAWNED=1", argc);
+    sprintf(buf, "PAR_SPAWNED=1");
     putenv(buf);
     i = spawnvp(P_WAIT, my_file, argv);
 #else
@@ -132,6 +133,8 @@ int main ( int argc, char **argv, char **env )
     return 2;
 #endif
 
-    par_rmtmpdir(stmpdir);
+    if ( getenv("PAR_CLEARTEMP") != NULL ) {
+        par_rmtmpdir(stmpdir);
+    }
     return i;
 }

@@ -1,4 +1,106 @@
 ____________________________________________________________________________
+[  9581] By: autrijus                              on 2004/01/03  16:18:29
+        Log: * This be 0.77_98.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  9561] By: autrijus                              on 2004/01/03  04:22:17
+        Log: * typo.
+	   ! script/par.pl
+____________________________________________________________________________
+[  9559] By: autrijus                              on 2004/01/02  18:51:17
+        Log: * self-contained scripts should also use the same
+             temporary directory semantics as self-contained
+             executables, so a pure-perl version of the logic
+             inside mktmpdir.c is reproduced.  (need to think
+             about the PAR.pm case.)
+	   ! script/par.pl
+____________________________________________________________________________
+[  9558] By: autrijus                              on 2004/01/02  18:50:23
+        Log: * slight reordering of arguments.
+             * the last-resort directory is now "." instead of "/".
+             * OS2 should also use Win32-style separators.
+	   ! myldr/mktmpdir.c myldr/mktmpdir.h
+____________________________________________________________________________
+[  9557] By: autrijus                              on 2004/01/02  18:10:04
+        Log: * oops, got the path separators wrong.
+	   ! myldr/mktmpdir.h
+____________________________________________________________________________
+[  9556] By: autrijus                              on 2004/01/02  18:03:07
+        Log: * update manifest.
+	   ! MANIFEST
+____________________________________________________________________________
+[  9555] By: autrijus                              on 2004/01/02  18:02:59
+        Log: * correct use of strtok().
+	   ! myldr/which.c
+____________________________________________________________________________
+[  9554] By: autrijus                              on 2004/01/02  18:02:24
+        Log: * properly initialize NULL pointers.
+             * "procname" should really be "progname".
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[  9553] By: autrijus                              on 2004/01/02  18:01:45
+        Log: * turn debug off by default.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  9552] By: autrijus                              on 2004/01/02  18:01:30
+        Log: * update to EU::AI 0.56.
+	   ! inc/ExtUtils/AutoInstall.pm
+	   ! inc/Module/Install/AutoInstall.pm
+____________________________________________________________________________
+[  9551] By: autrijus                              on 2004/01/02  17:59:52
+        Log: * let the "$0" in usage display use argv[0],
+             instead of the full $progname.
+	   ! script/par.pl
+____________________________________________________________________________
+[  9550] By: autrijus                              on 2004/01/02  17:36:39
+        Log: * oops, was setting username to 'SYSTEM'
+             unconditionally.
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[  9549] By: autrijus                              on 2004/01/02  17:29:36
+        Log: * heavy refactoring and cleanup of C code.
+             * use OpenBSD's which.c to determine the
+             correct progname from argv[0].
+	   + myldr/mktmpdir.h myldr/which.c
+	   ! myldr/mktmpdir.c myldr/static.c script/par.pl
+____________________________________________________________________________
+[  9546] By: autrijus                              on 2004/01/02  06:36:46
+        Log: * complete the transition to cache-$MTIME
+             and temp-$PID.
+	   ! myldr/mktmpdir.c myldr/static.c
+____________________________________________________________________________
+[  9543] By: autrijus                              on 2004/01/01  17:25:29
+        Log: * The beginning of non-CLEARTEMP behaviour,
+             by re-using whatever files we can in
+             PAR_TEMP.  Requested by Morbus Iff.
+	   ! lib/PAR.pm myldr/Makefile.PL myldr/main.c
+	   ! myldr/static.c script/par.pl
+____________________________________________________________________________
+[  9536] By: autrijus                              on 2004/01/01  07:13:35
+        Log: * add '#defaults' to MANIFEST.SKIP in anticipation
+             of future support from ExtUtils::MakeMaker.
+	   ! MANIFEST.SKIP
+____________________________________________________________________________
+[  9534] By: autrijus                              on 2004/01/01  06:54:24
+        Log: * By popular demand, default autoinstall to not
+             happen, since people may wish to use PPM or
+             search.cpan.org to install the modules themselves.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  9533] By: autrijus                              on 2004/01/01  06:52:55
+        Log: * Morbus notices that we're needlessly skipping the
+             __DATA__ test for people without IO::Scalar/PerlIO::scalar.
+	   ! t/1-basic.t
+____________________________________________________________________________
+[  9529] By: autrijus                              on 2004/01/01  05:20:38
+        Log: * Alan Stewart pointed out we were not cleaning
+             after temp files correctly.  duh.
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[  9527] By: autrijus                              on 2003/12/31  15:27:49
+        Log: * changes.
+	   ! ChangeLog Changes
+____________________________________________________________________________
 [  9525] By: autrijus                              on 2003/12/31  15:12:28
         Log: * This be PAR 0.77.
 	   ! Makefile.PL

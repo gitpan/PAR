@@ -38,8 +38,10 @@ myldr/internals.c
 myldr/main.c
 myldr/Makefile.PL
 myldr/mktmpdir.c
+myldr/mktmpdir.h
 myldr/parlsig.pl
 myldr/static.c
+myldr/which.c
 myldr/win32.res
 package/parl.nsi
 README

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #54 $ $Change: 9486 $ $DateTime: 2003/12/29 16:59:56 $
+# $Revision: #56 $ $Change: 9553 $ $DateTime: 2004/01/02 18:01:45 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.

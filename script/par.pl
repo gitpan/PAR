@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #83 $ $Change: 9518 $ $DateTime: 2003/12/31 14:09:50 $ vim: expandtab shiftwidth=4
+# $Revision: #88 $ $Change: 9561 $ $DateTime: 2004/01/03 04:22:17 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -150,8 +150,8 @@ followed by a 8-bytes magic string: "C<\012PAR.pm\012>".
 
 =cut
 
-my ($tmpfile, @tmpfiles);
-END { unlink @tmpfiles if @tmpfiles }
+my @tmpfiles;
+END { if (@tmpfiles) { unlink @tmpfiles; rmdir $par_temp } }
 
 BEGIN {
     Internals::PAR::BOOT() if defined &Internals::PAR::BOOT;
@@ -163,28 +163,30 @@ if ($ENV{PAR_ARGV_0}) {
     $0 = $ENV{PAR_ARGV_0};
 }
 
-$ENV{PAR_CLEARTEMP} = 1 unless exists $ENV{PAR_CLEARTEMP};
+my $progname = $0;
 my $quiet = !$ENV{PAR_DEBUG};
 
-# fix $0 if invoked from PATH
+# fix $progname if invoked from PATH
 my %Config = (
     path_sep    => ($^O =~ /^MSWin/ ? ';' : ':'),
     _exe        => ($^O =~ /^(?:MSWin|OS2|cygwin)/ ? '.exe' : ''),
     _delim      => ($^O =~ /^MSWin|OS2/ ? '\\' : '/'),
 );
 
-if (-s "$0$Config{_exe}") {
-    $0 = "$0$Config{_exe}";
+if (-s "$progname$Config{_exe}") {
+    $progname = "$progname$Config{_exe}";
 }
-elsif (!-s $0) {
+elsif (!-s $progname) {
     foreach my $dir (split /\Q$Config{path_sep}\E/, $ENV{PATH}) {
         $dir =~ s/\Q$Config{_delim}\E$//;
-        (($0 = "$dir$Config{_delim}$0$Config{_exe}"), last)
-            if -s "$dir$Config{_delim}$0$Config{_exe}";
-        (($0 = "$dir$Config{_delim}$0"), last)
-            if -s "$dir$Config{_delim}$0";
+        (($progname = "$dir$Config{_delim}$progname$Config{_exe}"), last)
+            if -s "$dir$Config{_delim}$progname$Config{_exe}";
+        (($progname = "$dir$Config{_delim}$progname"), last)
+            if -s "$dir$Config{_delim}$progname";
     }
 }
+
+_set_par_temp();
 
 # Magic string checking and extracting bundled modules {{{
 my ($start_pos, $data_pos);
@@ -192,7 +194,7 @@ my ($start_pos, $data_pos);
     local $SIG{__WARN__} = sub {};
 
     # Check file type, get start of data section {{{
-    open _FH, $0 or last;
+    open _FH, $progname or last;
     binmode(_FH);
 
     my $buf;
@@ -246,7 +248,10 @@ my ($start_pos, $data_pos);
         }
         else {
             $require_list{$fullname} =
-            $PAR::Heavy::ModuleCache{$fullname} = \"$buf";
+            $PAR::Heavy::ModuleCache{$fullname} = {
+                buf => $buf,
+                crc => $crc,
+            };
         }
         read _FH, $buf, 4;
     }
@@ -268,18 +273,18 @@ my ($start_pos, $data_pos);
 
         $INC{$module} = "/loader/$filename/$module";
 
-        if (defined(&IO::File::new)) {
+        if ($ENV{PAR_CLEARTEMP} and defined(&IO::File::new)) {
             my $fh = IO::File->new_tmpfile or die $!;
             binmode($fh);
-            print $fh $$filename;
+            print $fh $filename->{buf};
             seek($fh, 0, 0);
             return $fh;
         }
         else {
-            my ($out, $name) = _tempfile('.pm');
+            my ($out, $name) = _tempfile('.pm', $filename->{crc});
             if ($out) {
                 binmode($out);
-                print $out $$filename;
+                print $out $filename->{buf};
                 close $out;
             }
             open my $fh, $name or die $!;
@@ -423,7 +428,7 @@ if ($out) {
              $_ ne $Config::Config{privlibexp});
         } @INC;
 
-        if ($^O eq 'MSWin32') { s{\\}{/}g for @inc }
+        if ($Config{_delim} eq '\\') { s{\\}{/}g for @inc }
 
         my %files;
         /^_<(.+)$/ and $files{$1}++ for keys %::;
@@ -462,7 +467,7 @@ if ($out) {
 
             my $content;
             if (ref($file)) {
-                $content = ${$file};
+                $content = $file->{buf};
             }
             else {
                 open FILE, "$file" or die "Can't open $file: $!";
@@ -578,55 +583,57 @@ sub require_modules {
     require PAR::Filter::PodStrip;
 }
 
-# N.B. we set PAR_TMP_DIR and PAR_TEMP in myldr/main.c
-my $tmpdir;
-sub tmpdir {
-    return $tmpdir if defined $tmpdir;
-    my @dirlist = (@ENV{qw(PAR_TEMP PAR_TMP_DIR TMPDIR TEMP TMP)}, qw(C:/temp /tmp /));
-    {
-        if (${"\cTAINT"}) { eval {
-            require Scalar::Util;
-            @dirlist = grep { ! Scalar::Util::tainted $_ } @dirlist;
-        } }
+# The C version of this code appears in myldr/mktmpdir.c
+sub _set_par_temp {
+    if ($ENV{PAR_TEMP} and $ENV{PAR_TEMP} =~ /(.+)/) {
+        $par_temp = $1;
+        return;
     }
-    foreach (@dirlist) {
-        next unless defined && -d;
-        $tmpdir = $_;
+
+    foreach my $path (
+        (map $ENV{$_}, qw( TMPDIR TEMP TMP )),
+        qw( "C:\\TEMP /tmp . )
+    ) {
+        next unless $path and -d $path and -w $path;
+        my $username = defined(&Win32::LoginName)
+            ? &Win32::LoginName()
+            : $ENV{USERNAME} || $ENV{USER} || 'SYSTEM';
+
+        my $stmpdir = "$path$Config{_delim}par-$username";
+        mkdir $stmpdir, 0755;
+        if (!$ENV{PAR_CLEARTEMP} and my $mtime = (stat($progname))[9]) {
+            $stmpdir .= "$Config{_delim}cache-$mtime";
+        }
+        else {
+            $ENV{PAR_CLEARTEMP} = 1;
+            $stmpdir .= "$Config{_delim}temp-$$";
+        }
+
+        $ENV{PAR_TEMP} = $stmpdir;
+        mkdir $stmpdir, 0755;
         last;
     }
-    $tmpdir = '' unless defined $tmpdir;
-    return $tmpdir;
+
+    $par_temp = $1 if $ENV{PAR_TEMP} and $ENV{PAR_TEMP} =~ /(.+)/;
 }
 
 sub _tempfile {
     my ($ext, $crc) = @_;
     my ($fh, $filename);
     
-    if (defined $crc and !$ENV{PAR_CLEARTEMP}) {
-        $filename = tmpdir() . "/$crc$ext";
-        return (undef, $filename) if (-r $filename);
+    $filename = "$par_temp/$crc$ext";
 
-        open $fh, '>', $filename or die $!;
-    }
-    elsif (defined &File::Temp::tempfile) {
-        # under Win32, the file is created with O_TEMPORARY,
-        # and will be deleted by the C runtime; having File::Temp
-        # delete it has the only effect of giving an ugly warnings
-        ($fh, $filename) = File::Temp::tempfile(
-            SUFFIX      => $ext,
-            UNLINK      => ($^O ne 'MSWin32'),
-        ) or die $!;
+    if ($ENV{PAR_CLEARTEMP}) {
+        unlink $filename if -e $filename;
+        push @tmpfiles, $filename;
     }
     else {
-        my $tmpdir = tmpdir();
-        $tmpfile ||= ($$ . '0000');
-        do { $tmpfile++ } while -e ($filename = "$tmpdir/$tmpfile$ext");
-        push @tmpfiles, $filename;
-        open $fh, ">", $filename or die $!;
+        return (undef, $filename) if (-r $filename);
     }
 
+    open $fh, '>', $filename or die $!;
     binmode($fh);
-    return ($fh, $filename);
+    return($fh, $filename);
 }
 
 sub outs { warn("@_\n") unless $quiet }

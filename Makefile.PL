@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #53 $ $Change: 9520 $ $DateTime: 2003/12/31 14:15:38 $
+# $Revision: #55 $ $Change: 9534 $ $DateTime: 2004/01/01 06:54:24 $
 
 use 5.006;
 use inc::Module::Install;
@@ -13,7 +13,7 @@ license	    ('perl');
 requires    ('File::Temp');
 requires    ('Compress::Zlib'	=> ($^O eq 'MSWin32') ? 1.16 : 1.30);
 requires    ('Archive::Zip'	=> 1.00);
-requires    ('Module::ScanDeps'	=> 0.36);
+requires    ('Module::ScanDeps'	=> 0.37);
 requires    ('PAR::Dist'	=> 0.06);
 features    (
     'Digital signature support'	=> [
@@ -27,7 +27,7 @@ features    (
 include('ExtUtils::AutoInstall');
 
 sign(1);
-auto_install();
+auto_install( -default => 0 );
 
 &Autrijus->write;
 &WriteAll;

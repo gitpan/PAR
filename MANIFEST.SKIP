@@ -1,3 +1,4 @@
+#defaults
 ^\..*\.sw.$
 ^myldr/Makefile$
 ^myldr/Makefile\.old$

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/1-basic.t $ $Author: autrijus $
-# $Revision: #9 $ $Change: 4116 $ $DateTime: 2003/02/06 23:43:43 $
+# $Revision: #10 $ $Change: 9533 $ $DateTime: 2004/01/01 06:52:55 $
 
 use Test;
 BEGIN { plan tests => 8 }
@@ -22,8 +22,7 @@ ok(
     "No Strict!\n",
 );
 
-skip(
-    !(eval { require PerlIO::scalar; 1 } or eval { require IO::Scalar ; 1}),
+ok(
     `"$^X" -Mblib -MPAR t/hello.par data.pl`,
     "Data section\nData reflection\n",
 );

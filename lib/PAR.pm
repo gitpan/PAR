@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #46 $ $Change: 9520 $ $DateTime: 2003/12/31 14:15:38 $ vim: expandtab shiftwidth=4
+# $Revision: #48 $ $Change: 9581 $ $DateTime: 2004/01/03 16:18:29 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.77';
+$PAR::VERSION = '0.77_98';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.77 of PAR, released January 1, 2004.
+This document describes version 0.77_98 of PAR, released January 4, 2004.
 
 =head1 SYNOPSIS
 
@@ -383,7 +383,10 @@ sub _tmpfile {
     }
 
     require File::Spec;
-    my $filename = File::Spec->catfile( File::Spec->tmpdir, $_[0] );
+    my $filename = File::Spec->catfile(
+        $ENV{PAR_TEMP} || File::Spec->tmpdir,
+        $_[0],
+    );
     if (-r $filename) {
         open my $fh, '<', $filename or die $!;
         binmode($fh);
