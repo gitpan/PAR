@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #101 $ $Change: 10328 $ $DateTime: 2004/03/05 06:51:23 $ vim: expandtab shiftwidth=4
+# $Revision: #102 $ $Change: 10404 $ $DateTime: 2004/03/17 11:50:19 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -622,6 +622,7 @@ sub _set_par_temp {
         my $username = defined(&Win32::LoginName)
             ? &Win32::LoginName()
             : $ENV{USERNAME} || $ENV{USER} || 'SYSTEM';
+        $username =~ s/\W/_/g;
 
         my $stmpdir = "$path$Config{_delim}par-$username";
         mkdir $stmpdir, 0755;

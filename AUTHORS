@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #55 $ $Change: 10227 $ $DateTime: 2004/02/28 03:29:18 $
+# $Revision: #57 $ $Change: 10405 $ $DateTime: 2004/03/17 11:54:09 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -58,6 +58,7 @@ Martin Fabiani
 Matt Sergeant		(MSERGEANT)
 Matthew Braid		(MDBGRIZ)
 Mattia Barbon		(MBARBON)
+Mike Campbell
 Mike Stok		(MIKESTOK)
 Morbus Iff
 Nathan Byrd		(NBYRD)
@@ -83,6 +84,7 @@ Ryan Briones
 Simon Andrews
 Simon Cozens		(SIMON)
 Sisyphus
+TP Diffenbach
 Tim Conrow
 Tina Mueller		(TINITA)
 Tom Pollard

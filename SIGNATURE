@@ -14,15 +14,15 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 0ceb90ce446e1241c9301ff02c070196533f53a8 AUTHORS
+SHA1 269589817f276220a1077ccf1fd1e478a3dcdd9f AUTHORS
 SHA1 f58e465af66e22e44f7d9d6a4ae46ae03c563a51 ChangeLog
-SHA1 c3da2c021375765f9e8aa9ae2bdb769e0c463834 Changes
+SHA1 1b18a97864f9a9a8012a4ceced5d81d16293a5fa Changes
 SHA1 ae50c49795e65c28072cea4d16d24a8dac8b6601 MANIFEST
 SHA1 97fc757429bddc570c6e68a01655ff5aa077e369 MANIFEST.SKIP
-SHA1 fc2d829bb0aecf00320a0d38b76f985f289847da META.yml
+SHA1 bd8cbddaf8390792a12278ba63812dd75de12ed7 META.yml
 SHA1 d33a0bff7f7b59c01357ca675a935c74502fefda Makefile.PL
 SHA1 f1af91cce5fba647beecc7e17678d061e7a62f0c README
-SHA1 42a65d412babb928bc33669c14bf0516f86b4db1 TODO
+SHA1 51eb03bb9c73cdd1b6530af3474858c9525d234d TODO
 SHA1 ed51ae1dcd147fd05bada143da9b17ecf7d1bcd1 contrib/automated_pp_test/automated_pp_test.pl
 SHA1 08c8c5160258065b1e98b8f1f7637db3fc6ea9cd contrib/automated_pp_test/back_tick_a_command.pm
 SHA1 316ec0a6d223b30e91a9ce1b593551b685cd368a contrib/automated_pp_test/hello_tk.pl
@@ -52,7 +52,7 @@ SHA1 899060edb710d071cb1941a35cb181c8ec743707 inc/Test/Builder.pm
 SHA1 7a4fd763259a68743b255ab86b772a380a5f07cd inc/Test/More.pm
 SHA1 9a9e0db9f97d10dc8b82e60291980732edcc9f16 lib/App/Packer/Backend/PAR.pm
 SHA1 a1a8aa7ce0eed55dcae658cdbb73b7e086058ef2 lib/App/Packer/Temp.pm
-SHA1 cf332b72aba14a4e1b40d388cae26d9247eda91f lib/PAR.pm
+SHA1 b850c7a6c4918cc9a0325e540cd3d066924f23ea lib/PAR.pm
 SHA1 af87f01524ecc8b43264486abb1c91504fbc10fa lib/PAR/FAQ.pod
 SHA1 c23871de4a6c92cf5f046ccc377b09405c79deac lib/PAR/Filter.pm
 SHA1 9edf961b543cfc4c17753400472f280aa66e1c45 lib/PAR/Filter/Bleach.pm
@@ -67,7 +67,7 @@ SHA1 3af9063cbe23fade1b9e6d6d88763c7a1a7373ef myldr/env.c
 SHA1 65cd3a32f6e941ebd901ef0916ccc74a3f6a45b2 myldr/file2c.pl
 SHA1 871d70692f1f6a509542d0fb624bd2340ac19f82 myldr/internals.c
 SHA1 3d177e13394a430378731fda9630c35be8d2ba01 myldr/main.c
-SHA1 d94c3c4e83afa417badf297c8b9754c7601ff0b6 myldr/mktmpdir.c
+SHA1 75702f5b61e0963365e82a6a9d7c6d71470cd85b myldr/mktmpdir.c
 SHA1 5d0a28ff5dbe1fd78ac0d19bce9c14a21f48b2c7 myldr/mktmpdir.h
 SHA1 d09420b502c02f03d96df8343445c322ca9f5b10 myldr/parlsig.pl
 SHA1 5a17c672cdd7cd7b5ba1c88912c0bf517db95ddb myldr/sha1.c
@@ -75,9 +75,9 @@ SHA1 7846b5208513719820bd8332d004723daebb6e26 myldr/static.c
 SHA1 ac651d0b54e4593a5fb2b87ccea3742f80146e70 myldr/utils.c
 SHA1 fa6066c09715081d4d3f36685852207ff70caf9e myldr/win32.res
 SHA1 ee852494fd2882e6012791d968857eb76282498a package/parl.nsi
-SHA1 b5ff2cadd0de158ee017627b747b353e4021b709 script/par.pl
+SHA1 caef209237dd9f01d37596ba8f523e6137820025 script/par.pl
 SHA1 0197250a1c436389ed11d2a448c47c612442fe66 script/parl.pod
-SHA1 1c6b1ac90591226842e2e7f5e64e6798637435b1 script/pp
+SHA1 8cbe806f675b963e19607576ae4489964a9495b6 script/pp
 SHA1 03d8a9113cee5d196b3dc1adb41bea5c11c16b0d script/tkpp
 SHA1 1fd0aa833e574ecf80f2fb553b3b241dfe48ba16 t/0-signature.t
 SHA1 af5aae5097adcbcb1b69f2aa1f54a31392daa9c2 t/1-basic.t
@@ -86,7 +86,7 @@ SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.3 (FreeBSD)
 
-iD8DBQFAVzLBtLPdNzw1AaARAobqAJoDqIt0OjGRD2dTuq3FIak1LnmdAACgiIOG
-Ncf/UtK47Ftd5lGBhAczdXw=
-=NSsL
+iD8DBQFAZtyFtLPdNzw1AaARAs6EAJ9HpqkqLT5eBJBqD5pBZJLtJYKD2ACdELlN
+oAMBeQgaPsXPifbt6QED+w4=
+=+nlk
 -----END PGP SIGNATURE-----

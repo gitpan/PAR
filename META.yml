@@ -1,5 +1,5 @@
 name: PAR
-version: 0.80
+version: 0.80_99
 abstract: Perl Archive Tookit
 author: Autrijus Tang (autrijus@autrijus.org)
 license: perl

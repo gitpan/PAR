@@ -1,8 +1,9 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #35 $ $Change: 10382 $ $DateTime: 2004/03/13 20:18:33 $
+   $Revision: #37 $ $Change: 10416 $ $DateTime: 2004/03/17 15:14:13 $
    vim: expandtab shiftwidth=4
 */
 
+#include "ctype.h"
 #include "mktmpdir.h"
 
 #define PAR_TEMP "PAR_TEMP"
@@ -15,6 +16,7 @@
 
 char *par_mktmpdir ( char **argv ) {
     int i;
+    char *c;
     const char *tmpdir = NULL;
     const char *key = NULL , *val = NULL;
 
@@ -55,7 +57,17 @@ char *par_mktmpdir ( char **argv ) {
         }
     }
 #endif
-    if ( username == NULL ) username = "SYSTEM";
+    if ( username == NULL ) {
+        username = "SYSTEM";
+    }
+    else {
+        /* replace all non-alphanumeric letters with '_' */
+        for ( c = username ; *c != '\0' ; c++ ) {
+            if ( !isalnum(*c) ) {
+                *c = '_';
+            }
+        }
+    }
 
     for ( i = 0 ; tmpdir == NULL && strlen(key = temp_keys[i]) > 0 ; i++ ) {
         if ( (val = (char *)par_getenv(key)) &&

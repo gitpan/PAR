@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #68 $ $Change: 10399 $ $DateTime: 2004/03/16 16:25:41 $ vim: expandtab shiftwidth=4
+# $Revision: #71 $ $Change: 10442 $ $DateTime: 2004/03/28 14:05:12 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.80';
+$PAR::VERSION = '0.80_99';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.80 of PAR, released March 17, 2004.
+This document describes version 0.80_99 of PAR, released March 28, 2004.
 
 =head1 SYNOPSIS
 
@@ -434,6 +434,7 @@ sub _set_par_temp {
         my $username = defined(&Win32::LoginName)
             ? &Win32::LoginName()
             : $ENV{USERNAME} || $ENV{USER} || 'SYSTEM';
+        $username =~ s/\W/_/g;
 
         my $stmpdir = File::Spec->catdir($path, "par-$username");
         mkdir $stmpdir, 0755;

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #20 $ $Change: 10296 $ $DateTime: 2004/03/02 12:45:32 $
+# $Revision: #21 $ $Change: 10405 $ $DateTime: 2004/03/17 11:54:09 $
 
 - Implement inflate algorithm in perl, xor implement Archive::Zip,
   Compress::Zlib and friends in C.
@@ -17,3 +17,6 @@
 - make CHECK blocks work by perl_parse the code instead of
   eval"". this should clenaly solve the above problem as well.
 
+- POSIX.pm does not currently work with "pp -C".  Need to change
+  it to either use preemptive extraction, or extract under the
+  appropriate directory.

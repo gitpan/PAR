@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #117 $ $Change: 10357 $ $DateTime: 2004/03/11 15:29:04 $ vim: expandtab shiftwidth=4
+# $Revision: #118 $ $Change: 10403 $ $DateTime: 2004/03/17 06:59:23 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -168,6 +168,7 @@ sub compile_par {
         elsif (
             basename($map{$pfile}) =~ /^Tk\.dll$/i and opt(i)
             and eval { require Win32::Exe; 1 }
+            and eval { require Win32::Exe::IconFile; 1 }
             and $ENV{PP_TK_ICONFIX}
         ) {
             # XXX - broken on my WinXP but worked for Alan. hmm.
