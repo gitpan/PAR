@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/internals.c $ $Author: autrijus $
-   $Revision: #6 $ $Change: 7344 $ $DateTime: 2003/08/05 04:32:37 $
+   $Revision: #7 $ $Change: 7520 $ $DateTime: 2003/08/14 08:14:03 $
    vim: expandtab shiftwidth=4
 */
 
@@ -46,12 +46,10 @@ XS(XS_Internals_PAR_BOOT) {
     }
 
     if ((tmpgv = gv_fetchpv("0", TRUE, SVt_PV))) {/* $0 */
-#ifdef PAR_MKTMPDIR
         if ( ( stmpdir = getenv("PAR_TEMP") ) ) {
             sv_setpv(GvSV(tmpgv), fakeargv[0]);
         }
         else
-#endif
 #ifdef HAS_PROCSELFEXE
             S_procself_val(aTHX_ GvSV(tmpgv), fakeargv[0]);
 #else
@@ -69,7 +67,6 @@ XS(XS_Internals_PAR_BOOT) {
     /* PL_main_cv = PL_compcv; */
     PL_compcv = 0;
 
-#ifdef PAR_MKTMPDIR
     /* create temporary PAR directory */
     stmpdir = getenv("PAR_TEMP");
     if ( stmpdir == NULL ) {
@@ -86,7 +83,6 @@ XS(XS_Internals_PAR_BOOT) {
         croak("%s: creation of private temporary subdirectory %s failed - aborting with %i.\n", fakeargv[0], stmpdir, i);
         return;
     }
-#endif
 }
 
 static void par_xs_init(pTHX)

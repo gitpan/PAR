@@ -1,11 +1,7 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #30 $ $Change: 7344 $ $DateTime: 2003/08/05 04:32:37 $
+   $Revision: #32 $ $Change: 7614 $ $DateTime: 2003/08/20 08:54:50 $
    vim: expandtab shiftwidth=4
 */
-
-#ifndef PAR_MKTMPDIR
-#define PAR_MKTMPDIR 1
-#endif
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -23,9 +19,7 @@ extern char * name_load_me_2;
 extern unsigned long size_load_me_2;
 extern char load_me_2[];
 
-#ifdef PAR_MKTMPDIR
 static char *stmpdir;
-#endif
 static int options_count;
 static char **fakeargv;
 
@@ -97,6 +91,9 @@ int main ( int argc, char **argv, char **env )
 #ifdef PERL_EXIT_DESTRUCT_END
     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 #endif /* PERL_EXIT_DESTRUCT_END */
+#ifdef PERL_EXIT_EXPECTED
+    PL_exit_flags |= PERL_EXIT_EXPECTED;
+#endif /* PERL_EXIT_EXPECTED */
 
 #if (defined(CSH) && defined(PL_cshname))
     if (!PL_cshlen)
@@ -131,15 +128,15 @@ int main ( int argc, char **argv, char **env )
         perl_destruct(my_perl);
         perl_free(my_perl);
         PERL_SYS_TERM();
-        exit( exitstatus );
+        return exitstatus;
     }
 
     perl_run( my_perl );
     perl_destruct( my_perl );
 
-#ifdef PAR_MKTMPDIR
-    par_rmtmpdir(stmpdir);
-#endif
+    if ( getenv("PAR_SPAWNED") == NULL ) {
+        par_rmtmpdir(stmpdir);
+    }
 
     perl_free( my_perl );
     PERL_SYS_TERM();

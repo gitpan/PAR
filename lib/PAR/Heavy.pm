@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #11 $ $Change: 7349 $ $DateTime: 2003/08/05 17:22:57 $
+# $Revision: #12 $ $Change: 7522 $ $DateTime: 2003/08/14 08:22:48 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.06';
@@ -134,7 +134,6 @@ sub _dl_extract {
     }
 
     if ($fh) {
-	local $PAR::__reading = 1;
 	binmode($fh);
 	print $fh $member->contents;
 	close $fh;

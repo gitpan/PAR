@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #71 $ $Change: 7354 $ $DateTime: 2003/08/06 08:24:36 $ vim: expandtab shiftwidth=4
+# $Revision: #80 $ $Change: 7525 $ $DateTime: 2003/08/14 08:45:06 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -79,18 +79,12 @@ sub compile_par {
     }
     vprint 1, "Writing PAR on $par_file";
 
-    my (@modules, @data);
-    foreach (@{opt(M) || []}) {
-        if (/^[\w:]+$/) {
-            s/::/\//g;
-            push @modules, "$_.pm";
-        }
-        elsif (/\.(?:pm|ix|al)$/i) {
-            push @modules, $_;
-        }
-        else {
-            push @data, $_;
-        }
+    my (@modules, @data, @exclude);
+    foreach my $name (@{opt(M) || []}) {
+        _name2moddata($name, \@modules, \@data);
+    }
+    foreach my $name ('PAR', @{opt(X) || []}) {
+        _name2moddata($name, \@exclude, \@exclude);
     }
 
     my %map;
@@ -104,12 +98,16 @@ sub compile_par {
             (@Input ? @Input : ()),
         ],
         recurse => 1,
-        skip    => { map { ($_ => 1) } @{opt(X) || []} }
+        skip    => {
+            map { (Module::ScanDeps::_find_in_inc($_) => 1) } @exclude
+        }
     );
     Module::ScanDeps::add_deps(
         rv      => \%map,
         modules => \@modules,
-        skip    => { map { ($_ => 1) } @{opt(X) || []} }
+        skip    => {
+            map { (Module::ScanDeps::_find_in_inc($_) => 1) } @exclude
+        }
     );
 
     my %text;
@@ -153,21 +151,7 @@ sub compile_par {
             my $content = <$file>;
             $content = pod_strip($content, $map{$pfile}) unless $verbatim;
 
-            if ($map{$pfile} =~ /\bTk\b.*\bWidget\.pm$/i) {
-                my $from = 'if (defined($name=$INC{"$pkg.pm"}))';
-                my $to   = 'if (defined($name=$INC{"$pkg.pm"}) and !ref($name) and $name !~ m!^/loader/!)';
-                $content =~ s/\Q$from\E/$to/;
-            }
-            if ($map{$pfile} =~ /\bTk.pm$/i) {
-                my $from = 'foreach $dir (@INC)';
-                my $to   = q{
-                    if (my $member = PAR::unpar($0, $file, 1)) {
-                        $file =~ s![/\\\\]!_!g;
-                        return PAR::Heavy::_dl_extract($member,$file,$file);
-                    }
-                } . $from;
-                $content =~ s/\Q$from\E/$to/;
-            }
+            modify_content($pfile, \$content);
 
             $size += length($content);
             $zip->addString( \$content => $root."lib/$pfile", %zip_args );
@@ -257,13 +241,13 @@ YAML
 
     if ( opt('s') ) {
         if (eval {
-            require PAR::Dist; require Module::Signature; Module::Signature->VERSION >= 0.24
+            require PAR::Dist; require Module::Signature; Module::Signature->VERSION >= 0.25
         }) {
             vprint 0, "Signing $par_file";
             PAR::Dist::sign_par($par_file);
         }
         else {
-            vprint -1, "*** Signing requires PAR::Dist with Module::Signature 0.24 or later.  Skipping";
+            vprint -1, "*** Signing requires PAR::Dist with Module::Signature 0.25 or later.  Skipping";
         }
     }
 
@@ -275,7 +259,74 @@ YAML
     }
 }
 
-sub par_to_exe { 
+sub _name2moddata {
+    my ($name, $mod, $dat) = @_;
+    if ($name =~ /^[\w:]+$/) {
+        $name =~ s/::/\//g;
+        push @$mod, "$name.pm";
+    }
+    elsif (/\.(?:pm|ix|al)$/i) {
+        push @$mod, $name;
+    }
+    else {
+        push @$dat, $_;
+    }
+}
+
+sub PATCH_CONTENT () { {
+    'Tk.pm'             => [
+        'foreach $dir (@INC)'   => 
+        'if (my $member = PAR::unpar($0, $file, 1)) {
+            $file =~ s![/\\\\]!_!g;
+            return PAR::Heavy::_dl_extract($member,$file,$file);
+         }
+         foreach $dir (@INC)', 
+    ],
+    'Tk/Widget.pm'          => [
+        'if (defined($name=$INC{"$pkg.pm"}))' =>
+        'if (defined($name=$INC{"$pkg.pm"}) and !ref($name) and $name !~ m!^/loader/!)',
+    ],
+    'Win32/API/Type.pm'     => [
+        'INIT ' => '',
+    ],
+    'Win32/SystemInfo.pm'   => [
+        '$dll .= "cpuspd.dll";' =>
+        '$dll = "lib/Win32/cpuspd.dll";
+         if (my $member = PAR::unpar($0, $dll, 1)) {
+             $dll = PAR::Heavy::_dl_extract($member,"cpuspd.dll","cpuspd.dll");
+             $dll =~ s!\\\\!/!g;
+         } else { die $! }',
+    ],
+    'SQL/Parser.pm'   => [
+        'my @dialects;' =>
+        'my @dialects = ();
+         foreach my $member ( $PAR::LastAccessedPAR->members ) {
+             next unless $member->fileName =~ m!\bSQL/Dialects/([^/]+)\.pm$!;
+             push @dialects, $1;
+         }
+        ',
+    ],
+    'diagnostics.pm'        => [
+        'CONFIG: ' => 'CONFIG: if (0) ',
+        'if (eof(POD_DIAG)) ' => 'if (0 and eof(POD_DIAG)) ',
+        'close POD_DIAG' => '# close POD_DIAG',
+        'while (<POD_DIAG>) ' =>
+        'for(map "$_\\n\\n", split/\\r?\\n(?:\\r?\\n)*/, 
+            PAR::read_file("lib/Pod/perldiag.pod") ||
+            PAR::read_file("lib/pod/perldiag.pod")
+        ) ',
+    ],
+} };
+
+sub modify_content {
+    my ($file, $ref) = @_;
+    my @rule = @{PATCH_CONTENT->{$file}||[]} or return;
+    while (my ($from, $to) = splice(@rule, 0, 2)) {
+        $$ref =~ s/\Q$from\E/$to/g;
+    }
+}
+
+sub par_to_exe {
     my $parl = 'parl';
     $parl = 'parldyn' if (opt(d) and $dynperl);
     $PARL ||= _can_run("$parl$Config{_exe}") or _die("Can't find par loader");
@@ -567,6 +618,9 @@ sub pod_strip {
 
     no warnings 'uninitialized';
 
+    my $data = '';
+    $data = $1 if $pl_text =~ s/((?:^__DATA__$).*)//ms;
+
     my $line = 1;
     if ($pl_text =~ /^=(?:head\d|pod|begin|item|over|for|back|end)\b/) {
         $pl_text = "\n$pl_text";
@@ -588,7 +642,7 @@ sub pod_strip {
         if length $filename;
     $pl_text =~ s/^#line 1 (.*\n)(#!.*\n)/$2#line 2 $1/g;
 
-    return $pl_text;
+    return $pl_text . $data;
 }
 
 sub _die {
@@ -630,7 +684,6 @@ sub _can_run {
 
 sub _main_pl_multi {
     return << '__MAIN__';
-$PAR::__reading = 1;
 my $file = $0;
 my \$zip = \$PAR::LibCache{\$0} || Archive::Zip->new(__FILE__);
 $file =~ s/^.*[\/\\]//;
@@ -648,7 +701,6 @@ __MAIN__
 sub _main_pl_single {
     my $file = shift;
     return << "__MAIN__";
-\$PAR::__reading = 1;
 my \$zip = \$PAR::LibCache{\$0} || Archive::Zip->new(__FILE__);
 my \$member = eval { \$zip->memberNamed('$file') }
     or die qq(Can't open perl script "$file": No such file or directory (\$zip));

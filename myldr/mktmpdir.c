@@ -1,12 +1,14 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #15 $ $Change: 7337 $ $DateTime: 2003/08/04 14:33:22 $
+   $Revision: #17 $ $Change: 7558 $ $DateTime: 2003/08/16 04:32:39 $
    vim: expandtab shiftwidth=4
 */
 
-#ifdef PAR_MKTMPDIR
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 #ifdef HAS_LSTAT
 #define PAR_lstat lstat
@@ -128,6 +130,7 @@ void par_rmtmpdir ( char *stmpdir ) {
     struct _finddata_t cur_file;
     char *subsubdir = malloc(strlen(stmpdir) + 258);
     long hFile;
+    HMODULE dll;
 
     if ((stmpdir == NULL) || !strlen(stmpdir)) return;
 
@@ -152,7 +155,13 @@ void par_rmtmpdir ( char *stmpdir ) {
             sprintf(subsubdir, "%s", cur_file.name);
         }
         /*if (!(cur_file.attrib & _A_SUBDIR)) fprintf(stderr, "unlinking %s\n", subsubdir);*/
-        if (!(cur_file.attrib & _A_SUBDIR)) _unlink(subsubdir);
+        if (!(cur_file.attrib & _A_SUBDIR)) {
+            dll = GetModuleHandle(cur_file.name);
+            if ( dll ) while ( FreeLibrary(dll) ) {
+                       /* fprintf(stderr, "decrement ref count to %s\n", cur_file.name); */
+                       };
+            _unlink(subsubdir);
+        }
     }
 
     _findclose(hFile);
@@ -186,6 +195,4 @@ void par_rmtmpdir ( char *stmpdir ) {
     closedir(partmp_dirp);
     if (stmpdir) rmdir(stmpdir);
 }
-#endif
-
 #endif

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Intro.pod $
-# $Revision: #7 $ $Change: 7349 $ $DateTime: 2003/08/05 17:22:57 $ vim: expandtab shiftwidth=4
+# $Revision: #8 $ $Change: 7518 $ $DateTime: 2003/08/14 07:50:47 $ vim: expandtab shiftwidth=4
 
 =head1 NAME
 
@@ -242,6 +242,10 @@ Special files:
 =item *
 
 Programs can use C<PAR::read_file($filename)> to read file contents inside PAR
+
+=item *
+
+Programs can use C<PAR::reload_libs()> to reload modules within changed PARs
 
 =back
 

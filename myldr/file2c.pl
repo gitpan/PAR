@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #16 $ $Change: 7306 $ $DateTime: 2003/08/02 12:53:31 $
+# $Revision: #17 $ $Change: 7365 $ $DateTime: 2003/08/06 13:00:03 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -91,11 +91,19 @@ sub pod_strip {
     my ($pl_text, $filename) = @_;
 
     local $^W;
+
+    my $data = '';
+    $data = $1 if $pl_text =~ s/((?:^__DATA__$).*)//ms;
+
     my $line = 1;
+    if ($pl_text =~ /^=(?:head\d|pod|begin|item|over|for|back|end)\b/) {
+        $pl_text = "\n$pl_text";
+        $line--;
+    }
     $pl_text =~ s{(
-	(\A|.*?\n)
+	(.*?\n)
 	=(?:head\d|pod|begin|item|over|for|back|end)\b
-	(?:.*?\n)
+	.*?\n
 	(?:=cut[\t ]*[\r\n]*?|\Z)
 	(\r?\n)?
     )}{
@@ -108,7 +116,7 @@ sub pod_strip {
         if length $filename;
     $pl_text =~ s/^#line 1 (.*\n)(#!.*\n)/$2#line 2 $1/g;
 
-    return $pl_text;
+    return $pl_text . $data;
 }
 
 # local variables:

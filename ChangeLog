@@ -1,5 +1,48 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #16 $ $Change: 7358 $ $DateTime: 2003/08/06 08:59:07 $
+# $Revision: #20 $ $Change: 7620 $ $DateTime: 2003/08/20 09:45:10 $
+
+[Changes for 0.74 - August 20, 2003]
+
+* New Features
+
+    - pp now has a set of "PatchContent" rules, dealing with
+      non-PAR-compatible modules: Tk, Tk::Widget, Win32::API::Type,
+      Win32::SystemInfo, SQL::Parser, diagnostics.  These rules may
+      get refactored back to PAR.pm in the future.
+
+    - New function, PAR::reload_libs(), to reload currently used
+      libraries inside PAR files.
+
+    - PAR.pm itself is now never packed into pp-generated files,
+      to perserve interface compatibility and reduce bloat.
+
+    - PAR.pm now handles "use PAR 'othercode.par'" called from
+      program or modules inside PAR files, even recursively.
+
+    - A new icon for Win32 that is hopefully prettier.
+
+* Bug fixes
+
+    - All data after __DATA__ are preserved for included libraries.
+      This helps self-reading modules like Net::LDAP::Constants.
+
+    - PAR::read_file() was broken.  It now works.
+
+    - "use PAR" inside pp-generated executables was failing with
+      'file too short' errors due the mishandling of seek/tell.
+
+    - Occasional crashes on Win32 due to rmdir() called too early
+      with DLLs still open is fixed; however, "pp -d" executables
+      may still exhibit this problem.
+
+    - "pp -X" used to only take full pathnames as arguments.
+      It now also takes "Module::Name" and "Module/Name.pm".
+
+    - Dynamically built Perl under Cygwin failed to build, because
+      libperl.dll.a was not found.
+
+    - Eliminated "callback called on exit" warnings, and the related
+      "access violation" error on Win32.
 
 [Changes for 0.73 - August 6, 2003]
 
@@ -196,7 +239,7 @@
 
     - Better AutoInstall support, which uses 'sudo' where necessary.
 
-[Changes for 0.66 - Match 20, 2003]
+[Changes for 0.66 - March 20, 2003]
 
 * New Features
 
@@ -240,7 +283,7 @@
     - PAR does not include utf8_heavy.pl nor unicore/* for scripts that
       has "use utf8;".  This has since been fixed by Module::ScanDeps 0.18.
 
-[Changes for 0.65 - Match 9, 2003]
+[Changes for 0.65 - March 9, 2003]
 
 This release comes with several significant improvements:
 
@@ -283,7 +326,7 @@ library inside the PAR file, so this issue is resolved.
 Thanks to Sisyphus and various others, building on Perl 5.6.1 (with its
 old ExtUtils::MakeMaker and lack of PTHREAD_ATFORK) now works again.
 
-[Changes for 0.64 - Match 2, 2003]
+[Changes for 0.64 - March 2, 2003]
 
 This is primarily a bug-fix release for the binmode() bug, reported
 by Bill Atkins, D. Menzel and others, that prevents dynamic loading

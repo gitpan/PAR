@@ -1,4 +1,170 @@
 ____________________________________________________________________________
+[  7621] By: autrijus                              on 2003/08/20  09:46:48
+        Log: * This be PAR, version 0.74.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  7620] By: autrijus                              on 2003/08/20  09:45:10
+        Log: * revise changelog a bit.
+	   ! ChangeLog
+____________________________________________________________________________
+[  7619] By: autrijus                              on 2003/08/20  09:37:38
+        Log: * bump requirement to PAR::Dist 0.05, ScanDeps 0.28.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  7618] By: autrijus                              on 2003/08/20  09:29:59
+        Log: * do not exit() inside par.pl's BEGIN block.
+	   ! script/par.pl
+____________________________________________________________________________
+[  7617] By: autrijus                              on 2003/08/20  09:28:48
+        Log: * prettier (at least imho) icon.
+	   ! myldr/win32.res
+____________________________________________________________________________
+[  7615] By: autrijus                              on 2003/08/20  08:55:55
+        Log: * remove debug flag.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  7614] By: autrijus                              on 2003/08/20  08:54:50
+        Log: * eliminates "callback called on exit" warnings.
+             * also fixed access violations on win32 when such warnings
+	       are warranted.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  7606] By: autrijus                              on 2003/08/19  15:29:29
+        Log: * add Daniel Shane to authors list.
+	   ! AUTHORS
+____________________________________________________________________________
+[  7605] By: autrijus                              on 2003/08/19  15:17:43
+        Log: * Daniel Shane's cygwin doesn't built because
+             it wants libperl.dll.a.  Fancy that.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  7591] By: autrijus                              on 2003/08/18  16:06:58
+        Log: * update changelog to mention recursive reentrancy.
+	   ! ChangeLog
+____________________________________________________________________________
+[  7590] By: autrijus                              on 2003/08/18  16:03:39
+        Log: * Correct deal with multi-layer reentrancy by files in PAR
+             that "use PAR 'otherfile.par'" themselves.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  7589] By: autrijus                              on 2003/08/18  15:48:29
+        Log: * reverts to the old auto-run-$0 behaviour.
+	   ! lib/PAR.pm script/par.pl
+____________________________________________________________________________
+[  7558] By: autrijus                              on 2003/08/16  04:32:39
+        Log: * patch from Alan Stewart to properly cleanup allocated
+	       Dlls.
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[  7542] By: autrijus                              on 2003/08/14  16:21:14
+        Log: * changelog.
+	   ! ChangeLog
+____________________________________________________________________________
+[  7525] By: autrijus                              on 2003/08/14  08:45:06
+        Log: * -X was broken; it only handled full pathnames.  Now it
+             can take Module::Name or Module/Name.pm.
+             * now unconditionally prefix "-X PAR"; PAR.pm is strictly
+             unneccessary for pp-generated PAR files anyway.
+             * remove $PAR::__reading since it's not used naymore.
+	   ! script/pp
+____________________________________________________________________________
+[  7523] By: autrijus                              on 2003/08/14  08:33:52
+        Log: * 
+	   ! script/pp
+____________________________________________________________________________
+[  7522] By: autrijus                              on 2003/08/14  08:22:48
+        Log: * remove $PAR::__reading and the horrible ->tell kluge.
+	   ! lib/PAR.pm lib/PAR/Heavy.pm script/par.pl
+____________________________________________________________________________
+[  7520] By: autrijus                              on 2003/08/14  08:14:03
+        Log: * remove PAR_MKTMPDIR from internals.c.
+	   ! myldr/internals.c
+____________________________________________________________________________
+[  7519] By: autrijus                              on 2003/08/14  08:11:54
+        Log: * Alan Stewart suggests to drop _rmtmpdir for main.c
+             if it's spawned by static.c.
+             * also drop PAR_MKTMPDIR flag since it's now mandatory.
+	   ! myldr/main.c myldr/mktmpdir.c myldr/static.c
+____________________________________________________________________________
+[  7518] By: autrijus                              on 2003/08/14  07:50:47
+        Log: * Nathan's doc patch to mention reload_libs.
+	   ! lib/PAR/Intro.pod
+____________________________________________________________________________
+[  7438] By: autrijus                              on 2003/08/11  08:06:45
+        Log: * document the auto-completion feature available
+             in parl -i and par.pl -i.
+	   ! script/par.pl script/parl.pod
+____________________________________________________________________________
+[  7435] By: autrijus                              on 2003/08/11  06:32:55
+        Log: * ScanDeps 0.26.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  7433] By: autrijus                              on 2003/08/11  05:34:39
+        Log: * supports diagnostics.pm on win32.
+	   ! script/pp
+____________________________________________________________________________
+[  7432] By: autrijus                              on 2003/08/11  05:29:19
+        Log: * Cleaned-up patch from Nathan Byrd: implement reload_libs
+             to reload modules from PAR files.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  7429] By: autrijus                              on 2003/08/11  02:12:18
+        Log: * don't use constant.pm since it's unneccessary.
+	   ! script/pp
+____________________________________________________________________________
+[  7423] By: autrijus                              on 2003/08/10  16:58:02
+        Log: * add PatchContent rules for Win32::API::Type,
+	       Win32::SystemInfo and SQL::Parser.
+	   ! script/pp
+____________________________________________________________________________
+[  7421] By: autrijus                              on 2003/08/10  15:49:56
+        Log: * pp now requires Module::Signature 0.25 to sign stuff.
+	   ! script/pp
+____________________________________________________________________________
+[  7420] By: autrijus                              on 2003/08/10  15:48:27
+        Log: * upgrade deps to PAR::Dist 0.04 (with url autocompletion)
+             and Module::ScanDeps 0.25 (with correct POD/END/PAR::*)
+	   ! Makefile.PL
+____________________________________________________________________________
+[  7418] By: autrijus                              on 2003/08/10  15:40:21
+        Log: * refactor pp's module modification into content_modify.
+             * add support for SQL::Parser and diagnostics.
+	   ! script/pp
+____________________________________________________________________________
+[  7416] By: autrijus                              on 2003/08/10  15:38:31
+        Log: * Alan Stewart reported that PAR::read_file was broken.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  7400] By: autrijus                              on 2003/08/08  01:56:54
+        Log: * add nathan byrd.  should've done so long ago.
+	   ! AUTHORS
+____________________________________________________________________________
+[  7366] By: autrijus                              on 2003/08/06  13:07:55
+        Log: * oops, "local $^W" doesn't prevent lexical warnings.
+	   ! script/pp
+____________________________________________________________________________
+[  7365] By: autrijus                              on 2003/08/06  13:00:03
+        Log: * Roderich Schupp reports that Net::LDAP::Constants
+             reads its own DATA and podstrip failed it.
+             Fixed by preserving everything after __DATA__.
+	   ! myldr/file2c.pl script/par.pl script/pp
+____________________________________________________________________________
+[  7364] By: autrijus                              on 2003/08/06  12:04:43
+        Log: * revert, since it can't help debian at all
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  7362] By: autrijus                              on 2003/08/06  11:12:25
+        Log: * Try to amend Debian patching repored by Rob Casey.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  7359] By: autrijus                              on 2003/08/06  09:21:21
+        Log: * fix typo
+	   ! ChangeLog
+____________________________________________________________________________
+[  7358] By: autrijus                              on 2003/08/06  08:59:07
+        Log: * changes.
+	   ! ChangeLog Changes
+____________________________________________________________________________
 [  7356] By: autrijus                              on 2003/08/06  08:43:25
         Log: * This be 0.73.
 	   ! lib/PAR.pm
@@ -219,10 +385,6 @@ ____________________________________________________________________________
              * doc tweaks.
 	   ! lib/PAR.pm
 ____________________________________________________________________________
-[  7225] By: autrijus                              on 2003/07/29  01:06:27
-        Log: * clear signature
-	   ! SIGNATURE
-____________________________________________________________________________
 [  7224] By: autrijus                              on 2003/07/29  01:06:10
         Log: * use par_rmtmpdir() to clean up after ourselves.
              * the rebooting execv(SvPV_nolen(GvSV(tmpgv))
@@ -365,10 +527,6 @@ ____________________________________________________________________________
         Log: * make it (barely) compile on win32.
 	   ! myldr/mktmpdir.c myldr/static.c
 ____________________________________________________________________________
-[  7160] By: autrijus                              on 2003/07/27  14:08:27
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  7159] By: autrijus                              on 2003/07/27  14:05:08
         Log: * This be 0.69_93.
 	   ! ChangeLog lib/PAR.pm
@@ -395,10 +553,6 @@ ____________________________________________________________________________
              * PAR::Dist is now a mandatory prerequisite and
              bundled inside parl.
 	   ! Makefile.PL script/par.pl script/parl.pod
-____________________________________________________________________________
-[  7002] By: autrijus                              on 2003/07/16  08:18:03
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  7001] By: autrijus                              on 2003/07/16  08:16:33
         Log: * Richard Soderberg's last-minute suggestion about
@@ -554,18 +708,10 @@ ____________________________________________________________________________
 	   ! lib/App/Packer/PAR.pm lib/PAR/Heavy.pm
 	   ! script/par.pl
 ____________________________________________________________________________
-[  6151] By: autrijus                              on 2003/05/28  18:08:19
-        Log: * need to keep an empty signature for snapshots.
-	   ! SIGNATURE
-____________________________________________________________________________
 [  6141] By: autrijus                              on 2003/05/28  04:45:51
         Log: * Nicholas Clark caught my fubar'ing Markus's mktmp
              code, which caused Linux and Solaris to segfault.
 	   ! myldr/mktmpdir.c
-____________________________________________________________________________
-[  6086] By: autrijus                              on 2003/05/25  18:49:56
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE inc/Module/Install/PAR.pm
 ____________________________________________________________________________
 [  6085] By: autrijus                              on 2003/05/25  18:32:18
         Log: * This be PAR, 0.68.
@@ -1025,12 +1171,6 @@ ____________________________________________________________________________
         Log: * supress messages unless $ENV{PAR_DEBUG} is set.
 	   ! script/par.pl
 ____________________________________________________________________________
-[  4746] By: autrijus                              on 2003/03/17  00:50:57
-        Log: * move around things a bit for better snapshotting.
-	  +> patches/shlib.diff
-	   - shlib.diff
-	   ! MANIFEST SIGNATURE t/0-signature.t
-____________________________________________________________________________
 [  4745] By: autrijus                              on 2003/03/17  00:45:19
         Log: * check in inc/ to p4 so snapshots can run.
 	   + inc/ExtUtils/AutoInstall.pm
@@ -1113,14 +1253,6 @@ ____________________________________________________________________________
 	   + PAR/Intro.pod
 	   ! MANIFEST PAR.pm README
 ____________________________________________________________________________
-[  4677] By: autrijus                              on 2003/03/09  14:33:27
-        Log: * switch to M::I-generated MANIFEST and sign again.
-	   ! MANIFEST SIGNATURE
-____________________________________________________________________________
-[  4675] By: autrijus                              on 2003/03/09  13:37:46
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  4674] By: autrijus                              on 2003/03/09  13:35:34
         Log: * This be PAR 0.65, the "binary install, pod-stripping,
 	       5.6-reclaimed" edition.
@@ -1188,10 +1320,6 @@ ____________________________________________________________________________
              (reported by Sisyphus)
 	   ! AUTHORS myldr/main.c
 ____________________________________________________________________________
-[  4505] By: autrijus                              on 2003/03/01  15:51:49
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  4504] By: autrijus                              on 2003/03/01  15:50:24
         Log: * This be PAR 0.64, the "Win32 binmode bug fixed" edition.
              * adjust manifest for Module::Install.
@@ -1233,10 +1361,6 @@ ____________________________________________________________________________
         Log: * win32 quoting.
 	   ! myldr/Makefile.PL
 ____________________________________________________________________________
-[  4104] By: autrijus                              on 2003/02/06  00:32:53
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  4103] By: autrijus                              on 2003/02/06  00:30:50
         Log: * 0.63.
              * also from Jerry Veldhuis: document --par-options.
@@ -1251,10 +1375,6 @@ ____________________________________________________________________________
         Log: * mention various resource for par.
 	   ! README
 ____________________________________________________________________________
-[  3353] By: autrijus                              on 2003/01/09  10:55:08
-        Log: * signatures.
-	   ! MANIFEST.SKIP SIGNATURE
-____________________________________________________________________________
 [  3309] By: autrijus                              on 2003/01/07  13:30:13
         Log: * hm.
 	   ! myldr/Makefile.PL
@@ -1266,10 +1386,6 @@ ____________________________________________________________________________
 [  3307] By: autrijus                              on 2003/01/07  13:15:04
         Log: * errata.
 	   ! Makefile.PL myldr/Makefile.PL
-____________________________________________________________________________
-[  3305] By: autrijus                              on 2003/01/07  12:26:18
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  3304] By: autrijus                              on 2003/01/07  12:23:04
         Log: * This be 0.62, the 'parl' edition.
@@ -1338,10 +1454,6 @@ ____________________________________________________________________________
 	       specified. 
 	   ! script/pp
 ____________________________________________________________________________
-[  2740] By: autrijus                              on 2002/12/17  14:45:03
-        Log: * * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  2737] By: autrijus                              on 2002/12/17  11:26:03
         Log: * This be 0.61, the 'emergency fix' edition.
 	   ! PAR.pm
@@ -1354,10 +1466,6 @@ ____________________________________________________________________________
         Log: * Extraction of pp-generated scripts were broken due
              to offset mismatch.  Oops.
 	   ! script/pp
-____________________________________________________________________________
-[  2732] By: autrijus                              on 2002/12/17  04:55:24
-        Log: * changes and signatures.	
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  2731] By: autrijus                              on 2002/12/17  04:54:59
         Log: * updated tests.
@@ -1415,19 +1523,11 @@ ____________________________________________________________________________
         Log: * minor typo.
 	   ! PAR.pm
 ____________________________________________________________________________
-[  2664] By: autrijus                              on 2002/12/11  01:51:43
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  2663] By: autrijus                              on 2002/12/11  01:34:41
         Log: * This be 0.51.
              * Fixed incorrect PATH initialization problem on
              Solaris, as reported by Markus Jansen.
 	   ! PAR.pm script/par.pl
-____________________________________________________________________________
-[  2578] By: autrijus                              on 2002/12/03  00:47:52
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  2577] By: autrijus                              on 2002/12/03  00:33:18
         Log: * This be 0.50, the 'thanks to Markus Jansen' edition.
@@ -1454,10 +1554,6 @@ ____________________________________________________________________________
              Win32 with MinGW.
 	   ! AUTHORS myldr/Makefile.PL
 ____________________________________________________________________________
-[  2324] By: autrijus                              on 2002/11/23  14:22:52
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  2323] By: autrijus                              on 2002/11/23  14:21:11
         Log: * Version 0.49.
 	   ! PAR.pm
@@ -1483,10 +1579,6 @@ ____________________________________________________________________________
 [  2146] By: autrijus                              on 2002/11/14  00:22:12
         Log: * evil ideas that struck me in the dreams.
 	   ! TODO
-____________________________________________________________________________
-[  2106] By: autrijus                              on 2002/11/13  11:10:25
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  2105] By: autrijus                              on 2002/11/13  11:00:51
         Log: * This be 0.48, the "ActivePerl 5.6 works" edition.
@@ -1515,10 +1607,6 @@ ____________________________________________________________________________
              * merge Mattia's PAR.pm patch to par.pl.
 	   ! script/par.pl
 ____________________________________________________________________________
-[  2077] By: autrijus                              on 2002/11/10  09:20:23
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  2076] By: autrijus                              on 2002/11/10  06:34:19
         Log: * This be 0.47.
 	   ! myldr/main.c
@@ -1531,10 +1619,6 @@ ____________________________________________________________________________
 [  2073] By: autrijus                              on 2002/11/09  23:35:00
         Log: * pod nits.
 	   ! script/pp
-____________________________________________________________________________
-[  2072] By: autrijus                              on 2002/11/09  23:34:48
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  2071] By: autrijus                              on 2002/11/09  22:42:14
         Log: * This be 0.46, the 'Win32 standalone exe works' edition.
@@ -1552,10 +1636,6 @@ ____________________________________________________________________________
              files needed to bundle modules in par.pl -B.
              (Reported by Glenn Mabbutt)
 	   ! script/par.pl
-____________________________________________________________________________
-[  2068] By: autrijus                              on 2002/11/09  09:04:42
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  2063] By: autrijus                              on 2002/11/08  20:39:30
         Log: * Version 0.45.
@@ -1615,10 +1695,6 @@ ____________________________________________________________________________
              * s/compile/package/ in docs.
 	   ! script/pp
 ____________________________________________________________________________
-[  2045] By: autrijus                              on 2002/11/07  14:40:23
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  2041] By: autrijus                              on 2002/11/07  14:20:27
         Log: * 0.43.
              * retracted par.pl unzip hook because it breaks dynamic
@@ -1662,10 +1738,6 @@ ____________________________________________________________________________
 [  2019] By: autrijus                              on 2002/11/06  10:53:56
         Log: * add jeff goff to authors for the name 'pp'.
 	   ! AUTHORS
-____________________________________________________________________________
-[  2017] By: autrijus                              on 2002/11/05  22:03:25
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  2016] By: autrijus                              on 2002/11/05  22:02:09
         Log: * This be version 0.40.
@@ -1719,10 +1791,6 @@ ____________________________________________________________________________
         Log: * make perl 5.6 happy.
 	   ! myldr/main.c
 ____________________________________________________________________________
-[  1989] By: autrijus                              on 2002/11/05  14:18:54
-        Log: * changes and signatures. 
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  1988] By: autrijus                              on 2002/11/05  14:18:45
         Log: * fix manifest, again.
 	   + MANIFEST.SKIP
@@ -1757,10 +1825,6 @@ ____________________________________________________________________________
         Log: * reword 0-signature.t a bit for readability.
 	   ! t/0-signature.t
 ____________________________________________________________________________
-[  1872] By: autrijus                              on 2002/11/03  19:22:24
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  1857] By: autrijus                              on 2002/11/03  12:45:26
         Log: * This be 0.22.
              * %DATACache no longer used.
@@ -1775,10 +1839,6 @@ ____________________________________________________________________________
         Log: * Matt Sergeant's suggestion obsoletes PerlIO::scalar
              and IO::Scalar with IO::File.
 	   ! AUTHORS Makefile.PL PAR.pm script/par.pl
-____________________________________________________________________________
-[  1853] By: autrijus                              on 2002/11/03  10:10:27
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  1847] By: autrijus                              on 2002/11/02  21:08:04
         Log: * 0.21, the General Availability (for non-perlcc usage)
@@ -1805,10 +1865,6 @@ ____________________________________________________________________________
 [  1841] By: autrijus                              on 2002/11/02  20:33:29
         Log: * Module::ScanDeps 0.01 was broken. Bump dep to 0.02.
 	   ! Makefile.PL
-____________________________________________________________________________
-[  1834] By: autrijus                              on 2002/11/02  15:38:50
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  1822] By: autrijus                              on 2002/11/02  02:02:32
         Log: * This be 0.20.
@@ -1936,10 +1992,6 @@ ____________________________________________________________________________
              * Glenn reported that earlier Archive::Zip doesn't work.
 	   ! Makefile.PL
 ____________________________________________________________________________
-[  1704] By: autrijus                              on 2002/10/27  17:36:03
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  1703] By: autrijus                              on 2002/10/27  17:33:48
         Log: * This be version 0.15.
              * Added contributor list.
@@ -1959,10 +2011,6 @@ ____________________________________________________________________________
         Log: * For some reason, the PerlIO::scalar way doesn't work on
 	       win32.
 	   ! PAR.pm
-____________________________________________________________________________
-[  1694] By: autrijus                              on 2002/10/27  10:18:21
-        Log: * changes and signatures.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  1693] By: autrijus                              on 2002/10/27  10:16:25
         Log: * RCS headers.
@@ -1989,10 +2037,6 @@ ____________________________________________________________________________
              lest it obfusticates itself too much.
 	   ! PAR.pm
 ____________________________________________________________________________
-[  1594] By: autrijus                              on 2002/10/21  17:13:57
-        Log: * changes and signature.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  1593] By: autrijus                              on 2002/10/21  17:10:15
         Log: * Version 0.13.
              * Implemented suggestion from Nicholas Clark: on PerlIO
@@ -2009,10 +2053,6 @@ ____________________________________________________________________________
         Log: * experimental support for embedded .so files for full
 	       self-bootstrapping.
 	   ! PAR.pm script/par.pl
-____________________________________________________________________________
-[  1570] By: autrijus                              on 2002/10/20  12:46:06
-        Log: * changes and signature.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  1569] By: autrijus                              on 2002/10/20  12:45:22
         Log: * oops. should require Archive::Zip explicitly lest it
@@ -2045,10 +2085,6 @@ ____________________________________________________________________________
 	       core.
 	   ! Makefile.PL
 ____________________________________________________________________________
-[  1561] By: autrijus                              on 2002/10/19  22:16:33
-        Log: * changes and signature.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  1560] By: autrijus                              on 2002/10/19  22:15:26
         Log: * Thie be 0.11.
              * removed obsoleted test files.
@@ -2059,10 +2095,6 @@ ____________________________________________________________________________
 	   + TODO
 	   ! MANIFEST PAR.pm script/par.pl
 ____________________________________________________________________________
-[  1545] By: autrijus                              on 2002/10/19  17:24:52
-        Log: * changes and signature.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  1544] By: autrijus                              on 2002/10/19  17:23:23
         Log: * 0.10.
              * XS modules are now supported!
@@ -2070,10 +2102,6 @@ ____________________________________________________________________________
 	       cross-platform
              PAR files support.
 	   ! PAR.pm script/par.pl
-____________________________________________________________________________
-[  1542] By: autrijus                              on 2002/10/19  15:18:30
-        Log: * changes and signature.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  1541] By: autrijus                              on 2002/10/19  15:17:50
         Log: * This be 0.06.
@@ -2085,10 +2113,6 @@ ____________________________________________________________________________
         Log: * oops, PerlIO::Scalar should read IO::Scalar.
 	   ! Makefile.PL
 ____________________________________________________________________________
-[  1538] By: autrijus                              on 2002/10/19  14:19:57
-        Log: * changes and signature.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  1537] By: autrijus                              on 2002/10/19  14:18:37
         Log: * Version 0.05.
              * Full DATA section support with PerlIO::scalar or
@@ -2096,10 +2120,6 @@ ____________________________________________________________________________
              * script/par.pl now dies if the .par file is not found.
 	   ! Makefile.PL PAR.pm script/par.pl t/1-basic.t
 	   ! t/hello.par
-____________________________________________________________________________
-[  1523] By: autrijus                              on 2002/10/19  02:34:08
-        Log: * changes and signature.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  1522] By: autrijus                              on 2002/10/19  02:31:09
         Log: * This be 0.04.
@@ -2115,10 +2135,6 @@ ____________________________________________________________________________
 	   + patches/perl580.diff
 	   ! PAR.pm README script/par.pl
 ____________________________________________________________________________
-[  1520] By: autrijus                              on 2002/10/18  22:22:27
-        Log: * changes and signature.
-	   ! Changes SIGNATURE
-____________________________________________________________________________
 [  1519] By: autrijus                              on 2002/10/18  22:00:34
         Log: * oops.
 	   ! Makefile.PL
@@ -2129,10 +2145,6 @@ ____________________________________________________________________________
              * added README.
 	   + README script/par.pl
 	   ! MANIFEST Makefile.PL PAR.pm
-____________________________________________________________________________
-[  1517] By: autrijus                              on 2002/10/18  20:53:38
-        Log: * changes and signature.
-	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  1516] By: autrijus                              on 2002/10/18  20:52:38
         Log: * Officially 0.02.
@@ -2148,10 +2160,6 @@ ____________________________________________________________________________
 	       anymore.
 	   - PAR/Filter.pm
 	   ! MANIFEST Makefile.PL PAR.pm
-____________________________________________________________________________
-[  1513] By: autrijus                              on 2002/10/18  20:24:54
-        Log: * changes and signature.
-	   + Changes SIGNATURE
 ____________________________________________________________________________
 [  1512] By: autrijus                              on 2002/10/18  20:23:57
         Log: * The Perl Archive Library, version 0.01.

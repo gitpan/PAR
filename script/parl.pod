@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/script/parl.pod $ $Author: autrijus $
-# $Revision: #9 $ $Change: 7349 $ $DateTime: 2003/08/05 17:22:57 $
+# $Revision: #10 $ $Change: 7438 $ $DateTime: 2003/08/11 08:06:45 $
 
 =head1 NAME
 
@@ -17,11 +17,12 @@ To make a I<PAR distribution> from a CPAN module distribution:
 
 To manipulate a I<PAR distribution>:
 
-    % parl -i Foo-0.01-i386-freebsd-5.8.0.par     # install
-    % parl -i http://example.com/foo.par          # also works
-    % parl -u Foo-0.01-i386-freebsd-5.8.0.par     # uninstall
-    % parl -s Foo-0.01-i386-freebsd-5.8.0.par     # sign
-    % parl -v Foo-0.01-i386-freebsd-5.8.0.par     # verify
+    % parl -i Foo-0.01-i386-freebsd-5.8.0.par	# install
+    % parl -i http://foo.com/Foo-0.01		# auto-appends archname + perlver
+    % parl -i cpan://AUTRIJUS/PAR-0.74		# uses CPAN author directory
+    % parl -u Foo-0.01-i386-freebsd-5.8.0.par   # uninstall
+    % parl -s Foo-0.01-i386-freebsd-5.8.0.par   # sign
+    % parl -v Foo-0.01-i386-freebsd-5.8.0.par   # verify
 
 To use F<Hello.pm> from F<./foo.par>:
 

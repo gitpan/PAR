@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #40 $ $Change: 7277 $ $DateTime: 2003/07/30 15:14:08 $
+# $Revision: #43 $ $Change: 7619 $ $DateTime: 2003/08/20 09:37:38 $
 
 use 5.006;
 use inc::Module::Install;
@@ -11,8 +11,8 @@ version_from('lib/PAR.pm');
 requires    ('File::Temp');
 requires    ('Compress::Zlib' => 1.14);
 requires    ('Archive::Zip' => 1.0);
-requires    ('Module::ScanDeps' => 0.21);
-requires    ('PAR::Dist' => 0.03);
+requires    ('Module::ScanDeps' => 0.28);
+requires    ('PAR::Dist' => 0.05);
 features    (
     'Digital signature support'	=> [
 	-default => 0,

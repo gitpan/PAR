@@ -1,9 +1,7 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #9 $ $Change: 7353 $ $DateTime: 2003/08/06 07:50:26 $
+   $Revision: #10 $ $Change: 7519 $ $DateTime: 2003/08/14 08:11:54 $
    vim: expandtab shiftwidth=4
 */
-
-#define PAR_MKTMPDIR
 
 #ifdef WIN32
 #include <io.h>
@@ -99,6 +97,8 @@ int main ( int argc, char **argv, char **env )
     }
 
 #ifdef WIN32
+    sprintf(buf, "PAR_SPAWNED=1", argc);
+    putenv(buf);
     i = spawnvp(P_WAIT, my_file, argv);
 #else
     execvp(my_file, argv);

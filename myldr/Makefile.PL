@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #45 $ $Change: 7337 $ $DateTime: 2003/08/04 14:33:22 $
+# $Revision: #49 $ $Change: 7615 $ $DateTime: 2003/08/20 08:55:55 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -14,7 +14,7 @@ use ExtUtils::Embed;
 
 xsinit(undef);
 
-my $debug = 1;
+my $debug = 0;
 my $chunk_size = 30000;
 my $perl = $^X;
 my $exe = $Config{_exe};
@@ -40,6 +40,7 @@ if ($dynperl) {
     my $file = $Config{libperl};
     my $so = $Config{so} || 'so';
     $file = "libperl.$so" if $file eq 'libper'; # workaround Red Hat bug
+
     $file =~ s/\.(?!\d)[^.]*$/.$Config{so}/;
 
     my @paths = (
@@ -51,6 +52,8 @@ if ($dynperl) {
 
     foreach my $path (@paths) {
 	$libperl = File::Spec->catfile($path, $file);
+	last if -e $libperl;
+	$libperl = File::Spec->catfile($path, $file . $Config{_a}); # for cygwin
 	last if -e $libperl;
     }
 

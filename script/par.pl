@@ -1,6 +1,12 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
+
+eval 'exec /usr/local/bin/perl  -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
+
+eval 'exec /usr/local/bin/perl  -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #74 $ $Change: 7353 $ $DateTime: 2003/08/06 07:50:26 $ vim: expandtab shiftwidth=4
+# $Revision: #79 $ $Change: 7618 $ $DateTime: 2003/08/20 09:29:59 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -23,11 +29,12 @@ To make a I<PAR distribution> from a CPAN module distribution:
 
 To manipulate a I<PAR distribution>:
 
-    % par.pl -i Foo-0.01-i386-freebsd-5.8.0.par     # install
-    % par.pl -i http://example.com/foo.par          # also works
-    % par.pl -u Foo-0.01-i386-freebsd-5.8.0.par     # uninstall
-    % par.pl -s Foo-0.01-i386-freebsd-5.8.0.par     # sign
-    % par.pl -v Foo-0.01-i386-freebsd-5.8.0.par     # verify
+    % par.pl -i Foo-0.01-i386-freebsd-5.8.0.par	# install
+    % par.pl -i http://foo.com/Foo-0.01		# auto-appends archname + perlver
+    % par.pl -i cpan://AUTRIJUS/PAR-0.74	# uses CPAN author directory
+    % par.pl -u Foo-0.01-i386-freebsd-5.8.0.par # uninstall
+    % par.pl -s Foo-0.01-i386-freebsd-5.8.0.par # sign
+    % par.pl -v Foo-0.01-i386-freebsd-5.8.0.par # verify
 
 To use F<Hello.pm> from F<./foo.par>:
 
@@ -506,31 +513,14 @@ if ($out) {
 {
     last unless defined $start_pos;
 
-    # Set up fake IO::File routines to point into the PAR subfile {{{
-    require IO::File;
-    my $fh = IO::File->new($0);
-    my $seek_ref  = $fh->can('seek');
-    my $tell_ref  = $fh->can('tell');
-
-    *{'IO::File::seek'} = sub {
-        return $seek_ref->(@_) unless $PAR::__reading;
-        my ($fh, $pos, $whence) = @_;
-        $pos += $start_pos if $whence == 0;
-        $seek_ref->($fh, $pos, $whence);
-    };
-    *{'IO::File::tell'} = sub {
-        return $tell_ref->(@_) unless $PAR::__reading;
-        return $tell_ref->(@_) - $start_pos;
-    };
-    # }}}
-
     # Now load the PAR file and put it into PAR::LibCache {{{
     require PAR;
     PAR::Heavy::_init_dynaloader();
-    require Archive::Zip;
 
-    local $PAR::__reading = 1;
+    require Archive::Zip;
     my $zip = Archive::Zip->new;
+    my $fh = IO::File->new;
+    $fh->fdopen(fileno(_FH), 'r') or die "$!: $@";
     $zip->readFromFileHandle($fh) == Archive::Zip::AZ_OK() or die "$!: $@";
 
     push @PAR::LibCache, $zip;
@@ -644,6 +634,10 @@ sub pod_strip {
     my ($pl_text, $filename) = @_;
 
     local $^W;
+
+    my $data = '';
+    $data = $1 if $pl_text =~ s/((?:^__DATA__$).*)//ms;
+
     my $line = 1;
     if ($pl_text =~ /^=(?:head\d|pod|begin|item|over|for|back|end)\b/) {
         $pl_text = "\n$pl_text";
@@ -665,7 +659,7 @@ sub pod_strip {
         if length $filename;
     $pl_text =~ s/^#line 1 (.*\n)(#!.*\n)/$2#line 2 $1/g;
 
-    return $pl_text;
+    return $pl_text . $data;
 }
 
 sub init_inc {
@@ -690,15 +684,15 @@ die qq(Can't open perl script "$0": No such file or directory\n)
 
 do $0;
 die $@ if $@;
-exit;
 
 };
 
 $__ERROR = $@ if $@;
 }
 
-die  $__ERROR if $__ERROR;
+die $__ERROR if $__ERROR;
 
+1;
 
 =head1 SEE ALSO
 

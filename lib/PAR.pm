@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #31 $ $Change: 7356 $ $DateTime: 2003/08/06 08:43:25 $ vim: expandtab shiftwidth=4
+# $Revision: #37 $ $Change: 7621 $ $DateTime: 2003/08/20 09:46:48 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.73';
+$PAR::VERSION = '0.74';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.73 of PAR, released August 6, 2003.
+This document describes version 0.74 of PAR, released August 20, 2003.
 
 =head1 SYNOPSIS
 
@@ -135,16 +135,16 @@ discussed on the mailing list.  Join us if you have an idea or two!
 
 =cut
 
-use vars qw(@PAR_INC);                  # explicitly stated PAR library files
+use vars qw(@PAR_INC);  # explicitly stated PAR library files
+use vars qw(%PAR_INC);  # sets {$par}{$file} for require'd modules
 use vars qw(@LibCache %LibCache);       # I really miss pseudohash.
+use vars qw($LastAccessedPAR);
 
 my $ver  = $Config::Config{version};
 my $arch = $Config::Config{archname};
 
-my $_reentrant;                         # flag to avoid recursive import
 sub import {
     my $class = shift;
-    return if !@_ and $_reentrant++;
 
     foreach my $par (@_) {
         if ($par =~ /[?*{}\[\]]/) {
@@ -158,14 +158,16 @@ sub import {
         push @PAR_INC, unpar($par, undef, undef, 1);
     }
 
+    return if $PAR::__import;
+    local $PAR::__import = 1;
+
     unshift @INC, \&find_par unless grep { $_ eq \&find_par } @INC;
 
     require PAR::Heavy;
     PAR::Heavy::_init_dynaloader();
 
     if (unpar($0)) {
-        $PAR::__reading = 1;
-        push @PAR_INC, $0;
+        push @PAR_INC, unpar($0, undef, undef, 1);
 
         my $zip = $LibCache{$0};
         my $member = $zip->memberNamed("script/main.pl")
@@ -186,8 +188,6 @@ sub import {
 
         _run_member($member);
     }
-
-    $_reentrant-- if !@_;
 }
 
 sub _run_member {
@@ -208,7 +208,6 @@ sub _run_member {
 
     unshift @INC, sub { $fh };
 
-    $PAR::__reading = 0;
     { do 'main'; die $@ if $@; exit }
 }
 
@@ -224,11 +223,26 @@ sub find_par {
         else {
             $scheme = $path;
         }
-        my $rv = unpar($path, $file, $member_only, 1);
-        return $rv if defined($rv);
+        my $rv = unpar($path, $file, $member_only, 1) or next;
+        $PAR_INC{$path}{$file} = 1;
+        return $rv;
     }
 
     return;
+}
+
+sub reload_libs {
+    my @par_files = @_;
+    @par_files = sort keys %LibCache unless @par_files;
+
+    foreach my $par (@par_files) {
+        my $inc_ref = $PAR_INC{$par} or next;
+        delete $LibCache{$par};
+        foreach my $file (sort keys %$inc_ref) {
+            delete $INC{$file};
+            require $file;
+        }
+    }
 }
 
 sub read_file {
@@ -253,8 +267,8 @@ sub unpar {
     my $zip = $LibCache{$par};
     my @rv = $par;
 
-    return if $PAR::__reading;
-    local $PAR::__reading = 1;
+    return if $PAR::__unpar;
+    local $PAR::__unpar = 1;
 
     unless ($zip) {
         if ($par =~ m!^\w+://!) {
@@ -283,12 +297,14 @@ sub unpar {
             return unless -f $par;
         }
 
-        require Compress::Zlib;
         require Archive::Zip;
-
         $zip = Archive::Zip->new;
         my $method = (ref($par) ? 'readFromFileHandle' : 'read');
-        return unless $zip->$method($par) == Archive::Zip::AZ_OK();
+
+        Archive::Zip::setErrorHandler(sub {});
+        my $rv = $zip->$method($par);
+        Archive::Zip::setErrorHandler(undef);
+        return unless $rv == Archive::Zip::AZ_OK();
 
         push @LibCache, $zip;
         $LibCache{$_[0]} = $zip;
@@ -299,12 +315,11 @@ sub unpar {
             next if $member->isDirectory;
             my $content = $member->contents();
             next unless $content =~ /^PK\003\004/;
-            local $PAR::__reading = 0;
             push @rv, unpar(\$content, undef, undef, 1);
         }
     }
 
-    $PAR::LastAccessedPAR = $zip;
+    $LastAccessedPAR = $zip;
 
     return @rv unless defined $file;
 
