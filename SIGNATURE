@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.14.
+signed via the Module::Signature module, version 0.15.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,21 +14,21 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 0b47d2046fcaac63dd70e048a49d68fb00019ea9 Changes
+SHA1 c48353c8cd47c8d5454b8bf2fa1dde1b83e4aad5 Changes
 SHA1 459663abcea0abb8c1e3da6042544be55fa3e4b2 MANIFEST
 SHA1 2bff1dc833eddecedcfb35673ebad2fea5cec44f Makefile.PL
-SHA1 631c9e62afab3b175356a327808eb6fd910cc82c PAR.pm
+SHA1 55c43845df76f002538fe44781444d6024721dbe PAR.pm
 SHA1 9346468cea12eaa203bfa1c64b01c3327659ada7 README
-SHA1 ee87d16496133fb2565f61b0d4e0e3eb81b87451 TODO
+SHA1 3ade9be2e2546af174da03d748c12ced6b0b92d6 TODO
 SHA1 09d04745e0d6aa0c897ed4f41d9318d583528924 patches/perl580.diff
-SHA1 9727c66cc4742d8228cd07350c7c04129102f134 script/par.pl
+SHA1 1e8a6c67b28dd5579727838ff5e1f00651b196ee script/par.pl
 SHA1 d4e8d826539513b06a8f0d41dfbb172745fad1c3 t/0-signature.t
 SHA1 63099dc1323090796b552e7c3e34319f7a447746 t/1-basic.t
 SHA1 601f673d658a8860ac7110516ce0fcb5e406af58 t/hello.par
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.0 (FreeBSD)
 
-iD8DBQE9tDg6tLPdNzw1AaARAhYrAJ4gjPaCXH0XMwytqwBkkBKlsZ7pvgCeMuFP
-NBozPZhQC6TQEKzxjkknpio=
-=VMlF
+iD8DBQE9u8B3tLPdNzw1AaARAmRXAJ98K4RGC70ZMnu7MNAWwaFaP/nqOgCfekYY
+m3a4EivTJpBzdLyVzpIL/m4=
+=sK/8
 -----END PGP SIGNATURE-----

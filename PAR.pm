@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #15 $ $Change: 1593 $ $DateTime: 2002/10/21 17:10:15 $
+# $Revision: #18 $ $Change: 1692 $ $DateTime: 2002/10/27 10:15:27 $
 
 package PAR;
-$PAR::VERSION = '0.13';
+$PAR::VERSION = '0.14';
 
 use 5.006;
 use strict;
@@ -14,7 +14,7 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.13 of PAR, released October 20, 2002.
+This document describes version 0.14 of PAR, released October 27, 2002.
 
 =head1 SYNOPSIS
 
@@ -106,15 +106,15 @@ next time, but if you need the functionality, just mail me. ;-)
 
 =cut
 
-our @PAR_INC;			# explicitly stated PAR library files
-our (@LibCache, %LibCache);	# I really miss pseudohash.
-our (%DATACache, %DLCache);	# cache for __DATA__ segments
+use vars qw(@PAR_INC);			# explicitly stated PAR library files
+use vars qw(@LibCache %LibCache);	# I really miss pseudohash.
+use vars qw(%DATACache %DLCache);	# cache for __DATA__ segments
 
-my $ver		= sprintf("%vd", $^V);
+my $ver		= $^V ? sprintf("%vd", $^V) : $];
 my $arch	= $Config::Config{archname};
 my $dl_dlext	= $Config::Config{dlext};
 
-my $_reentrant;			# flag to avoid recursive import
+my $_reentrant;				# flag to avoid recursive import
 sub import {
     my $class = shift;
     return if !@_ and $_reentrant++;
@@ -227,8 +227,10 @@ sub unpar {
 
     # If lucky enough to have PerlIO, use it instead of ugly filtering.
     if (eval { require PerlIO::scalar; 1 }) {
-	open my $fh, '<:scalar', \(scalar $member->contents);
-	return $fh;
+	return eval q{
+	    open my $fh, '<:scalar', \(scalar $member->contents);
+	    $fh;
+	}
     }
 
     # You did not see this undocumented super-jenga piece.
@@ -249,11 +251,12 @@ sub _wrap_data {
     my ($key, $skip_perlio) = @_;
 
     if (!$skip_perlio and eval {require PerlIO::scalar; 1}) {
-	return "use PAR (".
+	return "use PerlIO::scalar (".
 	       "    open(*DATA, '<:scalar', \\\$PAR::DATACache{'$key'}) ? () : ()".
 	       ");\n"; 
     }
     elsif (eval {require IO::Scalar; 1}) {
+	# This will first load IO::Scalar, *then* tie the handles.
 	return "use IO::Scalar (".
 	       "    tie(*DATA, 'IO::Scalar', \\\$PAR::DATACache{'$key'})".
 	       "    ? () : ()".
@@ -265,11 +268,10 @@ sub _wrap_data {
     }
 }
 
-### BEGINS HEAVY MAGIC ################################################
-# caches for code references
+########################################################################
+# Dynamic inclusion of XS modules
 
-my ($bootstrap, $dl_findfile);
-
+my ($bootstrap, $dl_findfile);	# caches for code references
 sub _init_dynaloader {
     return if $bootstrap;
     return unless eval { require DynaLoader; DynaLoader::dl_findfile(); 1 };
@@ -278,7 +280,8 @@ sub _init_dynaloader {
     $dl_findfile = \&DynaLoader::dl_findfile;
 
     no strict 'refs';
-    no warnings 'redefine';
+
+    local $^W;
     *{'DynaLoader::bootstrap'}   = \&_bootstrap;
     *{'DynaLoader::dl_findfile'} = \&_dl_findfile;
 }
@@ -329,17 +332,22 @@ sub _bootstrap {
     $bootstrap->(@args);
 }
 
-
-### STUB __DATA__ FILEHANDLE ##########################################
+########################################################################
+# Stub __DATA__ filehandle
 
 package PAR::_data;
 
-sub TIEHANDLE { bless {}, shift }
+sub TIEHANDLE {
+    return bless({}, shift);
+}
+
+sub DESTROY {
+}
+
 sub AUTOLOAD {
     die "Cannot use __DATA__ sections in .par files; ".
         "please install IO::Scalar first!\n";
 }
-sub DESTROY {}
 
 1;
 
@@ -351,7 +359,7 @@ L<Archive::Zip>, L<perlfunc/require>
 
 L<ex::lib::zip>, L<Acme::use::strict::with::pride>
 
-L<PerlIO::scalar>, L<IO::Saclar>
+L<PerlIO::scalar>, L<IO::Scalar>
 
 =head1 ACKNOWLEDGMENTS
 

@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+# $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
+# $Revision: #10 $ $Change: 1693 $ $DateTime: 2002/10/27 10:16:25 $
 
 package __par_pl;
 
@@ -121,11 +123,10 @@ to build a truly self-containing executable:
 =cut
 
 my @par_args;
-
 my ($out, $bundle);
 
 while (@ARGV) {
-    $ARGV[0] =~ /^-([AIMO])(.*)/ or last;
+    $ARGV[0] =~ /^-([AIMOB])(.*)/ or last;
 
     if ($1 eq 'I') {
 	push @INC, $2;
@@ -181,8 +182,6 @@ my ($start_pos, $data_pos);
 	$PAR::DLCache{$buf}++;
 	$PAR::DLCache{$basename} = $filename;
 
-	# print "Basename: $basename($ext) as $buf into $filename\n";
-
 	$fh->read($buf, 4);
 	$fh->read($buf, unpack("N", $buf));
 	print $out $buf;
@@ -214,11 +213,13 @@ if ($out) {
     $/ = undef;
 
     my $data_len = 0;
-    if (!defined $start_pos and ((stat($0))[7] > 8.192)) {
-	require PAR; PAR::_init_dynaloader();
+    if (!defined $start_pos and $bundle) {
+	require PAR;
+	PAR::_init_dynaloader();
 
-	eval { require PerlIO::scalar; 1 } or
-	eval { require IO::Scalar; 1 };
+	eval { require PerlIO::scalar; 1 }
+	    or eval { require IO::Scalar; 1 }
+	    or die "Cannot require either PerlIO::scalar nor IO::Scalar!";
 
 	require IO::File;
 	require Compress::Zlib;
@@ -233,6 +234,7 @@ if ($out) {
 	    print OUT pack('N', length($2));
 	    print OUT $2;
 	    print OUT pack('N', (stat($1.$2))[7]);
+
 	    open FILE, $1.$2 or die $!;
 	    print OUT <FILE>;
 	    close FILE;
@@ -264,7 +266,8 @@ if ($out) {
 	return $tell_ref->(@_) - $start_pos;
     };
 
-    require PAR; PAR::_init_dynaloader();
+    require PAR;
+    PAR::_init_dynaloader();
     require Archive::Zip;
 
     my $zip = Archive::Zip->new;
@@ -282,7 +285,11 @@ Usage: $0 [-Alib.par] [-Idir] [-Mmodule] [src.par] program.pl
     $0 = shift(@ARGV)
 }
 
+########################################################################
+# The main package for script execution
+
 package main;
+
 require PAR;
 PAR->import(@par_args);
 

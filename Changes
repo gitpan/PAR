@@ -1,4 +1,32 @@
 ____________________________________________________________________________
+[  1693] By: autrijus                              on 2002/10/27  10:16:25
+        Log: * RCS headers.
+	   ! script/par.pl
+____________________________________________________________________________
+[  1692] By: autrijus                              on 2002/10/27  10:15:27
+        Log: * 0.14.
+             * Fixed -B omission bug pointed out by Glenn Mabbutt.
+             * style fixes.
+	   ! PAR.pm script/par.pl
+____________________________________________________________________________
+[  1653] By: autrijus                              on 2002/10/24  22:04:57
+        Log: * let's start anew with some reformatting.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1596] By: autrijus                              on 2002/10/21  20:30:14
+        Log: * suggestion from #perl.
+	   ! TODO
+____________________________________________________________________________
+[  1595] By: autrijus                              on 2002/10/21  20:28:13
+        Log: * Beginning backporting to Perl 5.004.
+             * Jan Dubois pointed out a chunk of code that needs comment,
+             lest it obfusticates itself too much.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1594] By: autrijus                              on 2002/10/21  17:13:57
+        Log: * changes and signature.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1593] By: autrijus                              on 2002/10/21  17:10:15
         Log: * Version 0.13.
              * Implemented suggestion from Nicholas Clark: on PerlIO
