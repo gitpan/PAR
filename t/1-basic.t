@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/1-basic.t $ $Author: autrijus $
-# $Revision: #3 $ $Change: 1522 $ $DateTime: 2002/10/19 02:31:09 $
+# $Revision: #4 $ $Change: 1537 $ $DateTime: 2002/10/19 14:18:37 $
 
 use Test;
-BEGIN { plan tests => 8 }
+BEGIN { plan tests => 9 }
 
 ok(
     `$^X -Mblib -MPAR -It/hello -MHello -e 'Hello::hello'`,
@@ -13,6 +13,12 @@ ok(
 ok(
     `$^X -Mblib -MPAR t/hello.par hello.pl`,
     "Hello, world!\nGoodbye, world!\n",
+);
+
+skip(
+    !(eval { require PerlIO::scalar; 1 } or eval { require IO::Scalar ; 1}),
+    `$^X -Mblib -MPAR t/hello.par data.pl`,
+    "Data section\nData reflection\n",
 );
 
 ok(

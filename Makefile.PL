@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #4 $ $Change: 1519 $ $DateTime: 2002/10/18 22:00:34 $
+# $Revision: #5 $ $Change: 1537 $ $DateTime: 2002/10/19 14:18:37 $
 
 use 5.006;
 use ExtUtils::MakeMaker;
@@ -16,6 +16,9 @@ WriteMakefile(
 
     PREREQ_PM		=> {
 	'Archive::Zip'	=> 0,
+(eval { require PerlIO::scalar; 1}) ? () : (
+	'PerlIO::Scalar'=> 0,
+),
     },
 
     dist		=> {

@@ -1,4 +1,14 @@
 ____________________________________________________________________________
+[  1537] By: autrijus                              on 2002/10/19  14:18:37
+        Log: * Version 0.05.
+             * Full DATA section support with PerlIO::scalar or IO::Scalar.
+             * script/par.pl now dies if the .par file is not found.
+	   ! Makefile.PL PAR.pm script/par.pl t/1-basic.t t/hello.par
+____________________________________________________________________________
+[  1523] By: autrijus                              on 2002/10/19  02:34:08
+        Log: * changes and signature.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1522] By: autrijus                              on 2002/10/19  02:31:09
         Log: * This be 0.04.
              * updated manifest and test files.

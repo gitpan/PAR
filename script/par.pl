@@ -2,6 +2,15 @@
 
 package __par_pl;
 
+use strict;
+use PAR ((
+    eval { require PerlIO::scalar; 1 } or
+    eval { require IO::Scalar; 1 } or
+    1
+) ? () : ());
+use IO::File;
+use Archive::Zip;
+
 =head1 NAME
 
 par.pl - Run Perl Archives
@@ -66,10 +75,6 @@ And then:
 Enjoy. :-)
 
 =cut
-
-use PAR;
-use IO::File;
-use Archive::Zip;
 
 my @par_args;
 my $out;
@@ -171,8 +176,12 @@ $0 = shift(@ARGV) unless $PAR::LibCache{$0};
 package main;
 
 PAR->import(@par_args);
-do $0;
 
+die qq(Can't open perl script "$0": No such file or directory\n)
+    unless -e $0;
+
+do $0;
+die $@ if $@;
 exit;
 
 =head1 SEE ALSO
