@@ -1,4 +1,66 @@
 ____________________________________________________________________________
+[  6898] By: autrijus                              on 2003/07/08  15:29:29
+        Log: * This be 0.69_90, OSCON tutorial release.
+	   ! Makefile.PL lib/PAR.pm lib/PAR/Heavy.pm
+	   ! script/pp
+____________________________________________________________________________
+[  6650] By: autrijus                              on 2003/06/20  15:32:48
+        Log: * add rshupp to authors
+	   ! AUTHORS
+____________________________________________________________________________
+[  6649] By: autrijus                              on 2003/06/20  15:30:05
+        Log: * patch from Roderich Schupp (RSCHUPP) to fix mkstemp
+             failing from a resetted ENV.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  6487] By: autrijus                              on 2003/06/12  13:24:11
+        Log: * Markus's compiler-friendly patch to add proper
+             linebreaks to file2c.pl.
+	   ! myldr/file2c.pl
+____________________________________________________________________________
+[  6460] By: autrijus                              on 2003/06/11  17:57:47
+        Log: * from Barry Jaspan: spurious warnings about undefined
+             $key in @INC hook.
+             * fixed pod_stripping so it respects the #! line.
+	   ! myldr/file2c.pl script/par.pl script/pp
+____________________________________________________________________________
+[  6319] By: autrijus                              on 2003/06/05  10:56:45
+        Log: * Nathan Byrd suggests par/ to recursively contain
+             subPAR (heh) files inside a PAR file.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  6235] By: autrijus                              on 2003/06/01  16:32:59
+        Log: * don't pollute LibCache with unneccessary duplicate key.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  6234] By: autrijus                              on 2003/06/01  16:29:14
+        Log: * crazyinsomniac pointed out that MANIFEST.SKIP doesn't
+	       work on win32.
+	   ! MANIFEST.SKIP
+____________________________________________________________________________
+[  6217] By: autrijus                              on 2003/05/31  19:41:59
+        Log: * make LibCache respect the unescaped PAR; this 
+             is needed for omit-extension and URL-style PARs.
+	   ! lib/PAR.pm script/par.pl
+____________________________________________________________________________
+[  6216] By: autrijus                              on 2003/05/31  19:24:24
+        Log: * "use PAR 'http://example.com/foo.par'" now works!
+             * perl -MPAR -Ihttp://example.com/foo.par also works!
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  6215] By: autrijus                              on 2003/05/31  17:10:35
+        Log: * oops. --multiarch has slipped into the POD. it really
+             has not been implemented.
+	   ! script/pp
+____________________________________________________________________________
+[  6212] By: autrijus                              on 2003/05/31  13:07:56
+        Log: * changes.
+	   ! Changes
+____________________________________________________________________________
+[  6211] By: autrijus                              on 2003/05/31  12:59:45
+        Log: * changelog.
+	   ! ChangeLog
+____________________________________________________________________________
 [  6210] By: autrijus                              on 2003/05/31  12:42:06
         Log: * This be PAR 0.69.
 	   ! lib/PAR.pm
@@ -52,10 +114,6 @@ ____________________________________________________________________________
 	       $Config{path_sep}
 	   ! lib/App/Packer/PAR.pm lib/PAR/Heavy.pm
 	   ! script/par.pl
-____________________________________________________________________________
-[  6156] By: autrijus                              on 2003/05/29  05:20:34
-        Log: * up to 3.0.3pre1.
-	   ! script/par.pl script/pp
 ____________________________________________________________________________
 [  6151] By: autrijus                              on 2003/05/28  18:08:19
         Log: * need to keep an empty signature for snapshots.
@@ -585,10 +643,6 @@ ____________________________________________________________________________
              * remove spurious comment in myldr.
              * Tina Mueller reported that CSH stuff doesn't work
              on 5.6 perl.
-	   ! AUTHORS myldr/main.c
-____________________________________________________________________________
-[  4733] By: autrijus                              on 2003/03/15  06:35:49
-        Log: * MERGE: 3.0.0rc1
 	   ! AUTHORS myldr/main.c
 ____________________________________________________________________________
 [  4723] By: autrijus                              on 2003/03/13  20:22:14
@@ -1131,10 +1185,6 @@ ____________________________________________________________________________
              * retracted par.pl unzip hook because it breaks dynamic
 	       loading.
 	   ! PAR.pm script/par.pl
-____________________________________________________________________________
-[  2031] By: autrijus                              on 2002/11/07  02:07:47
-        Log: * l10n.
-	   ! t/0-signature.t
 ____________________________________________________________________________
 [  2030] By: autrijus                              on 2002/11/07  00:23:11
         Log: * changes. (signature temporarily out of commission)

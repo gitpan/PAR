@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #6 $ $Change: 5898 $ $DateTime: 2003/05/16 16:30:10 $
+# $Revision: #8 $ $Change: 6487 $ $DateTime: 2003/06/12 13:24:11 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -46,9 +46,11 @@ sub map_fun { local $_ = $_[0];
               return sprintf '\0%o', ord };
 
 my @c_chars = map { map_fun($_) } split '', $pl_text;
-my $c_arr = "static char $c_var\[] = { " .
+my $c_arr = "static char $c_var\[] = {\n" .
   ( join ', ', map { "'$_'" } @c_chars ) .
-  ", '\\0' };\n";
+  ", '\\0'\n};\n";
+
+$c_arr =~ s/((?:'.*?',\s){16})/$1\n/sg;
 
 print OUT $c_arr;
 close OUT;
@@ -72,6 +74,7 @@ sub pod_strip {
     }gsex;
     $pl_text = '#line 1 "' . ($filename) . "\"\n" . $pl_text
         if length $filename;
+    $pl_text =~ s/^#line 1 (.*\n)(#!.*\n)/$2#line 2 $1/g;
 
     return $pl_text;
 }

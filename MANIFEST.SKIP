@@ -4,7 +4,7 @@
 ^myldr/main.[^c].*$
 ^myldr/my_par_pl.c$
 ^myldr/perlxsi.c$
-^myldr/par(?:\.+)?$
+^myldr/par(?:\.\w+)?$
 ^package/parl-.*$
 ^script/parl(?:\.(?!pod).+)?$
 ^MANIFEST.bak$

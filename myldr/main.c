@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #19 $ $Change: 6205 $ $DateTime: 2003/05/31 12:23:55 $
+   $Revision: #20 $ $Change: 6649 $ $DateTime: 2003/06/20 15:30:05 $
    vim: expandtab shiftwidth=4
 */
 
@@ -70,7 +70,8 @@ int main ( int argc, char **argv, char **env )
     char *subsubdir;
 
 #ifdef PAR_MKTMPDIR
-    char *stmpdir = par_mktmpdir( argv );
+    char *stmpdir;
+    par_mktmpdir( argv );
 #endif
 
 #if (defined(USE_5005THREADS) || defined(USE_ITHREADS)) && defined(HAS_PTHREAD_ATFORK)
@@ -166,6 +167,7 @@ int main ( int argc, char **argv, char **env )
 
 #ifdef PAR_MKTMPDIR
     /* create temporary PAR directory */
+    stmpdir = getenv("PAR_TEMP");
     if ( stmpdir != NULL ) {
         i = PerlDir_mkdir(stmpdir, 0755);
         if ( (i != 0) && (i != EEXIST) && (i != -1) ) {

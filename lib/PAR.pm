@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #14 $ $Change: 6210 $ $DateTime: 2003/05/31 12:42:06 $ vim: expandtab shiftwidth=4
+# $Revision: #19 $ $Change: 6898 $ $DateTime: 2003/07/08 15:29:29 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.69';
+$PAR::VERSION = '0.69_90';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.69 of PAR, released May 31, 2003.
+This document describes version 0.69_90 of PAR, released May 31, 2003.
 
 =head1 SYNOPSIS
 
@@ -43,6 +43,10 @@ Following paths inside the PAR file are searched:
     /5.8.0/                     # i.e. $Config{version}
     /5.8.0/i386-freebsd/        # both of the above
     /
+
+PAR files may also (recursively) contain other PAR files
+under F</par/>.  All files under it will be considered as
+PAR files and searched as well.
 
 Run F<script/test.pl> or F<test.pl> from F<foo.par>:
 
@@ -141,12 +145,12 @@ sub import {
         if ($par =~ /[?*{}\[\]]/) {
             require File::Glob;
             foreach my $matched (File::Glob::glob($par)) {
-                push @PAR_INC, $matched if unpar($matched, undef, undef, 1);
+                push @PAR_INC, unpar($matched, undef, undef, 1);
             }
             next;
         }
 
-        push @PAR_INC, $par if unpar($par, undef, undef, 1);
+        push @PAR_INC, unpar($par, undef, undef, 1);
     }
 
     unshift @INC, \&find_par unless grep { $_ eq \&find_par } @INC;
@@ -201,7 +205,15 @@ sub _run_member {
 sub find_par {
     my ($self, $file, $member_only) = @_;
 
-    foreach my $path (@PAR_INC ? @PAR_INC : @INC) {
+    my $scheme;
+    foreach (@PAR_INC ? @PAR_INC : @INC) {
+        my $path = $_;
+        if (!@PAR_INC and $path and $path =~ m!//! and $scheme and $scheme =~ /^\w+$/) {
+            $path = "$scheme:$path";
+        }
+        else {
+            $scheme = $path;
+        }
         my $rv = unpar($path, $file, $member_only, 1);
         return $rv if defined($rv);
     }
@@ -225,15 +237,38 @@ sub par_handle {
     return $LibCache{$par};
 }
 
+my %escapes;
 sub unpar {
     my ($par, $file, $member_only, $allow_other_ext) = @_;
     my $zip = $LibCache{$par};
+    my @rv = $par;
 
     return if $PAR::__reading;
     local $PAR::__reading = 1;
 
     unless ($zip) {
-        unless (($allow_other_ext or $par =~ /\.par\z/i) and -f $par) {
+        if ($par =~ m!^\w+://!) {
+            require File::Spec;
+            require LWP::Simple;
+            $ENV{PAR_TEMP} ||= File::Spec->catdir(File::Spec->tmpdir, 'par');
+            mkdir $ENV{PAR_TEMP};
+
+            my $file = $par;
+            if (!%escapes) {
+                $escapes{chr($_)} = sprintf("%%%02X", $_) for 0..255;
+            }
+            $file =~ s/([^\w\.])/$escapes{$1}/g;
+            $file = File::Spec->catfile( $ENV{PAR_TEMP}, $file);
+            LWP::Simple::mirror( $par, $file );
+            return unless -e $file;
+            $par = $file;
+        }
+        elsif (ref($par) eq 'SCALAR') {
+            my ($fh) = _tmpfile();
+            print $fh $$par;
+            $par = $fh;
+        }
+        elsif (!(($allow_other_ext or $par =~ /\.par\z/i) and -f $par)) {
             $par .= ".par";
             return unless -f $par;
         }
@@ -242,13 +277,22 @@ sub unpar {
         require Archive::Zip;
 
         $zip = Archive::Zip->new;
-        return unless $zip->read($par) == Archive::Zip::AZ_OK();
+        my $method = (ref($par) ? 'readFromFileHandle' : 'read');
+        return unless $zip->$method($par) == Archive::Zip::AZ_OK();
 
         push @LibCache, $zip;
-        $LibCache{$par} = $zip;
+        $LibCache{$_[0]} = $zip;
+
+        foreach my $member ( $zip->members('^par/') ) {
+            next if $member->isDirectory;
+            my $content = $member->contents();
+            next unless $content =~ /^PK\003\004/;
+            local $PAR::__reading = 0;
+            push @rv, unpar(\$content, undef, undef, 1);
+        }
     }
 
-    return 1 unless defined $file;
+    return @rv unless defined $file;
 
     my $member = $zip->memberNamed("lib/$file")
               || $zip->memberNamed("arch/$file")
@@ -280,7 +324,8 @@ sub _tmpfile {
     # at the time File::Temp calls unlink, there is still an open handle around,
     # and Win32 can't delete opened files...
     #
-    if ($ENV{PAR_CLEARTEMP}) {
+    if ($ENV{PAR_CLEARTEMP} or !@_) {
+        require IO::File;
         my $fh = IO::File->new_tmpfile;
         unless( $fh ) {
             require File::Temp;

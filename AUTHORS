@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #27 $ $Change: 5639 $ $DateTime: 2003/05/05 16:52:19 $
+# $Revision: #28 $ $Change: 6650 $ $DateTime: 2003/06/20 15:32:48 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -39,6 +39,7 @@ Randal L. Schwartz	(MERLYN)
 Reini Urban
 Robert Allerstorfer
 Robert Creager		(RCREAGER)
+Roderich Schupp		(RSCHUPP)
 Simon Andrews
 Simon Cozens		(SIMON)
 Sisyphus

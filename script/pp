@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #54 $ $Change: 6204 $ $DateTime: 2003/05/31 12:23:24 $ vim: expandtab shiftwidth=4
+# $Revision: #57 $ $Change: 6898 $ $DateTime: 2003/07/08 15:29:29 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -11,7 +11,7 @@ our $PARL;
 
 # bootstrap ourselves on a binary-only install.
 unless (eval { require PAR; 1 }) {
-    $PARL ||= _can_run("parl$Config{_exe}") or die("can't find par loader");
+    $PARL ||= _can_run("parl$Config{_exe}") or die("Can't find par loader");
     exec($PARL, $0, @ARGV);
 }
 
@@ -224,16 +224,28 @@ YAML
         $par_file, $size, $newsize, (100 - ($newsize / $size * 100))
     );
 
+    if ( opt('s') ) {
+        if (eval { require Module::Signature; Module::Signature->VERSION >= 0.24 } and
+            my $cpansign = _can_run("cpansign")
+        ) {
+            vprint 0, "Running cpansign -s $par_file";
+            system($cpansign, "-s", $par_file);
+        }
+        else {
+            vprint -1, "*** Signing requires Module::Signature 0.24 or later.  Skipping";
+        }
+    }
+
     par_to_exe() unless opt(p);
     
     if ($lose) {
-        vprint 2, "unlinking $par_file";
-        unlink $par_file or _die("can't unlink $par_file: $!"); 
+        vprint 2, "Unlinking $par_file";
+        unlink $par_file or _die("Can't unlink $par_file: $!"); 
     }
 }
 
 sub par_to_exe { 
-    $PARL ||= _can_run("parl$Config{_exe}") or _die("can't find par loader");
+    $PARL ||= _can_run("parl$Config{_exe}") or _die("Can't find par loader");
     my @quiet = (opt(v) ? () : ('-q'));
     vprint 0, "Running $PARL @quiet -B -O$Output $par_file";
     system($PARL, @quiet, "-B", "-O$Output", $par_file);
@@ -318,6 +330,7 @@ sub parse_argv {
         'p|par',        # Generate PAR only
         'r|run',        # Run the resulting executable
         'S|save',       # Preserve PAR files
+        's|sign',       # Sign PAR files
         'v|verbose:s',  # Verbosity level
         'V|version',    # Show version
     );
@@ -409,7 +422,7 @@ sub check_perl {
         _die("Please try a perlier file!\n");
     } 
 
-    open(my $handle, "<", $file) or _die("XXX: can't open $file: $!");
+    open(my $handle, "<", $file) or _die("XXX: Can't open $file: $!");
     local $_ = <$handle>;
     if (/^#!/ && !/perl/) {
         _die("$0: $file is a ", /^#!\s*(\S+)/, " script, not perl\n");
@@ -478,6 +491,7 @@ sub pod_strip {
     }gsex;
     $pl_text = '#line 1 "' . ($filename) . "\"\n" . $pl_text
         if length $filename;
+    $pl_text =~ s/^#line 1 (.*\n)(#!.*\n)/$2#line 2 $1/g;
 
     return $pl_text;
 }
@@ -674,10 +688,6 @@ C<-l /usr/local/lib/libncurses.so> in most Unixes.
 
 Log the output of packaging to a file rather than to stdout.
 
-=item B<-m>, B<--multiarch>
-
-Generate architecture-specific layout;
-
 =item B<-o>, B<--output>=I<FILE>
 
 Specifies the file name for the final packaged executable.
@@ -693,6 +703,11 @@ Run the resulting packaged script after packaging it.
 =item B<-S>, B<--save>
 
 Do not delete generated PAR file after packaging.
+
+=item B<-s>, B<--sign>
+
+Cryptographically sign the generated PAR or binary file using
+L<Module::Signature>.
 
 =item B<-v>, B<--verbose>[=I<NUMBER>]
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #63 $ $Change: 6169 $ $DateTime: 2003/05/29 18:53:54 $ vim: expandtab shiftwidth=4
+# $Revision: #65 $ $Change: 6460 $ $DateTime: 2003/06/11 17:57:47 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -230,7 +230,7 @@ my ($start_pos, $data_pos);
                 next unless /\Q$module\E$/;
                 $key = $_; last;
             }
-            delete $require_list{$key};
+            delete $require_list{$key} if defined($key);
         } or return;
 
         $INC{$module} = "/loader/$filename/$module";
@@ -613,6 +613,7 @@ sub pod_strip {
     }gsex;
     $pl_text = '#line 1 "' . ($filename) . "\"\n" . $pl_text
         if length $filename;
+    $pl_text =~ s/^#line 1 (.*\n)(#!.*\n)/$2#line 2 $1/g;
 
     return $pl_text;
 }

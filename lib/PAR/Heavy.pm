@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 6209 $ $DateTime: 2003/05/31 12:34:59 $
+# $Revision: #5 $ $Change: 6898 $ $DateTime: 2003/07/08 15:29:29 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.05';
@@ -90,7 +90,7 @@ sub _bootstrap {
 		);
 
 		open $fh, '>', $filename or die $!
-		    unless -r $filename and -s $file == $member->uncompressedSize;
+		    unless -r $filename and -e $file and -s $file == $member->uncompressedSize;
 	    }
 
 	    if ($fh) {
