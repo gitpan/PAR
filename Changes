@@ -1,4 +1,27 @@
 ____________________________________________________________________________
+[  1703] By: autrijus                              on 2002/10/27  17:33:48
+        Log: * This be version 0.15.
+             * Added contributor list.
+	   + AUTHORS
+	   ! MANIFEST PAR.pm
+____________________________________________________________________________
+[  1702] By: autrijus                              on 2002/10/27  17:24:23
+        Log: * More PerlIO::scalar unwelcomeness on MSWin32.
+             * This makes all test pass on that platform.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1700] By: autrijus                              on 2002/10/27  17:19:33
+        Log: * Win32 doesn't like single quotes in qx().
+	   ! t/1-basic.t
+____________________________________________________________________________
+[  1698] By: autrijus                              on 2002/10/27  17:12:31
+        Log: * For some reason, the PerlIO::scalar way doesn't work on win32.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1694] By: autrijus                              on 2002/10/27  10:18:21
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1693] By: autrijus                              on 2002/10/27  10:16:25
         Log: * RCS headers.
 	   ! script/par.pl

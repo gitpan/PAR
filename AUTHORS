@@ -1,0 +1,20 @@
+# $File: //member/autrijus/PAR/AUTHORS $
+# $Revision: #1 $ $Change: 1703 $ $DateTime: 2002/10/27 17:33:48 $
+
+Here is a list of people and their CPAN id, extracted from the ChangeLog
+file and the mailing list archives.  These people have either submitted
+patches or suggestions, or their bug reports or comments have inspired
+the appropriate patches.  Corrections, additions, deletions welcome:
+
+Andy Lester	(PETDANCE)
+Antti Lankila
+Arthur Bergman	(ABERGMAN)
+Glenn Mabbutt
+Iain Truskett	(SPOON)
+Indy Singh
+Jan Dubois	(JDB)
+Jesse Vincent	(JESSE)
+Nicholas Clark	(NWCLARK)
+Robert Creager	(RCREAGER)
+Ton Hospel
+Uri Guttman	(URI)

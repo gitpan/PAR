@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #18 $ $Change: 1692 $ $DateTime: 2002/10/27 10:15:27 $
+# $Revision: #21 $ $Change: 1703 $ $DateTime: 2002/10/27 17:33:48 $
 
 package PAR;
-$PAR::VERSION = '0.14';
+$PAR::VERSION = '0.15';
 
 use 5.006;
 use strict;
@@ -14,7 +14,7 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.14 of PAR, released October 27, 2002.
+This document describes version 0.15 of PAR, released October 28, 2002.
 
 =head1 SYNOPSIS
 
@@ -226,11 +226,18 @@ sub unpar {
     return $member if $member_only;
 
     # If lucky enough to have PerlIO, use it instead of ugly filtering.
-    if (eval { require PerlIO::scalar; 1 }) {
-	return eval q{
+    if ($^O ne 'MSWin32' and eval { require PerlIO::scalar; 1 }) {
+	open my $fh, '<:scalar', \(scalar $member->contents);
+	return $fh;
+
+=for comment
+	# Have to use eval STRING here eventually to avoid 5.005 warnings
+	my $fh = eval q{
 	    open my $fh, '<:scalar', \(scalar $member->contents);
 	    $fh;
-	}
+	};
+	return $fh if $fh;
+=cut
     }
 
     # You did not see this undocumented super-jenga piece.
@@ -249,6 +256,7 @@ sub unpar {
 
 sub _wrap_data {
     my ($key, $skip_perlio) = @_;
+    $skip_perlio ||= ($^O eq 'MSWin32');
 
     if (!$skip_perlio and eval {require PerlIO::scalar; 1}) {
 	return "use PerlIO::scalar (".
@@ -374,6 +382,9 @@ Uri Guttman for suggesting C<read_file> and C<par_handle> interfaces.
 
 Antti Lankila for making me implement the self-contained executable
 options via C<par.pl -O>.
+
+See the F<AUTHOR> file in the distribution for a list of people who
+have sent helpful patches, ideas or comments.
 
 =head1 AUTHORS
 

@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/1-basic.t $ $Author: autrijus $
-# $Revision: #5 $ $Change: 1566 $ $DateTime: 2002/10/20 12:22:25 $
+# $Revision: #6 $ $Change: 1700 $ $DateTime: 2002/10/27 17:19:33 $
 
 use Test;
 BEGIN { plan tests => 7 }
 
 ok(
-    `$^X -Mblib -MPAR -It/hello -MHello -e 'Hello::hello'`,
+    `$^X -Mblib -MPAR -It/hello -MHello -e Hello::hello`,
     "Hello, world!\n",
 );
 
