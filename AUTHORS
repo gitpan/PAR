@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #54 $ $Change: 10222 $ $DateTime: 2004/02/27 15:13:01 $
+# $Revision: #55 $ $Change: 10227 $ $DateTime: 2004/02/28 03:29:18 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -69,6 +69,7 @@ Paritosh Tyagi
 Paul Miller
 Phil Sallee
 PodMaster		(PODMASTER)
+Rafael Garcia-Suarez	(RGARCIA)
 Randal L. Schwartz	(MERLYN)
 Randy Carpenter
 Randy W. Sims		(RANDYS)

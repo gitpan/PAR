@@ -18,21 +18,22 @@
  *
  */
 
+#include "env.c"
+
 char *par_findprog(char *prog, char *path) {
     char *p, filename[MAXPATHLEN];
-    char buf[MAXPATHLEN + 14];
     int proglen, plen;
 
 #ifdef WIN32
     if ( GetModuleFileName(0, filename, MAXPATHLEN) ) {
-        sprintf(buf, "PAR_PROGNAME=%s", filename); putenv(buf);
+        par_setenv("PAR_PROGNAME", filename);
         return strdup(filename);
     }
 #endif
 
     /* Special case if prog contains '/' */
     if (strstr(prog, dir_sep)) {
-        sprintf(buf, "PAR_PROGNAME=%s", prog); putenv(buf);
+        par_setenv("PAR_PROGNAME", prog);
         return(prog);
     }
 
@@ -49,20 +50,20 @@ char *par_findprog(char *prog, char *path) {
         }
 
         if (plen + 1 + proglen >= MAXPATHLEN) {
-            sprintf(buf, "PAR_PROGNAME=%s", prog); putenv(buf);
+            par_setenv("PAR_PROGNAME", prog);
             return(prog);
         }
 
         sprintf(filename, "%s%s%s", p, dir_sep, prog);
         if ((stat(filename, &PL_statbuf) == 0) && S_ISREG(PL_statbuf.st_mode) &&
             access(filename, X_OK) == 0) {
-                sprintf(buf, "PAR_PROGNAME=%s", filename); putenv(buf);
+                par_setenv("PAR_PROGNAME", filename);
                 return(strdup(filename));
         }
         p = strtok(NULL, path_sep);
     }
 
-    sprintf(buf, "PAR_PROGNAME=%s", prog); putenv(buf);
+    par_setenv("PAR_PROGNAME", prog);
     return(prog);
 }
 
@@ -117,44 +118,39 @@ char *par_dirname (const char *path) {
 
 void par_init_env () {
     char par_clean[] = "__ENV_PAR_CLEAN__               \0";
-    char *par_var = (char *)malloc(256);
     char *buf;
 
-    putenv("PAR_SPAWNED=");
-    putenv("PAR_TEMP=");
-    putenv("PAR_CLEAN=");
-    putenv("PAR_DEBUG=");
-    putenv("PAR_CACHE=");
-    putenv("PAR_PROGNAME=");
-    putenv("PAR_ARGC=");
-    putenv("PAR_ARGV_0=");
+    par_unsetenv("PAR_SPAWNED");
+    par_unsetenv("PAR_TEMP");
+    par_unsetenv("PAR_DEBUG");
+    par_unsetenv("PAR_CACHE");
+    par_unsetenv("PAR_PROGNAME");
+    par_unsetenv("PAR_ARGC");
+    par_unsetenv("PAR_ARGV_0");
 
-    par_var[255] = '\0';
+    if ( (buf = getenv("PAR_GLOBAL_DEBUG")) != NULL ) {
+        par_setenv("PAR_DEBUG", buf);
+    }
 
     if ( (buf = getenv("PAR_GLOBAL_TEMP")) != NULL ) {
-        strcpy(par_var, "PAR_TEMP=");
-        strncpy(par_var+9, buf, 254 - 9);
-        putenv(par_var);
+        par_setenv("PAR_TEMP", buf);
+        par_unsetenv("PAR_CLEAN");
     }
-    if ( (buf = getenv("PAR_GLOBAL_CLEAN")) != NULL ) {
-        strcpy(par_var, "PAR_CLEAN=");
-        strncpy(par_var+10, buf, 254 - 10);
-        putenv(par_var);
+    else if ( (buf = getenv("PAR_GLOBAL_CLEAN")) != NULL ) {
+        par_setenv("PAR_CLEAN", buf);
     }
-    if ( (buf = getenv("PAR_GLOBAL_DEBUG")) != NULL ) {
-        strcpy(par_var, "PAR_DEBUG=");
-        strncpy(par_var+10, buf, 254 - 10);
-        putenv(par_var);
-    }
-
-    if ( getenv("PAR_GLOBAL_TEMP") != NULL ) {
-        putenv("PAR_CLEAN=");
-    }
-    else if ( getenv("PAR_GLOBAL_CLEAN") == NULL ) {
-        putenv(par_clean + 12 + strlen("CLEAN"));
+    else {
+        buf = par_clean + 12 + strlen("CLEAN");
+        if (strncmp(buf, "PAR_CLEAN=", strlen("PAR_CLEAN=")) == 0) {
+            par_setenv("PAR_CLEAN", buf + strlen("PAR_CLEAN="));
+        }
+        else {
+            par_unsetenv("PAR_CLEAN");
+        }
     }
 
-    putenv("PAR_INITIALIZED=1");
+    par_setenv("PAR_INITIALIZED", "1");
+
     return;
 }
 
@@ -168,4 +164,3 @@ int par_env_clean () {
 
     return rv;
 }
-

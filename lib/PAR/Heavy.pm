@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #21 $ $Change: 10222 $ $DateTime: 2004/02/27 15:13:01 $ vim: expandtab shiftwidth=4
+# $Revision: #22 $ $Change: 10226 $ $DateTime: 2004/02/27 23:56:33 $ vim: expandtab shiftwidth=4
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.08';
@@ -24,7 +24,7 @@ No user-serviceable parts inside.
 my ($bootstrap, $dl_findfile);  # Caches for code references
 my ($dlext);                    # Cache for $Config{dlext}
 my ($cache_key);                # The current file to find
-my $is_insensitive_fs = (-s $0 and (-s lc($0)) == (-s uc($0)));
+my $is_insensitive_fs = (-s $0 and (-s lc($0) || -1) == (-s uc($0) || -1));
 
 # Adds pre-hooks to Dynaloader's key methods
 sub _init_dynaloader {

@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #65 $ $Change: 10225 $ $DateTime: 2004/02/27 23:52:18 $ vim: expandtab shiftwidth=4
+# $Revision: #67 $ $Change: 10296 $ $DateTime: 2004/03/02 12:45:32 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.79_98';
+$PAR::VERSION = '0.79_99';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.79_98 of PAR, released February 27, 2004.
+This document describes version 0.79_99 of PAR, released March 3, 2004.
 
 =head1 SYNOPSIS
 
@@ -163,7 +163,7 @@ use vars qw($LastAccessedPAR $LastTempFile);
 
 my $ver  = $Config{version};
 my $arch = $Config{archname};
-my $is_insensitive_fs = (-s $0 and (-s lc($0)) == (-s uc($0)));
+my $is_insensitive_fs = (-s $0 and (-s lc($0) || -1) == (-s uc($0) || -1));
 my ($par_temp, $progname);
 
 sub import {

@@ -35,6 +35,7 @@ MANIFEST.SKIP
 META.yml
 myldr/file2c.pl
 myldr/internals.c
+myldr/env.c
 myldr/main.c
 myldr/Makefile.PL
 myldr/mktmpdir.c

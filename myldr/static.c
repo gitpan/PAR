@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #27 $ $Change: 10219 $ $DateTime: 2004/02/27 01:18:33 $
+   $Revision: #31 $ $Change: 10299 $ $DateTime: 2004/03/03 01:01:23 $
    vim: expandtab shiftwidth=4
 */
 
@@ -105,17 +105,17 @@ int main ( int argc, char **argv, char **env )
         close(i); chmod(my_file, 0755);
     }
 
-    sprintf(buf, "PAR_ARGC=%i", argc);
-    putenv(buf);
+    sprintf(buf, "%i", argc);
+    par_setenv("PAR_ARGC", buf);
     for (i = 0; i < argc; i++) {
         buf = (char *)malloc(strlen(argv[i]) + 14);
-        sprintf(buf, "PAR_ARGV_%i=%s", i, argv[i]);
-        putenv(buf);
+        sprintf(buf, "PAR_ARGV_%i", i);
+        par_setenv(buf, argv[i]);
     }
 
 #ifdef WIN32
-    putenv("PAR_SPAWNED=1");
-    i = spawnvp(P_WAIT, my_file, argv);
+    par_setenv("PAR_SPAWNED", "1");
+    i = spawnvpe(P_WAIT, my_file, argv, environ);
 #else
     execvp(my_file, argv);
     return 2;

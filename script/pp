@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #115 $ $Change: 10222 $ $DateTime: 2004/02/27 15:13:01 $ vim: expandtab shiftwidth=4
+# $Revision: #116 $ $Change: 10295 $ $DateTime: 2004/03/02 12:40:26 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -402,6 +402,9 @@ sub append_parl {
 sub generate_output {
     my @args = ('-B', "-O$Output", $par_file);
     unshift @args, '-q' unless opt(v);
+    if (opt(L)) {
+        unshift @args, "-L".opt(L);
+    }
     if (opt(P)) {
         unshift @args, $PARL;
         $PARL = $^X;

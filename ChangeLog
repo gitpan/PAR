@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #34 $ $Change: 10223 $ $DateTime: 2004/02/27 15:27:46 $
+# $Revision: #35 $ $Change: 10297 $ $DateTime: 2004/03/02 12:51:26 $
 
 [Changes for 0.80 - tentative]
 
@@ -52,6 +52,10 @@
 
     - Spurious =cut directives in source files is now handled gracefully
       by PAR::Filter::PodStrip.
+
+    - "pp -L" (--log) now logs all output messages to the log file,
+      not just the ones printed by "pp" itself.
+
 
 [Changes for 0.79 - January 8, 2004]
 

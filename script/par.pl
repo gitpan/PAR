@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #99 $ $Change: 10175 $ $DateTime: 2004/02/21 21:23:08 $ vim: expandtab shiftwidth=4
+# $Revision: #100 $ $Change: 10295 $ $DateTime: 2004/03/02 12:40:26 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -326,7 +326,7 @@ my ($start_pos, $data_pos);
 
 # Argument processing {{{
 my @par_args;
-my ($out, $bundle);
+my ($out, $bundle, $logfh);
 
 $quiet = 0 unless $ENV{PAR_DEBUG};
 
@@ -340,7 +340,7 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
         v   verify_par
     );
     while (@ARGV) {
-        $ARGV[0] =~ /^-([AIMOBbqpiusv])(.*)/ or last;
+        $ARGV[0] =~ /^-([AIMOBLbqpiusv])(.*)/ or last;
 
         if ($1 eq 'I') {
             unshift @INC, $2;
@@ -362,6 +362,9 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
         }
         elsif ($1 eq 'q') {
             $quiet = 1;
+        }
+        elsif ($1 eq 'L') {
+            open $logfh, ">>", $2 or die "XXX: Cannot open log: $!";
         }
 
         shift(@ARGV);
@@ -715,7 +718,15 @@ sub _par_init_env {
     }
 }
 
-sub outs { warn("@_\n") unless $quiet }
+sub outs {
+    return if $quiet;
+    if ($logfh) {
+        print $logfh "@_\n";
+    }
+    else {
+        warn "@_\n";
+    }
+}
 
 sub init_inc {
     require Config;

@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #46 $ $Change: 10198 $ $DateTime: 2004/02/24 18:05:09 $
+   $Revision: #47 $ $Change: 10299 $ $DateTime: 2004/03/03 01:01:23 $
    vim: expandtab shiftwidth=4
 */
 
@@ -129,7 +129,7 @@ int main ( int argc, char **argv, char **env )
     fakeargv[argc + options_count - 1] = 0;
 
     exitstatus = perl_parse(my_perl, par_xs_init, argc + options_count - 1,
-                            fakeargv, env);
+                            fakeargv, environ);
 
     if (exitstatus == 0)
 	exitstatus = perl_run( my_perl );
@@ -150,4 +150,3 @@ int main ( int argc, char **argv, char **env )
 
     return exitstatus;
 }
-
