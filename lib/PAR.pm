@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #76 $ $Change: 10648 $ $DateTime: 2004/05/22 18:31:56 $ vim: expandtab shiftwidth=4
+# $Revision: #79 $ $Change: 10680 $ $DateTime: 2004/05/24 13:48:55 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.81';
+$PAR::VERSION = '0.82';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.81 of PAR, released May 23, 2004.
+This document describes version 0.82 of PAR, released May 24, 2004.
 
 =head1 SYNOPSIS
 
@@ -511,6 +511,7 @@ sub _set_progname {
 
     if (( () = File::Spec->splitdir($progname) ) > 1) {
         if (open my $fh, $progname) {
+            $ENV{PAR_PROGNAME} = $progname;
             return if -s $fh;
         }
         if (-s "$progname$Config{_exe}") {

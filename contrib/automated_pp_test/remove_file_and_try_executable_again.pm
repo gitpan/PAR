@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //remove_file_and_try_executable_again.pm $ $Author: mnooning $
-# $Revision: #004 $ $Change: 20040304_01 $ $DateTime: 2004/03/03 12:21:
+# $Revision: #007 $ $Change: 20040501_01 $ $DateTime: 2004/05/01 12:21:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any
@@ -33,12 +33,13 @@
 #                                    $sub_test_number,
 #                                    $test_name_string,
 #                                    $test_dir,
-#                                    $back_tick_command_string,
+#                                    $pipe_command_string,
 #                                    $executable_name",
 #                                    $expected_results,
 #                                    $os,
 #                                    $verbose,
 #                                    \$message,
+#                                    $print_cannot_locate_message,
 #                                  );
 #
 ########################################################################
@@ -55,7 +56,7 @@ use Exporter;
 use POSIX qw(EXIT_SUCCESS EXIT_FAILURE);
 use Cwd qw(chdir);
 
-use back_tick_a_command;
+use pipe_a_command;
 
 use strict;
 
@@ -99,6 +100,7 @@ sub remove_file_and_try_executable_again {
        $os,
        $verbose,
        $message_ref,
+       $print_cannot_locate_message,
      ) = @_;
 
   my $results = "";
@@ -111,7 +113,7 @@ sub remove_file_and_try_executable_again {
   }
 
   #.................................................................
-  $error = back_tick_a_command(
+  $error = pipe_a_command(
                            $test_number,
                            $sub_test,
                            $test_name_string,
@@ -122,6 +124,7 @@ sub remove_file_and_try_executable_again {
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
   return ($error);
 

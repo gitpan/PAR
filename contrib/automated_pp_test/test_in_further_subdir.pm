@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //test_in_further_subdir.pm $ $Author: mnooning $
-# $Revision: #004 $ $Change: 20040304_01 $ $DateTime: 2004/03/03 12:21:
+# $Revision: #007 $ $Change: 20040501_01 $ $DateTime: 2004/05/01 12:21:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any
@@ -26,6 +26,12 @@
 ########################################################################
 our $VERSION = 0.01;
 
+########################################################################
+
+my $TRUE = 1;
+my $FALSE = 0;
+
+#########################################################################
 
 ########################################################################
 # Usage:
@@ -51,7 +57,7 @@ our $VERSION = 0.01;
 # -------
 # . Copy the executable to a different subdirectory
 # . chdir to the new subdirectory
-# . Back tick executable and collect the result.
+# . Pipe executable and collect the result.
 # . Compare the result with the expected result.
 # . Report back success or failure.
 ########################################################################
@@ -66,7 +72,7 @@ use POSIX qw(EXIT_SUCCESS EXIT_FAILURE);
 use File::Copy;
 use Cwd qw(chdir);
 
-use back_tick_a_command;
+use pipe_a_command;
 
 use strict;
 
@@ -84,6 +90,7 @@ sub test_in_further_subdir {
        $os, 
        $verbose,
        $message_ref,
+       $print_cannot_locate_message,
      ) = @_;
 
   my $final_subdir = "";
@@ -104,7 +111,7 @@ sub test_in_further_subdir {
   }
 
   #.................................................................
-  $error = back_tick_a_command(
+  $error = pipe_a_command(
                            $test_number,
                            $sub_test,
                            $test_name_string,
@@ -115,6 +122,7 @@ sub test_in_further_subdir {
                            $os, 
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   #.................................................................

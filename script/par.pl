@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #107 $ $Change: 10646 $ $DateTime: 2004/05/22 17:13:01 $ vim: expandtab shiftwidth=4
+# $Revision: #109 $ $Change: 10674 $ $DateTime: 2004/05/24 12:15:32 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -689,6 +689,7 @@ sub _set_progname {
 
     if (index($progname, $Config{_delim}) > -1) {
         if (open my $fh, $progname) {
+            $ENV{PAR_PROGNAME} = $progname;
             return if -s $fh;
         }
         if (-s "$progname$Config{_exe}") {
@@ -741,7 +742,7 @@ sub outs {
         print $logfh "@_\n";
     }
     else {
-        warn "@_\n";
+        print "@_\n";
     }
 }
 

@@ -1,4 +1,4 @@
-package App::Packer::Temp;
+package App::Packer::PAR;
 
 use strict;
 use vars qw($VERSION);
@@ -199,74 +199,31 @@ __END__
 
 =head1 NAME
 
-App::Packer - pack applications in a single executable file
+App::Packer::PAR - Pack applications in a single executable file
 
 =head1 DESCRIPTION
 
-App::Packer packs perl scripts and all of their dependencies inside
-an executable.
-
-=head1 RETURN VALUES
-
-All methods return a false value on failure, unless otherwise specified.
-
-=head1 METHODS
-
-=head2 new
-
-  my $packer = App::Packer->new( frontend => class,
-                                 backend  => class );
-
-Creates a new C<App::Packer> instance, using the given classes as
-frontend and backend.
-
-'frontend' defaults to C<App::Packer::Frontend::ModuleInfo>, 'backend'
-to C<App::Packer::Backend::DemoPack>. You need to C<use My::Module;>
-if you pass C<My::Module> as frontend or backend, I<unless> you use
-the default value.
-
-Currently known frontends are C<App::Packer::Frontend::ModuleInfo>
-(default, distributed with C<App::Packer>), and C<Module::ScanDeps>.
-
-Currently known backends are C<App::Packer::Backend::DemoPack>
-(default, distributed with C<App::Packer>), and
-C<App::Packer::Backend::PAR>.
-
-=head2 set_file
-
-  $packer->set_file( 'path/to/file' );
-
-Sets the file name of the script to be packed.
-
-=head2 write
-
-  my $file = $packer->write( 'my_executable' );
-
-Writes the executable file; the file name is just the basename of the file:
-$Config{_exe} will be appended, and the file will be made executable
-(via chmod 0755).
-
-The return value is the file name that was actually created.
-
-=head2 set_options
-
-  $packer->set_options( frontend => { option1 => value1,
-                                      ... },
-                        backend  => { option9 => value9,
-                                      ... },
-                       );
-
-Sets the options for frontend and backend; see the documentation
-for C<App::Packer::Frontend> and C<App::Packer::Backend> for details.
+This module is a modified version of B<App::Packer>, temporarily shipped
+with B<PAR> until it is merged into newer versions of B<App::Packer>.
 
 =head1 SEE ALSO
 
-L<App::Packer::Frontend|App::Packer::Frontend>,
-L<App::Packer::Backend|App::Packer::Backend>.
+See L<App::Packer> for the programming interface.
 
 =head1 AUTHOR
 
-Mattia Barbon <mbarbon@dsi.unive.it>
+Code modifications by Edward S. Peschko.  This documentation by Autrijus Tang.
+
+Based on the work of Mattia Barbon E<lt>mbarbon@dsi.unive.itE<gt>.
+
+=head1 COPYRIGHT
+
+Copyright 2004 by Edward S. Peschko, Autrijus Tang, and Mattia Barbon.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+See L<http://www.perl.com/perl/misc/Artistic.html>
 
 =cut
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
-# $File: //back_tick_a_command.pm $ $Author: mnooning $
-# $Revision: #004 $ $Change: 20040304_01 $ $DateTime: 2004/03/03 12:21:
+# $File: //pipe_a_command.pm $ $Author: mnooning $
+# $Revision: #007 $ $Change: 20040501_01 $ $DateTime: 2004/05/01 12:21:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any
@@ -25,13 +25,14 @@
 #
 #
 ########################################################################
+#
 ########################################################################
 our $VERSION = 0.01;
 
 ########################################################################
 # Usage:
 # $error =
-#    back_tick_a_command(
+#    pipe_a_command(
 #                  $test_number,
 #                  $sub_test,
 #                  $test_name_string,
@@ -50,16 +51,16 @@ our $VERSION = 0.01;
 # Outline
 # -------
 # . chdir to the test directory
-# . Back tick executable and collect the result.
+# . Pipe executable and collect the result.
 # . Compare the result with the expected result.
 # . Report back success or failure.
 ########################################################################
 #
-package back_tick_a_command;
+package pipe_a_command;
 
 use Exporter;
 @ISA = qw(Exporter);
-@EXPORT = ("back_tick_a_command");
+@EXPORT = ("pipe_a_command");
 
 use POSIX qw(EXIT_SUCCESS EXIT_FAILURE);
 use File::Copy;
@@ -68,7 +69,7 @@ use Cwd qw(chdir cwd);
 use strict;
 
 ########################################################################
-sub back_tick_a_command {
+sub pipe_a_command {
   my (
        $test_number,
        $sub_test,
@@ -80,12 +81,15 @@ sub back_tick_a_command {
        $os,
        $verbose,
        $message_ref,
+       $print_cannot_locate_message,
      ) = @_;
 
   my $results = "";
   my $cwd1 = cwd;
   my $cwd2;
   my $cmd = "";
+  my $log_file = "log_file_from_pipe";
+  my $stdline = "";
 
   #.................................................................
   if (!(chdir("$directory"))) {
@@ -96,7 +100,7 @@ sub back_tick_a_command {
   
   $cwd2 = cwd;
   if ($verbose) {
-    print ("back_tick_a_command started in dir $cwd1\n");
+    print ("pipe_a_command started in dir $cwd1\n");
     print ("but is now in $cwd2\n");
   }
   #.................................................................
@@ -114,7 +118,74 @@ sub back_tick_a_command {
 
   $cmd = "$command_string $executable_name";
   #.................................................................
-  $results = `$cmd`;
+
+  #################################################################
+  # Open up a log file to hold the data.  Then send the $cmd to
+  # a pipe.  Capture the stdout and stderr of the pipe and 
+  # print it to the log file.
+  #################################################################
+  if (!(open (PIPE_LOGFILE, ">$log_file"))){
+        $$message_ref = "\n\[415\]sub $test_name_string cannot " .
+                        "open $log_file\n";
+        return (EXIT_FAILURE);
+  }
+
+
+  if ($print_cannot_locate_message) {
+    print PIPE_LOGFILE ("\nThe Line Below SHOULD BE  \"Can\'t locate \.\.\. ");
+    print PIPE_LOGFILE (" along with a \"BEGIN failed \.\.\. \" line\n");
+    if ($verbose) {
+      print ("\nThe Line Below SHOULD BE  \"Can\'t locate \.\.\. ");
+      print (" along with a \"BEGIN failed \.\.\. \" line\n");
+    }
+  }
+
+
+  if (!(open (CMD_STDOUT_AND_STDERR, "$cmd 2>&1 |"))){
+    close(PIPE_LOGFILE);
+        $$message_ref = "\n\[420\]sub $test_name_string cannot " .
+                        "open a pipe for $cmd 2>&1 |\n";
+        return (EXIT_FAILURE);
+  }
+
+  # Take in any STDOUT and STDERR that "cmd" might cause
+  while ($stdline = <CMD_STDOUT_AND_STDERR>) {
+      print PIPE_LOGFILE $stdline;
+      if ($verbose) {
+        print $stdline;
+      }
+  }
+
+  # Close before copying it to force an output flush.
+  close(PIPE_LOGFILE); 
+  close(CMD_STDOUT_AND_STDERR);
+  #................................................................
+  # Slurp in the results to a single scaler.
+  if (open (FH, "$log_file")) {
+
+    # Slurp in all the lines of the file at once
+    local $/; $results = <FH>;
+
+    if (!(close(FH))) {
+      $$message_ref = 
+         "Something is wrong with test $test_name_string "            .
+         "in directory $cwd1\n"                                       .
+         "File $log_file exists, and I opened it, "                   .
+         "but now I cannot close it.\n"                               .
+         "Cannot continue with test $test_name_string\n";
+      return (EXIT_FAILURE);
+    }
+
+  } else {
+    $$message_ref = 
+       "Something is wrong with test $test_name_string "            .
+       "in directory $cwd1\n"                                       .
+       "File $log_file exists but I cannot open it.\n"              .
+       "Cannot continue with test $test_name_string\n";
+    return (EXIT_FAILURE);
+  }
+  
+  #.....................................................................
   chomp($results);
 
   if ($verbose) {
@@ -126,13 +197,13 @@ sub back_tick_a_command {
 
   #.................................................................
   if ($results !~ m/$expected_result/) {
-    $$message_ref = "\n\[420\]\n"                                  .
+    $$message_ref = "\n\[430\]\n"                                  .
        "Test ${test_number}_${sub_test} "                          .
        "The command string \"$command_string $executable_name \" " .
        "in directory $directory,"                                  .
        "did not produce :: \"$expected_result\" ::\n"              .
        "Instead, it produced :: $results ::\n"                     .
-       "End of [420] results \n";
+       "End of [430] results \n";
 
     return (EXIT_FAILURE);
   }

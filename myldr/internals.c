@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/internals.c $ $Author: autrijus $
-   $Revision: #23 $ $Change: 10608 $ $DateTime: 2004/05/17 18:35:31 $
+   $Revision: #24 $ $Change: 10660 $ $DateTime: 2004/05/24 01:25:53 $
    vim: expandtab shiftwidth=4
 */
 
@@ -77,8 +77,10 @@ XS(XS_Internals_PAR_BOOT) {
             fakeargv[0][len] = '\0';
             Safefree( p );
         }
+        /*
 #else
         SvSETMAGIC(GvSV(tmpgv));
+        */
 #endif
     }
 

@@ -1,4 +1,137 @@
 ____________________________________________________________________________
+[ 10682] By: autrijus                              on 2004/05/24  14:36:21
+        Log: * This be 0.82, for real.
+             * Update changelog.
+	   ! ChangeLog
+____________________________________________________________________________
+[ 10681] By: autrijus                              on 2004/05/24  14:34:22
+        Log: * last-minute fix to make Cygwin pass tests.
+	   ! contrib/automated_pp_test/automated_pp_test.pl
+____________________________________________________________________________
+[ 10680] By: autrijus                              on 2004/05/24  13:48:55
+        Log: * This be PAR, version 0.82.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[ 10679] By: autrijus                              on 2004/05/24  13:47:51
+        Log: * add win32.coff to MANIFEST.
+	   ! MANIFEST
+____________________________________________________________________________
+[ 10678] By: autrijus                              on 2004/05/24  13:46:23
+        Log: * activate t/2-pp.t on win32 if $^X and
+             $startperl are the same thing, only
+             differing by case.
+	   ! t/2-pp.t
+____________________________________________________________________________
+[ 10677] By: autrijus                              on 2004/05/24  13:37:31
+        Log: * add the missing pipe_a_command test file.
+	   + contrib/automated_pp_test/pipe_a_command.pm
+____________________________________________________________________________
+[ 10676] By: autrijus                              on 2004/05/24  13:27:34
+        Log: * bump version.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[ 10675] By: autrijus                              on 2004/05/24  13:22:13
+        Log: * Object-Oriented pp (pp_new) has now replaced script/pp.
+             * The old script/pp is moved to
+	       contrib/procedural/pp/pp_old.
+             * As a consequence, automated_pp_test.pl now passes all
+	       tests.
+             * Rename App::Packer::Backend::PAR to PAR:Packer.
+             * Rename App::Packer::Temp to App::Packer::PAR.
+	   + contrib/procedural_pp/pp_old
+	   + lib/App/Packer/PAR.pm lib/PAR/Packer.pm
+	   - contrib/object_oriented_pp/pp_new
+	   - contrib/object_oriented_pp/ppack
+	   - lib/App/Packer/Backend/PAR.pm
+	   - lib/App/Packer/Temp.pm
+	   ! MANIFEST
+	   ! contrib/automated_pp_test/automated_pp_test.pl
+	   ! script/pp
+____________________________________________________________________________
+[ 10674] By: autrijus                              on 2004/05/24  12:15:32
+        Log: * par.pl now writes diagnosis to STDOUT, not STDERR.
+             * as a consequence, t/2-pp.t writes nothing to STDERR, so
+	       there's
+             not need to display a "warning messages are harmless"
+	     warning anymore.
+	   ! script/par.pl t/2-pp.t
+____________________________________________________________________________
+[ 10672] By: autrijus                              on 2004/05/24  10:22:36
+        Log: * finished merging.
+	   ! lib/App/Packer/Backend/PAR.pm
+____________________________________________________________________________
+[ 10669] By: autrijus                              on 2004/05/24  02:40:48
+        Log: * backport another batch of pp features.
+	   ! lib/App/Packer/Backend/PAR.pm
+____________________________________________________________________________
+[ 10668] By: autrijus                              on 2004/05/24  02:37:07
+        Log: * enable tk_iconfix automatically for perl 5.6 on win32.
+	   ! script/pp
+____________________________________________________________________________
+[ 10667] By: autrijus                              on 2004/05/24  02:30:38
+        Log: * POD mergeup; retab; syntax cleanup
+	   ! lib/App/Packer/Backend/PAR.pm
+____________________________________________________________________________
+[ 10666] By: autrijus                              on 2004/05/24  02:19:21
+        Log: * perltidy.
+	   ! lib/App/Packer/Backend/PAR.pm
+____________________________________________________________________________
+[ 10665] By: autrijus                              on 2004/05/24  02:17:40
+        Log: * fix syntax errors
+	   ! lib/App/Packer/Backend/PAR.pm
+____________________________________________________________________________
+[ 10664] By: autrijus                              on 2004/05/24  02:15:38
+        Log: * backport pp changes to APBP.
+	   ! lib/App/Packer/Backend/PAR.pm
+____________________________________________________________________________
+[ 10663] By: autrijus                              on 2004/05/24  02:06:15
+        Log: * do not run t/2-pp.t if startperl does not agree
+             with $^X.
+	   ! t/2-pp.t
+____________________________________________________________________________
+[ 10662] By: autrijus                              on 2004/05/24  02:00:44
+        Log: * skip t/2-pp.t testing when $Config{startperl} does not
+             agree with $^X.
+	   ! t/2-pp.t
+____________________________________________________________________________
+[ 10661] By: autrijus                              on 2004/05/24  01:47:34
+        Log: * fix to automated_pp_test so it tests cache dir's max
+	       number
+             instead of exact number.
+             * also, let t/2-pp.t be invoked with perl from PATH.
+	   ! contrib/automated_pp_test/automated_pp_test.pl
+	   ! t/2-pp.t
+____________________________________________________________________________
+[ 10660] By: autrijus                              on 2004/05/24  01:25:53
+        Log: * remove a questionable SETMAGIC that borked on pre-5.8.1
+             perl versions.
+	   ! myldr/internals.c
+____________________________________________________________________________
+[ 10659] By: autrijus                              on 2004/05/24  01:22:06
+        Log: * fix MANIFEST.
+	   ! MANIFEST
+____________________________________________________________________________
+[ 10658] By: autrijus                              on 2004/05/24  01:21:54
+        Log: * running pp-generated executables with absolute path
+	       failed
+             on statically-built perls.
+	   ! lib/PAR.pm script/par.pl
+____________________________________________________________________________
+[ 10651] By: autrijus                              on 2004/05/23  04:59:27
+        Log: * nooning's new batch of quieter tests.
+	   - contrib/automated_pp_test/back_tick_a_command.
+	   - pm
+	   ! contrib/automated_pp_test/automated_pp_test.pl
+	   ! contrib/automated_pp_test/prior_to_test.pm
+	   ! contrib/automated_pp_test/remove_file_and_try_
+	   ! executable_again.pm
+	   ! contrib/automated_pp_test/test_in_further_subd
+	   ! ir.pm
+____________________________________________________________________________
+[ 10650] By: autrijus                              on 2004/05/22  19:14:00
+        Log: * changes.
+	   ! Changes
+____________________________________________________________________________
 [ 10649] By: autrijus                              on 2004/05/22  19:07:05
         Log: * This be PAR, version 0.81.
              * Update README.

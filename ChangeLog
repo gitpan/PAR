@@ -1,5 +1,48 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #37 $ $Change: 10648 $ $DateTime: 2004/05/22 18:31:56 $
+# $Revision: #38 $ $Change: 10682 $ $DateTime: 2004/05/24 14:36:21 $
+
+[Changes for 0.82 - May 24, 2004]
+
+* New Features
+
+    - New module PAR::Packer provides an OO interface to "pp"'s
+      functionality; "pp" is now merely a thin wrapper for it.
+
+    - New module App::Packer::PAR is a modified version of
+      App::Packer, designed to work with PAR::Packer, and will
+      hopefully be merged back to App::Packer.
+
+    - The old, procedural "pp" is moved to contrib/; end-users
+      should notice no changes in "pp"'s behaviour.
+
+    - New options "pp -a" and "pp -A" (--addfile/--addlist) provides
+      ways to include extra files and directories in the package.
+
+    - The long option name for "pp -M" is changed from --add to
+      --module.  The old name is still recognized but no longer
+      documented.  Using "pp -M" to include non-library files
+      is now deprecated; use "pp -a" instead.
+
+    - par.pl and parl now writes messages to STDOUT, instead of
+      STDERR.  As a consequence, t/2-pp.t no longer prints extra
+      warnings during "make test".
+
+* Bug fixes
+
+    - On Non-Win32 platforms, perl 5.8.0 and earlier versions produced
+      pp-generated executables that immediately segfaults.
+
+    - Running pp-generated executables with absolute pathname failed
+      on statically-built perls.
+
+    - Tests were failing due to a missing pipe_a_command.pm in MANIFEST.
+
+    - Add the missing myldr/win32.coff for building on Cygwin/MinGW.
+
+    - If the "perl" in path is different from the perl interpreter used
+      for "make test", t/2-pp.t is known to fail and is now skipped.
+
+    - Cygwin failed t/2-pp.t because "parl" is spelled as "parl.exe" there.
 
 [Changes for 0.81 - May 23, 2004]
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //automated_pp_test.pl $ $Author: mnooning $
-# $Revision: #005 $ $Change: 20040412_01 $ $DateTime: 2004/04/12 11:56:
+# $Revision: #008 $ $Change: 20040522_01 $ $DateTime: 2004/05/22 16:09:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any
@@ -25,8 +25,7 @@
 #
 #
 ########################################################################
-our $VERSION = 0.01;
-
+our $VERSION = 0.05;
 ########################################################################
 # Prior to each test
 #   . Remove any possible files that could exist from a previous
@@ -45,7 +44,7 @@ our $VERSION = 0.01;
 #   . Maybe we want to print result verbiage?
 #
 # Windows versus Unix
-#   . For each test, the command to "system" or back tick, path, etc.,
+#   . For each test, the command to "system" or pipe, path, etc.,
 #     will be determined by the type of OS.
 #     For example,
 #     if Unix, use "./tmp1/foo1".  For windows, use "temp\\foo1".
@@ -60,7 +59,7 @@ our $VERSION = 0.01;
 #    don't match for hello. Chomp and do an "eq".
 #
 ########################################################################
-use Test::More tests => 32;
+use Test::More tests => 35;
 use Cwd qw(chdir cwd);
 
 use Config;
@@ -80,7 +79,7 @@ use strict;
 ########################################################################
 # Home grown perl modules go here
 use prior_to_test;
-use back_tick_a_command;
+use pipe_a_command;
 use test_in_further_subdir;
 use remove_file_and_try_executable_again;
 ########################################################################
@@ -100,14 +99,186 @@ our  $SUBDIR4 = "subdir4";
 
 ########################################################################
 our $os = (uname())[0];
-if ($os =~ m/^Win/i) { eval {
+if ($os =~ m/^Win/i) {
+   eval {
     require Win32::Exe;
     Win32::Exe->import();
-} }
+
+    require Win32::Exe::IconFile;
+    Win32::Exe::IconFile->import;
+
+  } 
+}
 ########################################################################
 
-our $TRUE = 1;
-our $FALSE = 0;
+my $TRUE = 1;
+my $FALSE = 0;
+
+#########################################################################
+sub how_many_cache_dirs {
+  my ($par_scratch_dir, $num_cache_dirs_ref, $message_ref, $verbose) = @_;
+
+  my $file;
+  my $count = 0;
+  $$num_cache_dirs_ref = 0;
+  $$message_ref = "";
+
+  if ( -e($par_scratch_dir) ) {
+
+    if (!(opendir(DIR, "$par_scratch_dir"))) {
+      $$message_ref = "hmcd_msg20: Cannot opendir $par_scratch_dir:$!:\n";
+      return(EXIT_FAILURE);
+    }
+    #....................................
+    while ($file = readdir(DIR)) {
+      next if ( $file =~ m/^\.{1,2}$/ );
+      $count++ if ($file =~ m/cache/);
+      print ("Incremented cache count for $file\n") if $verbose;
+    }
+    #....................................
+    if (!(closedir(DIR))) {
+      $$message_ref = "hmcd_msg30: Cannot closedir $par_scratch_dir:$!:\n";
+      return(EXIT_FAILURE);
+    }
+
+    $$num_cache_dirs_ref = $count;
+    return (EXIT_SUCCESS);
+  } else {
+    return (EXIT_SUCCESS);
+  }
+}
+
+#########################################################################
+sub deltree {
+   my ($dir, $level, $message_ref) = @_;
+
+   my $file = "";
+   my $error = EXIT_SUCCESS;
+   my $dir_handle = 'DIR_';
+   my $type = "";
+
+   #.............................................................
+   # Since we are deleting entire directories here, we really
+   # want to double check parameters.
+   #.............................................................
+   $type = ref(\$dir);
+   if ($type !~ m/SCALAR/i) {
+     print ("deltree_msg10: PROGRAMMING ERROR\n");
+     print ("dir $dir is type $type\n");
+     die("Please research and fix ... Exiting\n");
+   }
+   #.................
+   $type = ref(\$level);
+   if ($type !~ m/SCALAR/i) {
+     print ("deltree_msg12: PROGRAMMING ERROR\n");
+     print ("level $level is type $type\n");
+     die("Please research and fix ... Exiting\n");
+   }
+   #.................
+   $type = ref($message_ref);
+   if ($type !~ m/SCALAR/i) {
+     print ("deltree_msg14: PROGRAMMING ERROR\n");
+     print ("message ref is type $type\n");
+     die("Please research and fix ... Exiting\n");
+   }
+   if ($level !~ m/^\d+$/) {
+     print ("deltree_msg16: PROGRAMMING ERROR\n");
+     print ("level $level is not all digits\n");
+     die("Please research and fix ... Exiting\n");
+   }
+   #.............................................................
+
+   if (!(-e($dir))) {
+     # Nothing to remove
+     return (EXIT_SUCCESS);
+   }
+   no strict; # The symbolic dir handles cause strict complaints
+
+   # Level is to prevent duplicate file handle names.
+   if ( defined($level) ) {
+     $level++;
+   } else {
+     $level = 0;
+   }
+
+   $dir_handle = $dir_handle . $level;
+
+   if (!(opendir ($dir_handle, "$dir"))) {
+     $$message_ref = "deltree_msg18: Could not read $dir:$!:\n";
+     print ("$$message_ref\n");
+     return(EXIT_FAILURE);
+   }
+
+   # Foreach file in directory...
+   foreach $file (readdir($dir_handle)) {
+      next if $file =~ /^\.+$/; # Skip . or ..
+      if (-d ("$dir/$file")) {
+        $error = deltree("$dir/$file", $level, $message_ref); # Recursion!
+        return ($error) if ($error == EXIT_FAILURE);
+      } else {
+        if (!(unlink ("$dir/$file"))) {
+          $$message_ref =
+               "deltree_msg20:Could not delete $dir/$file :$!:\n"       .
+               "If it appears to be a permissions problem, it could "   .
+               "be that another PAR application is running.\n"          .
+               "This particular test attempts to remove all par cache " .
+               "directories.  That cannot happen if a cache is in use\n";
+          return(EXIT_FAILURE);
+        }
+      }
+   }
+   if (!(closedir($dir_handle))) {
+     $$message_ref = "deltree_msg22:Could not close dir $dir/$file :$!:\n";
+     return (EXIT_FAILURE);
+   }
+
+   if (!(rmdir ($dir))) {
+     $$message_ref = "deltree_msg24:Couldn\'t remove directory \'$dir\' :$!:\n";
+     return (EXIT_FAILURE);
+   }
+  use strict;
+  return(EXIT_SUCCESS);
+
+}
+
+########################################################################
+sub find_par_temp_base {
+  my ($verbose) = @_;
+
+  #################################################################
+  # Originally taken from par.pl:_set_par_temp.  The lines
+  # containing $Config{_delim} were replaced by
+  # File::Spec->catdir(whatever, whatever);
+  #################################################################
+  my $path = "";
+  my $par_temp = "";
+  my $progname = "";
+  my $username = "";
+  my $stmpdir = "";
+  my $mtime = "";
+  my $ctx = "";
+
+    if ($ENV{PAR_TEMP} and $ENV{PAR_TEMP} =~ /(.+)/) {
+        $par_temp = $1;
+        return;
+    }
+
+    foreach $path (
+        (map $ENV{$_}, qw( TMPDIR TEMP TMP )),
+        qw( "C:\\TEMP /tmp . )
+    ) {
+        next unless $path and -d $path and -w $path;
+        $username = defined(&Win32::LoginName)
+            ? &Win32::LoginName()
+            : $ENV{USERNAME} || $ENV{USER} || 'SYSTEM';
+
+        $stmpdir = File::Spec->catdir($path, "par-$username");
+        last;
+    }
+    print ("fptb_msg_10: stmpdir is $stmpdir\n") if $verbose;
+
+    return ($stmpdir);
+}
 
 ########################################################################
 sub okay_response {
@@ -182,9 +353,10 @@ sub pp_hello_1 {
 
   my $error = EXIT_FAILURE;
   my $test_file = $test_dir . "/$hello_pl_file";
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -211,18 +383,19 @@ sub pp_hello_1 {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
   if ($error == EXIT_FAILURE) {
     $$message_ref =
@@ -259,9 +432,10 @@ sub pp_minus_o_hello_hello_dot_pl {
 
   my $error = EXIT_FAILURE;
   my $test_file = $test_dir . "/$hello_pl_file";
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
   #.................................................................
@@ -284,18 +458,19 @@ sub pp_minus_o_hello_hello_dot_pl {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $hello_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
   if ($error == EXIT_FAILURE) {
    $$message_ref =
@@ -342,9 +517,10 @@ sub pp_minus_o_foo_foo_dot_pl_bar_dot_pl {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
   if (!(chdir("$test_dir"))) {
@@ -372,18 +548,19 @@ sub pp_minus_o_foo_foo_dot_pl_bar_dot_pl {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $foo_executable,
                            "hello foo",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                          );
 
   if ($error == EXIT_FAILURE) {
@@ -401,18 +578,19 @@ sub pp_minus_o_foo_foo_dot_pl_bar_dot_pl {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $bar_executable,
                            "hello bar",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -454,9 +632,10 @@ sub pp_minus_p_hello {
 
   my $error = EXIT_FAILURE;
   my $test_file = $hello_pl_file;
-  my $back_tick_command_string = "$perl $par ";
+  my $pipe_command_string = "$perl $par ";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -480,18 +659,19 @@ sub pp_minus_p_hello {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_dot_par,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                          );
 
   if ($error == EXIT_FAILURE) {
@@ -533,9 +713,10 @@ sub pp_minus_p_minus_o_hello_dot_par_hello {
 
   my $error = EXIT_FAILURE;
   my $test_file = $hello_pl_file;
-  my $back_tick_command_string = "$perl $par ";
+  my $pipe_command_string = "$perl $par ";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -557,18 +738,19 @@ sub pp_minus_p_minus_o_hello_dot_par_hello {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $hello_par_file_with_dot_par,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                          );
   if ($error == EXIT_FAILURE) {
     $$message_ref =
@@ -577,20 +759,21 @@ sub pp_minus_p_minus_o_hello_dot_par_hello {
   }
 
   #.................................................................
-  $back_tick_command_string = "$perl $par hello";
-  $error = back_tick_a_command
+  $pipe_command_string = "$perl $par hello";
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "", # We don't want the sub to try
                                # to chmod +x anything.
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                          );
 
   if ($error == EXIT_FAILURE) {
@@ -640,9 +823,10 @@ sub pp_minus_o_hello_file_dot_par {
 
   my $error = EXIT_FAILURE;
   my $test_file = $hello_pl_file;
-  my $back_tick_command_string = "$perl $par ";
+  my $pipe_command_string = "$perl $par ";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -669,18 +853,19 @@ sub pp_minus_o_hello_file_dot_par {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $hello_par_file_with_dot_par,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                          );
 
   if ($error == EXIT_FAILURE) {
@@ -691,19 +876,20 @@ sub pp_minus_o_hello_file_dot_par {
 
   #.................................................................
 
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string . 'hello',
+                           $pipe_command_string . 'hello',
                            "", # We don't want the sub to try
                                # to chmod +x anything.
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                          );
 
   if ($error == EXIT_FAILURE) {
@@ -724,19 +910,20 @@ sub pp_minus_o_hello_file_dot_par {
     }
   }
   #.................................................................
-  $back_tick_command_string = "";
-  $error = back_tick_a_command
+  $pipe_command_string = "";
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $hello_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                          );
   if ($error == EXIT_FAILURE) {
     $$message_ref =
@@ -785,9 +972,10 @@ sub pp_minus_S_minus_o_hello_file {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "$perl $par ";
+  my $pipe_command_string = "$perl $par ";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -814,18 +1002,19 @@ sub pp_minus_S_minus_o_hello_file {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $hello_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
   if ($error == EXIT_FAILURE) {
     $$message_ref =
@@ -835,20 +1024,21 @@ sub pp_minus_S_minus_o_hello_file {
 
   #.................................................................
 
-  $back_tick_command_string = "$perl $par hello";
-  $error = back_tick_a_command
+  $pipe_command_string = "$perl $par hello";
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "", # We don't want the sub to try
                                # to chmod +x anything.
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -860,19 +1050,20 @@ sub pp_minus_S_minus_o_hello_file {
 
   #.................................................................
 
-  $back_tick_command_string = "";
-  $error = back_tick_a_command
+  $pipe_command_string = "";
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $hello_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -914,9 +1105,10 @@ sub pp_minus_p_minus_o_out_dot_par_file {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "$perl $par ";
+  my $pipe_command_string = "$perl $par ";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -943,18 +1135,19 @@ sub pp_minus_p_minus_o_out_dot_par_file {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            'out.par',
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -965,19 +1158,20 @@ sub pp_minus_p_minus_o_out_dot_par_file {
 
   #.................................................................
 
-  $back_tick_command_string = "$perl $par out";
-  $error = back_tick_a_command
+  $pipe_command_string = "$perl $par out";
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "", # Don't let sub try to chmod  +x anything.
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1050,11 +1244,12 @@ sub pp_minus_B_with_small_minus_p_tests {
 
   my $error = EXIT_FAILURE;
 
-  my $back_tick_command_string = "$perl $par ";
+  my $pipe_command_string = "$perl $par ";
   my $cmd = "";
   my $sub_test = 0;
 
   my $top_of_created_file_text = "use strict;\n";
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -1093,18 +1288,19 @@ sub pp_minus_B_with_small_minus_p_tests {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            'out_par.par',
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1114,19 +1310,20 @@ sub pp_minus_B_with_small_minus_p_tests {
   }
   #.................................................................
 
-  $back_tick_command_string = "$perl $par out_par";
-  $error = back_tick_a_command
+  $pipe_command_string = "$perl $par out_par";
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "",  # Don't let sub try to chmod  +x anything.
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1147,18 +1344,19 @@ sub pp_minus_B_with_small_minus_p_tests {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            'out_par_B.par',
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1169,19 +1367,20 @@ sub pp_minus_B_with_small_minus_p_tests {
 
   #.................................................................
 
-  $back_tick_command_string = "$perl $par out_par_B";
-  $error = back_tick_a_command
+  $pipe_command_string = "$perl $par out_par_B";
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "",  # Don't let sub try to chmod  +x anything.
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1252,11 +1451,12 @@ sub pp_minus_B_with_large_minus_P_tests {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "$perl ";
+  my $pipe_command_string = "$perl ";
   my $cmd = "";
   my $sub_test = 0;
 
   my $top_of_created_file_text = "use strict;\n";
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -1296,18 +1496,19 @@ sub pp_minus_B_with_large_minus_P_tests {
 
   #.................................................................
 
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            'out_pl.pl',
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1329,18 +1530,19 @@ sub pp_minus_B_with_large_minus_P_tests {
   }
   #.................................................................
 
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            'out_pl_B.pl',
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1379,9 +1581,10 @@ sub pp_minus_e_print_hello {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -1403,18 +1606,19 @@ sub pp_minus_e_print_hello {
 
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
   if ($error == EXIT_FAILURE) {
     $$message_ref =
@@ -1454,9 +1658,10 @@ sub pp_minus_p_minus_e_print_hello {
 
   my $error = EXIT_FAILURE;
 
-  my $back_tick_command_string = "$perl $par ";
+  my $pipe_command_string = "$perl $par ";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -1478,18 +1683,19 @@ sub pp_minus_p_minus_e_print_hello {
 
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "a.par",
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1500,19 +1706,20 @@ sub pp_minus_p_minus_e_print_hello {
 
   #.................................................................
 
-  $back_tick_command_string = "$perl $par a";
-  $error = back_tick_a_command
+  $pipe_command_string = "$perl $par a";
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "",
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1550,9 +1757,10 @@ sub pp_minus_P_minus_e_print_hello {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "$perl ";
+  my $pipe_command_string = "$perl ";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -1576,18 +1784,19 @@ sub pp_minus_P_minus_e_print_hello {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            'a.pl',
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1630,9 +1839,10 @@ sub pp_minus_c_hello {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -1663,18 +1873,19 @@ sub pp_minus_c_hello {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1719,9 +1930,10 @@ sub pp_minus_x_hello {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   $$message_ref = "";
 
@@ -1752,18 +1964,19 @@ sub pp_minus_x_hello {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
   if ($error == EXIT_FAILURE) {
     $$message_ref =
@@ -1807,9 +2020,10 @@ sub pp_minus_n_minus_x_hello {
   # Success if "hello" was collected.  Failure otherwise.
   #--------------------------------------------------------------------
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   if (!(chdir("$test_dir"))) {
       $$message_ref = "\n\[005\]sub $test_name_string cannot " .
@@ -1839,18 +2053,19 @@ sub pp_minus_n_minus_x_hello {
 
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -1911,9 +2126,10 @@ sub pp_minus_I_foo_hello {
 
   my $error = EXIT_FAILURE;
   my $hidden_dir = $test_dir . "/$SUBDIR1";
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $TRUE;
 
 #..............................................
   my $foo_top_of_file_text = '
@@ -1982,22 +2198,21 @@ sub hidden_print {
       print ("sub $test_name_string created $a_default_executable\n");
     }
   }
-  print ("\nThe Line Below SHOULD BE  \"Can\'t locate \.\.\. ");
-  print (" along with a \"BEGIN failed \.\.\. \" line\n");
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
   ####################################################
   ##### This SHOULD fail, so don't return
@@ -2020,18 +2235,19 @@ sub hidden_print {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -2048,12 +2264,13 @@ sub hidden_print {
                                     $test_name_string,
                                     $test_dir,
                                     $SUBDIR1,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   if ($error == EXIT_FAILURE) {
@@ -2071,12 +2288,13 @@ sub hidden_print {
                                     $sub_test++,
                                     $test_name_string,
                                     $test_dir,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -2131,9 +2349,12 @@ sub pp_minus_lib_foo_hello {
 
   my $error = EXIT_FAILURE;
   my $foo_dir = $test_dir . "/$SUBDIR1";
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $TRUE;
+
+
 #..............................................
   my $foo_top_of_file_text = '
 use hidden_print;
@@ -2199,22 +2420,21 @@ sub hidden_print {
       print ("sub $test_name_string created $a_default_executable\n");
     }
   }
-  print ("\n\[025\]The Line Below SHOULD BE  \"Can\'t locate \.\.\. ");
-  print (" along with a \"BEGIN failed \.\.\. \" line\n");
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   ########################################################
@@ -2237,18 +2457,19 @@ sub hidden_print {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -2265,12 +2486,13 @@ sub hidden_print {
                                     $test_name_string,
                                     $test_dir,
                                     $SUBDIR1,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -2289,12 +2511,13 @@ sub hidden_print {
                                     $sub_test++,
                                     $test_name_string,
                                     $test_dir,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -2371,9 +2594,10 @@ sub pp_minus_I_foo_minus_I_bar_hello {
   my $further_subdir = "";
   my $further_file = "";
 
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $TRUE;
 
 #..............................................
   my $foo_top_of_file_text = '
@@ -2474,21 +2698,20 @@ sub hidden_print {
     }
   }
   #.................................................................
-  print ("\nThe Line Below SHOULD BE  \"Can\'t locate \.\.\. ");
-  print (" along with a \"BEGIN failed \.\.\. \" line\n");
 
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   ########################################################
@@ -2511,18 +2734,19 @@ sub hidden_print {
   }
 
  #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -2539,12 +2763,13 @@ sub hidden_print {
                                     $test_name_string,
                                     $test_dir,
                                     $SUBDIR1,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -2563,12 +2788,13 @@ sub hidden_print {
                                     $sub_test++,
                                     $test_name_string,
                                     $test_dir,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -2631,9 +2857,10 @@ sub pp_minus_lib_foo_minus_lib_bar_hello {
   my $error = EXIT_FAILURE;
   my $foo_dir = $test_dir . "/$SUBDIR1";
   my $bar_dir = $test_dir . "/$SUBDIR2";
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $TRUE;
 
 #..............................................
   my $foo_top_of_file_text = '
@@ -2734,21 +2961,19 @@ sub hidden_print {
   }
 
   #.................................................................
-  print ("\nThe Line Below SHOULD BE  \"Can\'t locate \.\.\. ");
-  print (" along with a \"BEGIN failed \.\.\. \" line\n");
-
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   ########################################################
@@ -2772,18 +2997,19 @@ sub hidden_print {
   }
 
  #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -2800,12 +3026,13 @@ sub hidden_print {
                                     $test_name_string,
                                     $test_dir,
                                     $SUBDIR1,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -2824,12 +3051,13 @@ sub hidden_print {
                                     $sub_test++,
                                     $test_name_string,
                                     $test_dir,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -2887,10 +3115,11 @@ sub pp_minus_M_foo_hidden_print_foo {
 
   my $error = EXIT_FAILURE;
   my $foo_dir = $test_dir . "/$SUBDIR1";
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
   my $hidden_print_file = "$foo_dir/hidden_print\.pm";
+  my $print_cannot_locate_message = $FALSE;
 
 #..............................................
   my $foo_top_of_file_text = '
@@ -2961,18 +3190,19 @@ sub hidden_print {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -2995,18 +3225,19 @@ sub hidden_print {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -3023,12 +3254,13 @@ sub hidden_print {
                                     $test_name_string,
                                     $test_dir,
                                     $SUBDIR1,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   if ($error == EXIT_FAILURE) {
@@ -3046,12 +3278,13 @@ sub hidden_print {
                                     $sub_test++,
                                     $test_name_string,
                                     $test_dir,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -3112,12 +3345,13 @@ sub pp_minus_M_foo_minus_M_bar_hello {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
   my $foo_dir = $test_dir . "/$SUBDIR1";
   my $bar_dir = $test_dir . "/$SUBDIR2";
   my $subdir_foo_file =  "$foo_dir/foo_1\.pm";
+  my $print_cannot_locate_message = $FALSE;
 
 #..............................................
   my $foo_top_of_file_text = '
@@ -3216,18 +3450,19 @@ sub bar_1 {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello_foohello_bar",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -3250,18 +3485,19 @@ sub bar_1 {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello_foohello_bar",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -3278,12 +3514,13 @@ sub bar_1 {
                                     $test_name_string,
                                     $test_dir,
                                     $SUBDIR1,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello_foohello_bar",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   if ($error == EXIT_FAILURE) {
@@ -3301,12 +3538,13 @@ sub bar_1 {
                                     $sub_test++,
                                     $test_name_string,
                                     $test_dir,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "hello_foohello_bar",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -3351,10 +3589,11 @@ sub pp_minus_M_abbrev_dot_pl_hello {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
   my $subdir_abbrev_file = $SUBDIR1 . "/abbrev.pl";
+  my $print_cannot_locate_message = $FALSE;
 
   $test_dir =~ s!\\!\/!g;
   #..............................................
@@ -3420,18 +3659,19 @@ print "abbrev_dot_pl";
 
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "abbrev_dot_pl",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -3453,18 +3693,19 @@ print "abbrev_dot_pl";
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "abbrev_dot_pl",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -3481,12 +3722,13 @@ print "abbrev_dot_pl";
                                     $test_name_string,
                                     $test_dir,
                                     $SUBDIR1,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "abbrev_dot_pl",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   if ($error == EXIT_FAILURE) {
@@ -3504,12 +3746,13 @@ print "abbrev_dot_pl";
                                     $sub_test++,
                                     $test_name_string,
                                     $test_dir,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $a_default_executable,
                                     "abbrev_dot_pl",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -3555,10 +3798,11 @@ sub pp_minus_M_abbrev_dot_pl_minus_o_hello_hello {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
   my $subdir_abbrev_file = $SUBDIR1 . "/abbrev.pl";
+  my $print_cannot_locate_message = $FALSE;
 
   $test_dir =~ s!\\!\/!g;
   #..............................................
@@ -3624,18 +3868,19 @@ print "abbrev_dot_pl";
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "abbrev_dot_pl",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -3658,18 +3903,19 @@ print "abbrev_dot_pl";
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $hello_executable,
                            "abbrev_dot_pl",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -3686,12 +3932,13 @@ print "abbrev_dot_pl";
                                     $test_name_string,
                                     $test_dir,
                                     $SUBDIR1,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $hello_executable,
                                     "abbrev_dot_pl",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   if ($error == EXIT_FAILURE) {
@@ -3709,12 +3956,13 @@ print "abbrev_dot_pl";
                                     $sub_test++,
                                     $test_name_string,
                                     $test_dir,
-                                    $back_tick_command_string,
+                                    $pipe_command_string,
                                     $hello_executable,
                                     "abbrev_dot_pl",
                                     $os,
                                     $verbose,
                                     $message_ref,
+                                    $print_cannot_locate_message,
                                   );
 
   #.................................................................
@@ -3756,9 +4004,10 @@ sub pp_minus_X_module_foo {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   #..............................................
   my $foo_top_of_file_text = '
@@ -3811,18 +4060,19 @@ print $basename;
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            'perl',
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -3847,18 +4097,19 @@ print $basename;
   #.................................................................
   # Note: If Basename were really excluded this would fail.
   #          But it doesn't!!!
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            'perl',
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   #.................................................................
@@ -3897,9 +4148,10 @@ sub pp_minus_r_hello {
 
   my $error = EXIT_FAILURE;
 
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   #..............................................
   my $hello_top_of_file_text = '
@@ -3929,22 +4181,23 @@ print "hello";
   }
 
   #..........................................................
-  $back_tick_command_string = "pp -r $hello_pl_file";
-  $cmd = $back_tick_command_string; # Just to keep our code 
+  $pipe_command_string = "pp -r $hello_pl_file";
+  $cmd = $pipe_command_string; # Just to keep our code 
                                     # template here consistent.
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "", # No separate executable name this time
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -3987,9 +4240,10 @@ sub pp_minus_r_hello_a_b_c {
 
   my $error = EXIT_FAILURE;
 
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   #..............................................
   my $hello_top_of_file_text = '
@@ -4019,23 +4273,24 @@ print "hello $ARGV[0] $ARGV[1] $ARGV[2]";
   }
 
   #..........................................................
-  $back_tick_command_string = 
+  $pipe_command_string = 
                 "pp -r $hello_pl_file \"one\" \"two\" \"three\"";
-  $cmd = $back_tick_command_string; # Just to keep our code 
+  $cmd = $pipe_command_string; # Just to keep our code 
                                     # template here consistent.
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "", # No separate executable name this time
                            "hello one two three",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -4081,10 +4336,11 @@ sub pp_hello_to_log_file {
 
   my $error = EXIT_FAILURE;
 
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
   my $log_file = 'c.txt';
+  my $print_cannot_locate_message = $FALSE;
 
   #..............................................
   my $hello_top_of_file_text = '
@@ -4143,18 +4399,19 @@ print "hello";
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -4198,18 +4455,19 @@ print "hello";
 
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -4260,9 +4518,10 @@ sub pp_name_four_ways {
 
   my $error = EXIT_FAILURE;
 
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
 
   #..............................................
   my $hello_top_of_file_text = '
@@ -4304,18 +4563,19 @@ print "hello";
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            $a_default_executable,
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -4336,18 +4596,19 @@ print "hello";
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            'output1.exe',
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -4368,18 +4629,19 @@ print "hello";
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            'output2.exe',
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -4401,18 +4663,19 @@ print "hello";
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            'output3.exe',
                            "hello",
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -4494,7 +4757,7 @@ sub pp_minus_v_tests {
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = "";
+  my $pipe_command_string = "";
   my $cmd = "";
   my $at_least_one_line_not_found = $FALSE;
 
@@ -4508,8 +4771,9 @@ sub pp_minus_v_tests {
   my $line = "";
   my $all_lines = ();
   my $test_and_sub_test = "00_00";
-  my $file_to_back_tick = "";
+  my $file_to_send_to_pipe = "";
   my @converted_array = ();
+  my $print_cannot_locate_message = $FALSE;
 
   #..............................................
   my $hello_top_of_file_text = '
@@ -4589,7 +4853,7 @@ print "hello";
   if ($os !~ m/^Win/i) {
     @converted_array = ();
     foreach $line (@results_to_expect_v) {
-        $line =~ s/parl.exe/\/parl /g;
+        $line =~ s/parl.exe/\/parl\\b/g;
         push(@converted_array, ($line));
     }
     @results_to_expect_v = ();
@@ -4599,7 +4863,7 @@ print "hello";
   if ($os !~ m/^Win/i) {
     @converted_array = ();
     foreach $line (@results_to_expect_vv) {
-        $line =~ s/parl.exe/\/parl /g;
+        $line =~ s/parl.exe/\/parl\\b/g;
         push(@converted_array, ($line));
     }
     @results_to_expect_vv = ();
@@ -4609,7 +4873,7 @@ print "hello";
   if ($os !~ m/^Win/i) {
     @converted_array = ();
     foreach $line (@results_to_expect_vvv) {
-        $line =~ s/parl.exe/\/parl /g;
+        $line =~ s/parl.exe/\/parl\\b/g;
         push(@converted_array, ($line));
     }
     @results_to_expect_vvv = ();
@@ -4659,7 +4923,7 @@ print "hello";
     #..........................................................
     # Remove any executables from prior iterations
     if ($text_file_to_examine =~  m/o/) {
-      $file_to_back_tick = $hello_executable;
+      $file_to_send_to_pipe = $hello_executable;
       if (-e($hello_executable)) {
         # Remove any executables from prior sub tests
         if (!(unlink($hello_executable))) {
@@ -4679,7 +4943,7 @@ print "hello";
           return(EXIT_FAILURE);
         }
       } # exists
-      $file_to_back_tick = $a_default_executable;
+      $file_to_send_to_pipe = $a_default_executable;
     }
 
     #..........................................................
@@ -4717,7 +4981,7 @@ print "hello";
       if (open (FH, "$text_file_to_examine")) {
 
         # Slurp in all the lines of the file at once
-        $all_lines = do { local( @ARGV, $/ ) = $text_file_to_examine ; <> };
+        local $/; $all_lines = <FH>;
 
         if (!(close(FH))) {
           $$message_ref = 
@@ -4748,9 +5012,8 @@ print "hello";
     }
 
     #..........................................................
-    # By this time, I have extracted opened the text file,
-    # extracted all of the lines into $all_lines, and closed the
-    # file.
+    # By this time, I have opened the text file, extracted
+    # all of the lines into $all_lines, and closed the file.
     #..........................................................
     foreach $line (@expected_lines) {
       if ($all_lines !~ m!$line!gm) {
@@ -4780,23 +5043,24 @@ print "hello";
 
     #..........................................................
     # Now to see if the created executable works
-    $error = back_tick_a_command
+    $error = pipe_a_command
                            (
                              $test_number,
                              $i,
                              $test_name_string,
                              $test_dir,
-                             $back_tick_command_string,
-                             $file_to_back_tick,
+                             $pipe_command_string,
+                             $file_to_send_to_pipe,
                              "hello",
                              $os,
                              $verbose,
                              $message_ref,
+                             $print_cannot_locate_message,
                           );
     if ($error == EXIT_FAILURE) {
       $$message_ref = 
         " Test $test_and_sub_test \n" . $$message_ref . 
-        "\nDid $cmd produce $file_to_back_tick?\n";
+        "\nDid $cmd produce $file_to_send_to_pipe?\n";
       return ($error);
     }
 
@@ -4805,6 +5069,7 @@ print "hello";
 
   } # for $i
   #..........................................................
+
   return (EXIT_SUCCESS);
 
 }
@@ -4834,12 +5099,13 @@ sub pp_minus_V {
   # 
   #--------------------------------------------------------------------
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string_big_V = 'pp -V';
-  my $back_tick_command_string_minus_minus = 'pp --version';
+  my $pipe_command_string_big_V = 'pp -V';
+  my $pipe_command_string_minus_minus = 'pp --version';
   my $sub_test = 0;
   my $expected_string = 
          "Such use shall not be construed as a distribution";
   my $cmd = "";
+  my $print_cannot_locate_message = $FALSE;
 
   #..........................................................
   if (!(chdir("$test_dir"))) {
@@ -4849,20 +5115,21 @@ sub pp_minus_V {
   }
 
   #.................................................................
-  $cmd = $back_tick_command_string_big_V; # Keeps template the same
+  $cmd = $pipe_command_string_big_V; # Keeps template the same
                                           # as possible.
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string_big_V,
+                           $pipe_command_string_big_V,
                            "",
                            $expected_string,
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -4872,20 +5139,21 @@ sub pp_minus_V {
   }
 
   #.................................................................
-  $cmd = $back_tick_command_string_minus_minus; # Keeps template the
+  $cmd = $pipe_command_string_minus_minus; # Keeps template the
                                                 # same as possible.
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string_minus_minus,
+                           $pipe_command_string_minus_minus,
                            "",
                            $expected_string,
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
   if ($error == EXIT_FAILURE) {
     $$message_ref =
@@ -4923,9 +5191,10 @@ sub pp_help_tests {
   # 
   #--------------------------------------------------------------------
   my $error = EXIT_FAILURE;
-  my $back_tick_command_string = 'pp -h';
+  my $pipe_command_string = 'pp -h';
   my $sub_test = 0;
   my $expected_string = 'Perl Packager';
+  my $print_cannot_locate_message = $FALSE;
 
 
   #..........................................................
@@ -4936,18 +5205,19 @@ sub pp_help_tests {
   }
 
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "",
                            $expected_string,
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -4957,20 +5227,21 @@ sub pp_help_tests {
   }
 
   #.................................................................
-  $back_tick_command_string = 'pp --help';
+  $pipe_command_string = 'pp --help';
   #.................................................................
-  $error = back_tick_a_command
+  $error = pipe_a_command
                          (
                            $test_number,
                            $sub_test++,
                            $test_name_string,
                            $test_dir,
-                           $back_tick_command_string,
+                           $pipe_command_string,
                            "",
                            $expected_string,
                            $os,
                            $verbose,
                            $message_ref,
+                           $print_cannot_locate_message,
                         );
 
   if ($error == EXIT_FAILURE) {
@@ -4984,7 +5255,1138 @@ sub pp_help_tests {
 }
 
 #########################################################################
+sub test_par_clean_cache_count {
+  my (
+       $test_name_string,
+       $os,
+       $test_number,
+       $test_dir,
+       $hello_pl_file,
+       $hello_executable,
+       $verbose,
+       $message_ref,
+     ) = @_;
 
+  #--------------------------------------------------------------------
+  # Goal: Test cache counts with PAR_GLOBAL_CLEAN
+  # ----
+  #
+  # Outline
+  # -------
+  # . Cache tests ...
+  # . Set PAR_GLOBAL_CLEAN = 0 for the rest of the tests
+  #
+  # . Compute the name of the par scratchpad directory.
+  # . Remove it if it exists.
+  # . Create hello.pl with the code that will print out the word "hello".
+  # 
+  # . system pp -o hello hello.pl
+  #   There should be 1 cache dir
+  # . Back tick the hello executable and collect the results.
+  #   There should be 2 cache dirs
+  # . Success if "hello"
+  #
+  # . Repeat the system pp -o hello hello.pl
+  #   There should be 2 cache dirs
+  # .
+  # . Back tick the new hello executable and collect the results.
+  #   There should be 3 cache dirs
+  # . Success if "hello"
+  #
+  # . Rerun the same back tick test
+  #   There should still be 3 cache dirs
+  # . Success if "hello"
+  #
+  # . Rerun the same back tick test yet again
+  #   There should still be 3 cache dirs
+  # . Success if "hello"
+  #--------------------------------------------------------------------
+
+  my $error = EXIT_FAILURE;
+  my $sub_test = 0;
+  my $test_file = $hello_pl_file;
+  my $pipe_command_string = "";
+  my $cmd = "";
+  my $number_of_cache_dirs = 0;
+  my $message = "";
+  my $par_scratch_dir = find_par_temp_base($verbose);
+  my $print_cannot_locate_message = $FALSE;
+
+  #..........................................................
+  $$message_ref = "";
+  #.................................................................
+  if (-e($par_scratch_dir)) {
+    print ("pgc_msg106: Removing $par_scratch_dir\n") if $verbose;
+    $error = deltree($par_scratch_dir, 0, $message_ref);
+    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  }
+
+  #.................................................................
+  if (!(chdir("$test_dir"))) {
+      $$message_ref = "\npgc_msg010: sub $test_name_string cannot " .
+                      "chdir $test_dir\n:$!:\n";
+      return (EXIT_FAILURE);
+  }
+  print ("pgc_msg012:chdir to $test_dir\n") if ($verbose);
+
+  #.................................................................
+  $error = create_file($test_file, "hello", $verbose, $message_ref);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\npgc_msg014: sub $test_name_string: $$message_ref";
+    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $ENV{PAR_GLOBAL_CLEAN} = 0;
+  #.................................................................
+  $cmd = "pp -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
+  print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
+  if (system("$cmd")) {
+    $$message_ref = "\npgc_msg110:sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+  print ("pgc_msg112: sub $test_name_string did $cmd \n") if ($verbose);
+
+  #.................................................................
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$number_of_cache_dirs,
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\npgc_msg114: Error from call to how_many_cache_dirs\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if ($verbose) {
+    $message = "\npgc_msg116: "                                      .
+               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}   .
+               "  and   \"system $cmd\",\n there are now "           .
+               "$number_of_cache_dirs cache dirs under \n$par_scratch_dir\n";
+    print ($message);
+  }
+
+  #.................................................................
+  # How many cache dirs are there now?
+  if ($number_of_cache_dirs > 1) {
+    $$message_ref = $$message_ref    .
+         "pgc_msg120: The number of cache dirs should be <= 1, "   .
+         "\n\tbut there are $number_of_cache_dirs of them.\n";
+    return(EXIT_FAILURE);
+  }
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           "hello",
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                         );
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\npgc_msg130:Did $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if (!(-e($par_scratch_dir))) {
+    $$message_ref = $$message_ref .
+        "\npgc_msg132:The par scratchpad dir \n$par_scratch_dir\n " .
+        "should have existed, but it does not.\n";
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$number_of_cache_dirs,
+                               $message_ref,
+                               $verbose);
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\npgc_msg140: Error from call to how_many_cache_dirs\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if ($verbose) {
+    $message = "\npgc_msg142: "                                      .
+               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}   .
+               "  and back ticking the hello executable\n"           .
+               "there are now $number_of_cache_dirs cache dirs "     .
+               "under \n$par_scratch_dir\n";
+    print ($message);
+  }
+  #.................................................................
+  # How many cache dirs are there now?
+  if ($number_of_cache_dirs > 2) {
+    $$message_ref = $$message_ref    .
+         "pgc_msg144: The number of cache dirs should be <= 2, "   .
+         "\n\tbut there are $number_of_cache_dirs of them.\n";
+    return(EXIT_FAILURE);
+  }
+  #.................................................................
+
+  #######################
+  # Next sub test
+  #######################
+
+  #.................................................................
+  $cmd = "pp -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
+  print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
+  if (system("$cmd")) {
+    $$message_ref = "\npgc_msg150:sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+  print ("pgc_msg154: sub $test_name_string did $cmd \n") if ($verbose);
+
+  #.................................................................
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$number_of_cache_dirs,
+                               $message_ref,
+                               $verbose);
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\npgc_msg160: Error from call to how_many_cache_dirs\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if ($verbose) {
+    $message = "\npgc_msg168: "                                      .
+               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}   .
+               "  and   \"system $cmd\",\n there are now "           .
+               "$number_of_cache_dirs cache dirs under \n$par_scratch_dir\n";
+    print ($message);
+  }
+  #.................................................................
+  # How many cache dirs are there now?
+  if ($number_of_cache_dirs > 2) {
+    $$message_ref = $$message_ref    .
+         "pgc_msg170: The number of cache dirs should be <= 2, "   .
+         "\n\tbut there are $number_of_cache_dirs of them.\n";
+    return(EXIT_FAILURE);
+  }
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           "hello",
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                         );
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\npgc_msg180:Did $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$number_of_cache_dirs,
+                               $message_ref,
+                               $verbose);
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\npgc_msg182: Error from call to how_many_cache_dirs\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if ($verbose) {
+    $message = "\npgc_msg184: "                                         .
+               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}      .
+               "  and back ticking the hello executable\n"              .
+               "there are now $number_of_cache_dirs cache dirs under "  .
+               "\n$par_scratch_dir\n";
+    print ($message);
+  }
+  #.................................................................
+  # How many cache dirs are there now?
+  if ($number_of_cache_dirs > 3) {
+    $$message_ref = $$message_ref    .
+         "pgc_msg190: The number of cache dirs should be <= 3, "   .
+         "\n\tbut there are $number_of_cache_dirs of them.\n";
+    return(EXIT_FAILURE);
+  }
+  #.................................................................
+  if (!(-e($par_scratch_dir))) {
+    $$message_ref = $$message_ref .
+        "\npgc_msg192:The par scratchpad dir \n$par_scratch_dir\n " .
+        "should have existed, but it does not.\n";
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  # Back tick the same executable again
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           "hello",
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                         );
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\npgc_msg200:Did $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$number_of_cache_dirs,
+                               $message_ref,
+                               $verbose);
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\npgc_msg202: Error from call to how_many_cache_dirs\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if ($verbose) {
+    $message = "\npgc_msg204: "                                         .
+               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}      .
+               "  and back ticking the same hello executable\n"         .
+               "there are now $number_of_cache_dirs cache dirs under "  .
+               "\n$par_scratch_dir\n";
+    print ($message);
+  }
+  #.................................................................
+  # How many cache dirs are there now?
+  if ($number_of_cache_dirs > 3) {
+    $$message_ref = $$message_ref    .
+         "pgc_msg206: The number of cache dirs should be <= 3, "   .
+         "\n\tbut there are $number_of_cache_dirs of them.\n";
+    return(EXIT_FAILURE);
+  }
+  #.................................................................
+  if (!(-e($par_scratch_dir))) {
+    $$message_ref = $$message_ref .
+        "\npgc_msg208:The par scratchpad dir \n$par_scratch_dir\n " .
+        "should have existed, but it does not.\n";
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+
+  #######################
+  # Next sub test
+  #######################
+
+  #.................................................................
+  # Back tick the same executable for the third time
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           "hello",
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                         );
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\npgc_msg300:Did $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$number_of_cache_dirs,
+                               $message_ref,
+                               $verbose);
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\npgc_msg302: Error from call to how_many_cache_dirs\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if ($verbose) {
+    $message = "\npgc_msg304: "                                         .
+               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}      .
+               "  and back ticking the same hello executable\n"         .
+               "there are now $number_of_cache_dirs cache dirs under "  .
+               "\n$par_scratch_dir\n";
+    print ($message);
+  }
+
+  #.................................................................
+  # How many cache dirs are there now?
+  if ($number_of_cache_dirs > 3) {
+    $$message_ref = $$message_ref    .
+         "pgc_msg306: The number of cache dirs should be <= 3, "   .
+         "\n\tbut there are $number_of_cache_dirs of them.\n";
+    return(EXIT_FAILURE);
+  }
+  #.................................................................
+  if (!(-e($par_scratch_dir))) {
+    $$message_ref = $$message_ref .
+        "\npgc_msg308:The par scratchpad dir \n$par_scratch_dir\n " .
+        "should have existed, but it does not.\n";
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+
+  #.................................................................
+  return(EXIT_SUCCESS);
+  #.................................................................
+
+}
+
+#########################################################################
+sub test_par_clean {
+  my (
+       $test_name_string,
+       $os,
+       $test_number,
+       $test_dir,
+       $hello_pl_file,
+       $hello_executable,
+       $verbose,
+       $message_ref,
+     ) = @_;
+
+  #--------------------------------------------------------------------
+  # Goal: Test PAR_GLOBAL_CLEAN with different parameters
+  # ----
+  #
+  # Outline
+  # -------
+  # . Compute the name of the par scratchpad directory.
+  # . Remove it if it exists.
+  # . Create hello.pl with the code that will print out the word "hello".
+  # .
+  # . Set PAR_GLOBAL_CLEAN = 0
+  # . system pp -o hello hello.pl
+  # . Back tick the hello executable and collect the results.
+  # . Success if "hello"
+  # . The par scratchpad directory should exist.
+  # .
+  # . Again, remove the par scratchpad directory, if it exists.
+  # . Set PAR_GLOBAL_CLEAN = 1
+  # . Rerun the above test
+  # . The par scratchpad directory should NOT exist.
+  # .
+  # . Again, remove the par scratchpad directory, if it exists.
+  # . Set PAR_GLOBAL_CLEAN = 0
+  # . system pp -d -o hello hello.pl
+  # . Back tick the hello executable and collect the results.
+  # . Success if "hello"
+  # . The par scratchpad directory should exist.
+  # .
+  # . Again, remove the par scratchpad directory, if it exists.
+  # . Set PAR_GLOBAL_CLEAN = 1
+  # . Rerun the above test
+  # . The par scratchpad directory should NOT exist.
+  # .
+  # . Again, remove the par scratchpad directory, if it exists.
+  # . Set PAR_GLOBAL_CLEAN = 0
+  # . system pp -C -o hello hello.pl
+  # . Back tick the hello executable and collect the results.
+  # . Success if "hello"
+  # . The par scratchpad directory should exist.
+  # .
+  # . Again, remove the par scratchpad directory, if it exists.
+  # . Set PAR_GLOBAL_CLEAN = 1
+  # . Rerun the above test
+  # . The par scratchpad directory should NOT exist.
+  # .
+  # . Again, remove the par scratchpad directory, if it exists.
+  # . Set PAR_GLOBAL_CLEAN = 0
+  # . system pp -C -d -o hello hello.pl
+  # . Back tick the hello executable and collect the results.
+  # . Success if "hello"
+  # . The par scratchpad directory should exist.
+  # .
+  # . Again, remove the par scratchpad directory, if it exists.
+  # . Set PAR_GLOBAL_CLEAN = 1
+  # . Rerun the above test
+  # . The par scratchpad directory should NOT exist.
+  # .
+  #
+  #--------------------------------------------------------------------
+
+  my $error = EXIT_FAILURE;
+  my $sub_test = 0;
+  my $test_file = $hello_pl_file;
+  my $pipe_command_string = "";
+  my $cmd = "";
+  my $number_of_cache_dirs = 0;
+  my $message = "";
+  my $par_scratch_dir = find_par_temp_base($verbose);
+  my $print_cannot_locate_message = $FALSE;
+
+  #..........................................................
+  $$message_ref = "";
+  #..........................................................
+  if (-e($par_scratch_dir)) {
+    print ("Removing $par_scratch_dir\n") if $verbose;
+    $error = deltree($par_scratch_dir, 0, $message_ref);
+    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  }
+  #.................................................................
+  if (!(chdir("$test_dir"))) {
+      $$message_ref = "\npgc_msg010: sub $test_name_string cannot " .
+                      "chdir $test_dir\n:$!:\n";
+      return (EXIT_FAILURE);
+  }
+  print ("pgc_msg012:chdir to $test_dir\n") if ($verbose);
+
+  #.................................................................
+  $error = create_file($test_file, "hello", $verbose, $message_ref);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\npgc_msg014: sub $test_name_string: $$message_ref";
+    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $ENV{PAR_GLOBAL_CLEAN} = 0;
+  #.................................................................
+  $cmd = "pp -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
+  print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
+  if (system("$cmd")) {
+    $$message_ref = "\npgc_msg016:sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+  print ("pgc_msg018: sub $test_name_string did $cmd \n") if ($verbose);
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           "hello",
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                         );
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\npgc_msg020:Did $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if (!(-e($par_scratch_dir))) {
+    $$message_ref = $$message_ref .
+        "\npgc_msg022:The par scratchpad dir \n$par_scratch_dir\n " .
+        "should have existed, but it does not.\n";
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+
+  #######################
+  # Next sub test
+  #######################
+
+  #.................................................................
+  if (-e($par_scratch_dir)) {
+    print ("pgc_msg030: Removing $par_scratch_dir\n") if $verbose;
+    $error = deltree($par_scratch_dir, 0, $message_ref);
+    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $ENV{PAR_GLOBAL_CLEAN} = 1;
+  #.................................................................
+  $cmd = "pp -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
+  print ("About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
+  if (system("$cmd")) {
+    $$message_ref = "\npgc_msg032:sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+  print ("pgc_msg034: sub $test_name_string did $cmd \n") if ($verbose);
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           "hello",
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                         );
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\npgc_msg036:Did $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if (-e($par_scratch_dir)) {
+    $$message_ref = $$message_ref .
+        "\npgc_msg038: The par scratchpad dir \n$par_scratch_dir\n " .
+        "should NOT have existed, but it does.\n";
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+
+  #######################
+  # Next sub test
+  #######################
+
+  #.................................................................
+  if (-e($par_scratch_dir)) {
+    print ("pgc_msg040:Removing $par_scratch_dir\n") if $verbose;
+    $error = deltree($par_scratch_dir, 0, $message_ref);
+    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  }
+  #.................................................................
+  if ( $Config{useshrplib} and ($Config{useshrplib} ne 'false') ) {
+    # Perl was built as shared library, so the -d option is valid.
+    #.................................................................
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    #.................................................................
+    $cmd = "pp -d -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
+    print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
+    if (system("$cmd")) {
+      $$message_ref = "\npgc_msg042: sub $test_name_string " .
+                      "cannot system $cmd\n";
+      return (EXIT_FAILURE);
+    }
+    print ("pgc_msg044: sub $test_name_string did $cmd \n") if ($verbose);
+
+    #.................................................................
+    $error = pipe_a_command
+                           (
+                             $test_number,
+                             $sub_test++,
+                             $test_name_string,
+                             $test_dir,
+                             $pipe_command_string,
+                             $hello_executable,
+                             "hello",
+                             $os,
+                             $verbose,
+                             $message_ref,
+                             $print_cannot_locate_message,
+                           );
+
+    if ($error == EXIT_FAILURE) {
+      $$message_ref =
+        $$message_ref . "\npgc_msg046:Did $cmd produce $hello_executable?\n";
+      return ($error);
+    }
+
+    #.................................................................
+    if (!(-e($par_scratch_dir)) ) {
+      $$message_ref = $$message_ref .
+          "\npgc_msg048: The par scratchpad dir \n$par_scratch_dir\n " .
+          "should have existed, but it does not.\n";
+      return (EXIT_FAILURE);
+    }
+    #.................................................................
+  } # shared lib
+
+    #######################
+    # Next sub test
+    #######################
+    #.................................................................
+    if (-e($par_scratch_dir)) {
+      print ("pgc_msg050: Removing $par_scratch_dir\n") if $verbose;
+      $error = deltree($par_scratch_dir, 0, $message_ref);
+      return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    }
+
+  #.................................................................
+  if ( $Config{useshrplib} and ($Config{useshrplib} ne 'false') ) {
+    # Perl was built as shared library, so the -d option is valid.
+    #.................................................................
+    $ENV{PAR_GLOBAL_CLEAN} = 1;
+    #.................................................................
+    $cmd = "pp -d -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
+    print ("About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
+    if (system("$cmd")) {
+      $$message_ref = "\npgc_msg052:sub $test_name_string "  .
+                      "cannot system $cmd\n";
+      return (EXIT_FAILURE);
+    }
+    print ("pgc_msg054: sub $test_name_string did $cmd \n") if ($verbose);
+
+    #.................................................................
+    $error = pipe_a_command
+                           (
+                             $test_number,
+                             $sub_test++,
+                             $test_name_string,
+                             $test_dir,
+                             $pipe_command_string,
+                             $hello_executable,
+                             "hello",
+                             $os,
+                             $verbose,
+                             $message_ref,
+                             $print_cannot_locate_message,
+                           );
+
+    if ($error == EXIT_FAILURE) {
+      $$message_ref =
+        $$message_ref . "\npgc_msg056: Did $cmd produce $hello_executable?\n";
+      return ($error);
+    }
+
+    #.................................................................
+    if (-e($par_scratch_dir) ) {
+      $$message_ref = $$message_ref .
+          "\npgc_msg058: The par scratchpad dir \n$par_scratch_dir\n " .
+          "should NOT have existed, but it does.\n";
+      return (EXIT_FAILURE);
+    }
+    #.................................................................
+  } # Perl was built as shared library
+
+  #######################
+  # Next sub test
+  #######################
+  #.................................................................
+  if (-e($par_scratch_dir)) {
+    print ("pgc_msg060: Removing $par_scratch_dir\n") if $verbose;
+    $error = deltree($par_scratch_dir, 0, $message_ref);
+    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $ENV{PAR_GLOBAL_CLEAN} = 0;
+  #.................................................................
+  $cmd = "pp -C -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
+  print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
+  if (system("$cmd")) {
+    $$message_ref = "\npgc_msg062:sub $test_name_string "  .
+                    "cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+  print ("pgc_msg064: sub $test_name_string did $cmd \n") if ($verbose);
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           "hello",
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                         );
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\npgc_msg066: Did $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if (!(-e($par_scratch_dir)) ) {
+    $$message_ref = $$message_ref .
+        "\npgc_msg068: The par scratchpad dir \n$par_scratch_dir\n " .
+        "should have existed, but it does not.\n";
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+
+
+  #######################
+  # Next sub test
+  #######################
+
+  #.................................................................
+  if (-e($par_scratch_dir)) {
+    print ("pgc_msg070: Removing $par_scratch_dir\n") if $verbose;
+    $error = deltree($par_scratch_dir, 0, $message_ref);
+    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $ENV{PAR_GLOBAL_CLEAN} = 1;
+  #.................................................................
+  $cmd = "pp -C -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
+  print ("About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
+  if (system("$cmd")) {
+    $$message_ref = "\npgc_msg072:sub $test_name_string "  .
+                    "cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+  print ("pgc_msg074: sub $test_name_string did $cmd \n") if ($verbose);
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           "hello",
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                         );
+
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\npgc_msg076: Did $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  if ( -e($par_scratch_dir) ) {
+    $$message_ref = $$message_ref .
+        "\npgc_msg078: The par scratchpad dir \n$par_scratch_dir\n " .
+        "should not have existed, but it does.\n";
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+
+
+  #######################
+  # Next sub test
+  #######################
+
+  #.................................................................
+  if ( $Config{useshrplib} and ($Config{useshrplib} ne 'false') ) {
+    # Perl was built as shared library, so the -d option is valid.
+    #.................................................................
+    #.................................................................
+    if (-e($par_scratch_dir)) {
+      print ("pgc_msg080: Removing $par_scratch_dir\n") if $verbose;
+      $error = deltree($par_scratch_dir, 0, $message_ref);
+      return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    }
+  
+    #.................................................................
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    #.................................................................
+    $cmd = "pp -C -d -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
+    print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
+    if (system("$cmd")) {
+      $$message_ref = "\npgc_msg082:sub $test_name_string "  .
+                      "cannot system $cmd\n";
+      return (EXIT_FAILURE);
+    }
+    print ("pgc_msg084: sub $test_name_string did $cmd \n") if ($verbose);
+  
+    #.................................................................
+    $error = pipe_a_command
+                           (
+                             $test_number,
+                             $sub_test++,
+                             $test_name_string,
+                             $test_dir,
+                             $pipe_command_string,
+                             $hello_executable,
+                             "hello",
+                             $os,
+                             $verbose,
+                             $message_ref,
+                             $print_cannot_locate_message,
+                           );
+  
+    if ($error == EXIT_FAILURE) {
+      $$message_ref =
+        $$message_ref . "\npgc_msg086: Did $cmd produce $hello_executable?\n";
+      return ($error);
+    }
+  
+    #.................................................................
+    if ( !(-e($par_scratch_dir)) ) {
+      $$message_ref = $$message_ref .
+          "\npgc_msg088: The par scratchpad dir \n$par_scratch_dir\n " .
+          "should have existed, but it does not.\n";
+      return (EXIT_FAILURE);
+    }
+    #.................................................................
+  }
+
+  #######################
+  # Next sub test
+  #######################
+
+  #.................................................................
+  if (-e($par_scratch_dir)) {
+    print ("pgc_msg090: Removing $par_scratch_dir\n") if $verbose;
+    $error = deltree($par_scratch_dir, 0, $message_ref);
+    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $ENV{PAR_GLOBAL_CLEAN} = 1;
+  #.................................................................
+  #.................................................................
+  if ( $Config{useshrplib} and ($Config{useshrplib} ne 'false') ) {
+    # Perl was built as shared library, so the -d option is valid.
+    #.................................................................
+    $cmd = "pp -C -d -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
+    print ("About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
+    if (system("$cmd")) {
+      $$message_ref = "\npgc_msg092:sub $test_name_string "  .
+                      "cannot system $cmd\n";
+      return (EXIT_FAILURE);
+    }
+    print ("pgc_msg094: sub $test_name_string did $cmd \n") if ($verbose);
+  
+    #.................................................................
+    $error = pipe_a_command
+                           (
+                             $test_number,
+                             $sub_test++,
+                             $test_name_string,
+                             $test_dir,
+                             $pipe_command_string,
+                             $hello_executable,
+                             "hello",
+                             $os,
+                             $verbose,
+                             $message_ref,
+                             $print_cannot_locate_message,
+                           );
+  
+    if ($error == EXIT_FAILURE) {
+      $$message_ref =
+        $$message_ref . "\npgc_msg096: Did $cmd produce $hello_executable?\n";
+      return ($error);
+    }
+  
+    #.................................................................
+    if ( -e($par_scratch_dir) ) {
+      $$message_ref = $$message_ref .
+          "\npgc_msg098: The par scratchpad dir \n$par_scratch_dir\n " .
+          "should not exist, but it does.\n";
+      return (EXIT_FAILURE);
+    }
+    #.................................................................
+  
+    $error = how_many_cache_dirs($par_scratch_dir,
+                                 \$number_of_cache_dirs,
+                                 $message_ref,
+                                 $verbose);
+    if ($error == EXIT_FAILURE) {
+      $$message_ref = $$message_ref .
+                "\npgc_msg100: Error from call to how_many_cache_dirs\n";
+      return ($error);
+    }
+  
+    #.................................................................
+    if ($verbose) {
+      $message = "pgc_msg102: "                             .
+                 "Tried to remove all cache dirs under "    .
+                 "\n$par_scratch_dir\n and there are now "  .
+                 "$number_of_cache_dirs cache dirs.\n";
+      print ($message);
+    }
+  
+    #.................................................................
+    # How many cache dirs are there now?
+    if ($number_of_cache_dirs > 0) {
+      $$message_ref = $$message_ref    .
+           "pgc_msg104: The number of cache dirs should be <= 0, "   .
+           "\n\tbut there are $number_of_cache_dirs of them.\n";
+      return(EXIT_FAILURE);
+    }
+    #.................................................................
+  } # shared lib
+  #.................................................................
+  return(EXIT_SUCCESS);
+  #.................................................................
+
+}
+
+#########################################################################
+sub pp_gui_tests { 
+  my (
+       $test_name_string,
+       $os,
+       $test_number,
+       $test_dir,
+       $orig_dir,
+       $hello_pl_file,
+       $hello_executable,
+       $verbose,
+       $message_ref,
+     ) = @_;
+
+  #--------------------------------------------------------------------
+  # Goal: Test of 'pp --gui --icon hi.ico -o hello.exe hello.pl'
+  # ----
+  #            The file hi.ico should already exist in the same
+  #            directory as the running program, so that it can
+  #            be copied to the test directory.  hello.pl is created.
+  #
+  # Outline
+  # -------
+  # . Create the file hello.pl with code that will print "hello".
+  # . Assume the icon hi.ico already exists.
+  # . Build the out.exe with
+  #     pp --gui --icon hi.ico -o out.exe hello.pl
+  # . Test the out.exe for gui and icon. We can use Win32::Exe
+  #   itself to inspect the GUI and icon status of the resulting
+  #   exe, so the snippet below should do:
+  # 
+  #   my $exe = Win32::Exe->new('out.exe');
+  #   my $ico = Win32::Exe->new('hi.ico');
+  #   is($exe->Subsystem, 'windows');
+  #   is($exe->dump_iconfile, $ico->dump_iconfile);
+  # Success if true in both cases, failure otherwise.  # 
+  # 
+  # 
+  #--------------------------------------------------------------------
+  my $error = EXIT_FAILURE;
+  my $cmd = 'pp --gui --icon hi.ico -o ' . "$hello_executable $hello_pl_file";
+
+  my $sub_test = 0;
+  my $file_to_copy = "";
+  my $exe = "";
+  my $ico = "";
+  my $FALSE = 0;
+  my $exe_is_okay = $FALSE;
+  my $ico_is_okay = $FALSE;
+  my $test_file = $hello_pl_file;
+  my $print_cannot_locate_message = $FALSE;
+
+  print ("orig_dir is $orig_dir\n") if $verbose;
+
+  #..........................................................
+  if ($os !~ m/^Win/i) {
+    print ("Test $test_name_string not done on OS: $os\n");
+    return(EXIT_SUCCESS);
+  }
+  #..........................................................
+  if (!(chdir("$test_dir"))) {
+      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+                      "chdir $test_dir\n:$!:\n";
+      return (EXIT_FAILURE);
+  }
+  if ($verbose) {
+    print ("chdir to $test_dir\n");
+  }
+
+
+  #.................................................................
+  $file_to_copy = $orig_dir . '/hi.ico';
+  if(!(copy($file_to_copy, "$test_dir"))) {
+      $$message_ref = "\n\[030\]sub $test_name_string: cannot " .
+                       "copy $file_to_copy to $test_dir:$!:\n";
+      return (EXIT_FAILURE);
+  }
+  if ($verbose) {
+    print ("Copied $file_to_copy to $test_dir\n");
+  }
+  #.................................................................
+  $error = create_file($test_file, "hello", $verbose, $message_ref);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\npgt_msg014: sub $test_name_string: $$message_ref";
+    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  }
+  
+  #.................................................................
+  if (system("$cmd")) {
+    $$message_ref = "\n\[050\]sub $test_name_string cannot system $cmd:$!:\n";
+    return (EXIT_FAILURE);
+  } else {
+    if ($verbose) {
+      print ("sub $test_name_string did $cmd ");
+    }
+  }
+
+  #.................................................................
+  $exe = Win32::Exe->new($hello_executable);
+  $ico = Win32::Exe::IconFile->new('hi.ico');
+  #.................................................................
+
+  if ($ico->dump_iconfile eq $exe->dump_iconfile) {
+    $ico_is_okay = $TRUE;
+  } else {
+    $ico_is_okay = $FALSE;
+    $$message_ref = $$message_ref . "pgt_msg16: sub $test_name_string " .
+               "pgt_msg16: ico->dump_iconfile is not exe->dump_iconfile\n";
+  }
+
+  #.................................................................
+  if ($exe->Subsystem eq 'windows') {
+    $exe_is_okay = $TRUE;
+  } else {
+    $exe_is_okay = $FALSE;
+    $$message_ref = $$message_ref . "pgt_msg18: sub $test_name_string " .
+               "pgt_msg18: exe->Subsystem is not windows\n";
+  }
+
+  if ($exe_is_okay && $ico_is_okay) {
+    if ($verbose) {
+      print ("Win32::Exe shows a good icon file\n");
+    }
+
+    return (EXIT_SUCCESS);
+  } else {
+      $$message_ref = $$message_ref . 
+        "\nThe command $cmd did not produce a good icon on exe\n";
+    return (EXIT_FAILURE)
+  }
+  #.................................................................
+
+}
+
+#########################################################################
 
 #########################################################################
 ##################### Beginning - Start of Main #########################
@@ -4993,6 +6395,7 @@ sub pp_help_tests {
 my $startdir = "";
 
 my $answer = "";
+my $orig_dir = cwd;
 
 my $test_name_string = "";
 my $test_number = 1;
@@ -5090,8 +6493,8 @@ if ($debug) {
 }
 
 #SKIP: { 
-#  $test_number = 25;
-#  skip("Skipping  tests for brevity "  . "$test_number \n", 24);
+#  $test_number = 33;
+#  skip("Skipping  tests for brevity "  . "$test_number \n", 32);
 
 ########################### Next Test 001 ##################################
 $test_name_string = "pp_hello_1";
@@ -5377,7 +6780,7 @@ print ("\n\n\n") if ($error == EXIT_FAILURE);
 ########################### Next Test 007 ##################################
 $test_name_string = "pp_minus_S_minus_o_hello_file";
 SKIP: {
-  skip("Skipping " . $test_number++ . " $test_name_string because we know it does not work\n", 1);
+#  skip("Skipping " . $test_number++ . " $test_name_string because we know it does not work\n", 1);
 
 $error = prior_to_test($test_number,
                        $startdir,
@@ -6204,7 +7607,7 @@ if ($debug) {
 after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
-#         } # SKIP 24
+
 ########################### Next Test 025 ##################################
 $test_name_string = "pp_minus_X_module_foo";
 $error = prior_to_test($test_number,
@@ -6431,8 +7834,6 @@ after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
-
-
 ########################### Next Test 030 ##################################
 $test_name_string = "pp_minus_v_tests";
 $error = prior_to_test($test_number,
@@ -6565,7 +7966,135 @@ if ($debug) {
 after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
+#       } # SKIP 32
 
+########################### Next Test 033 ##################################
+$test_name_string = "test_par_clean";
+$error = prior_to_test($test_number,
+                       $startdir,
+                       $os,
+                       \$test_dir,
+                       $verbose,
+                       \$message);
+if ($error == EXIT_FAILURE) {
+  $message = "\nCannot run test $test_name_string due to\n"     .
+             "prior_to_test: Test $test_number : $message\n";
+  die($message);
+}
+
+if ($verbose) {
+  print ("About to run test $test_number: $test_name_string ");
+  print ("in directory $test_dir\n");
+}
+
+$error =
+  test_par_clean
+     (
+        $test_name_string,
+        $os,
+        $test_number,
+        $test_dir,
+        $hello_pl_file,
+        $hello_executable,
+        $verbose,
+        \$message,
+     );
+
+if ($debug) {
+  if ($error) {
+    print DEBUG ("\n\nTest $test_number: $test_name_string FAILED\n");
+    print DEBUG ("$message\n");
+  } else {
+    print DEBUG ("\n\nTest $test_number: $test_name_string PASSED\n");
+  }
+}
+
+after_test($test_number++, $error, $message, $verbose);
+ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
+print ("\n\n\n") if ($error == EXIT_FAILURE);
+
+
+########################### Next Test 034 ##################################
+$test_name_string = "test_par_clean_cache_count";
+$error = prior_to_test($test_number,
+                       $startdir,
+                       $os,
+                       \$test_dir,
+                       $verbose,
+                       \$message);
+if ($error == EXIT_FAILURE) {
+  $message = "\nCannot run test $test_name_string due to\n"     .
+             "prior_to_test: Test $test_number : $message\n";
+  die($message);
+}
+
+if ($verbose) {
+  print ("About to run test $test_number: $test_name_string ");
+  print ("in directory $test_dir\n");
+}
+
+$error =
+  test_par_clean_cache_count
+     (
+        $test_name_string,
+        $os,
+        $test_number,
+        $test_dir,
+        $hello_pl_file,
+        $hello_executable,
+        $verbose,
+        \$message,
+     );
+
+if ($debug) {
+  if ($error) {
+    print DEBUG ("\n\nTest $test_number: $test_name_string FAILED\n");
+    print DEBUG ("$message\n");
+  } else {
+    print DEBUG ("\n\nTest $test_number: $test_name_string PASSED\n");
+  }
+}
+
+after_test($test_number++, $error, $message, $verbose);
+ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
+print ("\n\n\n") if ($error == EXIT_FAILURE);
+
+####################### Next Test 035 ###########################
+$test_name_string = "pp_gui_tests";
+$error = prior_to_test($test_number,
+                       $startdir,
+                       $os,
+                       \$test_dir,
+                       $verbose,
+                       \$message);
+if ($error == EXIT_FAILURE) {
+  $message = "\nCannot run test $test_name_string due to\n"     .
+             "prior_to_test: Test $test_number : $message\n";
+  die($message);
+}
+
+if ($verbose) {
+  print ("About to run test $test_number: $test_name_string ");
+  print ("in directory $test_dir\n");
+}
+
+$error =
+  pp_gui_tests
+     (
+        $test_name_string,
+        $os,
+        $test_number,
+        $test_dir,
+        $orig_dir,
+        $hello_pl_file,
+        $hello_executable,
+        $verbose,
+        \$message,
+     );
+
+after_test($test_number, $error, $message, $verbose);
+ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
+print ("\n\n\n") if ($error == EXIT_FAILURE);
 
 ########################################################################
 if ($debug) {

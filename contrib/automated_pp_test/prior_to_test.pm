@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //prior_to_test.pm $ $Author: mnooning $
-# $Revision: #005 $ $Change: 20040304_02 $ $DateTime: 2004/03/04 15:26:
+# $Revision: #006 $ $Change: 20040303_01 $ $DateTime: 2004/03/03 12:16:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any
@@ -128,7 +128,7 @@ sub remove_windows_tree {
 
   if ($actual_num_files >= $MAX_FILES_TO_DELETE) {
     # Ouch.  Something is wrong
-    $$message_ref =
+    $$message_ref = "ptt_055: "                                   .
                "In preparation for a test, I am not permitted "   .
                "to delete more than $MAX_FILES_TO_DELETE files\n" .
                "however, there are $actual_num_files files to "   .
@@ -143,7 +143,8 @@ sub remove_windows_tree {
   # without worring about whether or not they are empty.
   foreach $file (@global_files) {
     if (!(unlink ("$file"))) {
-      $$message_ref = "Cannot unlink $file:$!:\n";
+      $$message_ref =  "ptt_060: "                .
+                       "Cannot unlink $file:$!:\n";
       return (EXIT_FAILURE);
     }
   }
@@ -151,7 +152,8 @@ sub remove_windows_tree {
   # Remove the last dir first
   foreach $dir (reverse @global_dirs) {
     if (!(rmdir($dir))) {
-      $$message_ref = "I am in dir $cwd and I "                .
+      $$message_ref = "ptt_065: "                              .
+                      "I am in dir $cwd and I "                .
                       "cannot rmdir $dir:$!:\n"                .
                       "Are you using it in another window?\n";
       return (EXIT_FAILURE);
@@ -196,7 +198,8 @@ sub prior_to_test {
     $test_sub_dir = $base_directory . "/temp" . "$temp_num";
     if (-e("$test_sub_dir")) {
       if (system("rm -rf \"$test_sub_dir\"")) {
-        $$message_ref = ("prior_to_test:$!:$?:\n");
+        $$message_ref = ( "ptt_075: "  .
+                          ":$!:$?:\n");
         return (EXIT_FAILURE);
       }
     }
@@ -204,7 +207,7 @@ sub prior_to_test {
 
   # mkpath assuming unix.  Windows defaults to read/write itself.
   if (!(mkpath ("$test_sub_dir", 0, $permission))) {
-    $$message_ref = "Cannot create dir $test_sub_dir:$!:\n";
+    $$message_ref = "ptt_080: Cannot create dir $test_sub_dir:$!:\n";
     return (EXIT_FAILURE);
   }
 
@@ -217,7 +220,8 @@ sub prior_to_test {
   foreach $further_subdir (@further_subdirs) {
     $further_subdir_to_create = $test_sub_dir . "/$further_subdir";
     if (!(mkpath ("$further_subdir_to_create", 0, $permission))) {
-      $$message_ref = "Cannot create dir $further_subdir_to_create:$!:\n";
+      $$message_ref = "ptt_085: "         .
+                      "Cannot create dir $further_subdir_to_create:$!:\n";
       return (EXIT_FAILURE);
     }
   }
