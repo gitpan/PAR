@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #14 $ $Change: 3652 $ $DateTime: 2003/01/19 14:54:34 $
+# $Revision: #16 $ $Change: 4504 $ $DateTime: 2003/03/01 15:50:24 $
 
 This is the README file for PAR, a toolkit to use perl scripts and
 modules stored inside compressed .par files.
@@ -19,8 +19,8 @@ You may also want to read the 'ChangeLog' file, which describes new
 features, bugfixes and additional notes for this release.
 
 There is also a presentation "Introduction to PAR", available as
-<http://www.autrijus.org/par-intro/slide001.html>; a Chinese version
-is at <http://www.autrijus.org/par-intro.zh/slide001.html>.
+<http://www.autrijus.org/par-intro/>; a Chinese version is at
+<http://www.autrijus.org/par-intro.zh/>.
 
 * Installation
 
@@ -60,43 +60,51 @@ there; that will create the 'nmake.exe' file needed by CPANPLUS.
 You may then resume the installation process above, but replace 'make'
 with 'nmake' in the last three lines.
 
+Also, if you do not have the compiler used to compile your version or
+Perl (e.g. Microsoft Visual C++ for ActivePerl -- do not forget to run
+"vcvars32.bat" or equivalent before "perl Makefile.PL"!), you will not
+be able to generate binary executables using 'pp'.  However, ActiveState
+is known to make PPM-installable PAR versions quite frequently, so your
+best bet may still be "ppm install PAR".
+
 * Typical Usage
 
 Here are some recipes showing how to utilize pp to bundle source.pl with
 all its dependencies, on target machines with different expected
 settings:
 
-- Perl with PAR.pm and its dependencies installed:
+- Stand-alone setup
 
-    % pp -p source.pl                   # makes source.par
-    % echo "use PAR 'source.par';" > packed.pl;
-    % cat source.pl >> packed.pl;       # makes packed.pl
-    (now deploy 'source.par' and 'packed.pl' to target machine)
-    $ perl packed.pl                    # run it
+    % pp -o packed.exe source.pl	# makes packed.exe
+    # Now, deploy 'packed.exe' to target machine...
+    $ packed.exe			# run it
+
+- Perl interpreter only, without core modules:
+
+    % pp -B -p source.pl		# makes source.par
+    % par.pl -B -Opacked.pl source.par  # makes packed.pl
+    # Now, deploy 'packed.pl' to target machine...
+    $ perl packed.pl			# run it
 
 - Perl with core module installed:
 
     % pp -p source.pl			# makes source.par
     % par.pl -b -Opacked.pl source.par	# makes packed.pl
-    (now deploy 'packed.pl' to target machine)
+    # Now, deploy 'packed.pl' to target machine...
     $ perl packed.pl			# run it
 
-- Perl interpreter only, without core module:
+- Perl with PAR.pm and its dependencies installed:
 
-    % pp -B -p source.pl		# makes source.par
-    % par.pl -B -Opacked.pl source.par  # makes packed.pl
-    (now deploy 'packed.pl' to target machine)
-    $ perl packed.pl			# run it
+    % pp -p source.pl                   # makes source.par
+    % echo "use PAR 'source.par';" > packed.pl;
+    % cat source.pl >> packed.pl;       # makes packed.pl
+    # Now, deploy 'source.par' and 'packed.pl' to target machine...
+    $ perl packed.pl                    # run it
 
-- Clean setup
-
-    % pp -Opacked.exe source.pl		# makes packed.exe
-    (now deploy 'packed.exe' to target machine)
-    $ packed.exe			# run it
-
-Note that if your perl was built as a shared library, the
-'Clean setup' above will still need a separate perl5x.dll or
-libperl.so to function correctly.
+Note that if your perl was built with a shared library, the
+'Stand-alone setup' above will still need a separate perl5x.dll or
+libperl.so to function correctly.  Patches to include a copy
+of libperl with the executable are most welcome.
 
 Please consult the documentation of 'pp' for more information.
 
@@ -106,11 +114,11 @@ PAR has a mailing list, <par@perl.org>, that you can write to;
 send an empty mail to <par-subscribe@perl.org> to join the list
 and participate in the discussion.
 
-Please send bug reports to bug-par@rt.cpan.org.
+Please send bug reports to <bug-par@rt.cpan.org>.
 
 * Copyright
 
-Copyright 2002 by Autrijus Tang <autrijus@autrijus.org>.
+Copyright 2002, 2003 by Autrijus Tang <autrijus@autrijus.org>.
 
 All rights reserved.  You can redistribute and/or modify
 this bundle under the same terms as Perl itself.

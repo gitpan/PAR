@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #7 $ $Change: 2102 $ $DateTime: 2002/11/13 09:55:09 $ */
+   $Revision: #9 $ $Change: 4500 $ $DateTime: 2003/03/01 14:48:38 $ */
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -58,6 +58,8 @@ int main( int argc, char **argv, char **env )
     char **fakeargv;
     GV* tmpgv;
     int options_count;
+
+/*    setenv("LD_LIBRARY_PATH", "/tmp", 1); */
 
 #if defined(USE_ITHREADS)
     /* XXX Ideally, this should really be happening in perl_alloc() or

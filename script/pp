@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #20 $ $Change: 3302 $ $DateTime: 2003/01/07 12:01:26 $
+# $Revision: #22 $ $Change: 4500 $ $DateTime: 2003/03/01 14:48:38 $
 
 use 5.006;
 use strict;
@@ -379,40 +379,40 @@ pp - Perl Packager
 
 =head1 SYNOPSIS
 
-    % pp hello			# Packages 'hello' into executable 'a.out'
-    % pp -o hello hello.pl	# Packages 'hello.pl' into executable 'hello'
+    % pp hello			# Pack 'hello' into executable 'a.out'
+    % pp -o hello hello.pl	# Pack 'hello.pl' into executable 'hello'
 
-    % pp -o foo foo.pl bar.pl	# Packages 'foo.pl' and 'bar.pl' into 'foo'
-    % ./foo			# Executes the 'foo.pl' inside 'foo'
-    % mv foo bar; ./bar		# Executes the 'bar.pl' inside 'foo'
+    % pp -o foo foo.pl bar.pl	# Pack 'foo.pl' and 'bar.pl' into 'foo'
+    % ./foo			# Run 'foo.pl' inside 'foo'
+    % mv foo bar; ./bar		# Run 'bar.pl' inside 'foo'
     % mv bar baz; ./baz		# Error: Can't open perl script "baz"
 
     % pp -p file		# Creates a PAR file, 'file.par'
     % pp -S -o hello file	# Creates a PAR file, 'file.par',
 				# then packages it to executable 'hello'
-    % pp -p -o out.par file	# Creates a PAR file, 'out.par' from 'file'
+    % pp -p -o out.par file	# Creates 'out.par' from 'file'
     % pp -B -p -o out.par file	# same as above, but bundles core modules
 				# (-B is assumed when making executables)
 
-    % pp -e 'print q//'		# Packages a one-liner into 'a.out'
+    % pp -e 'print q//'		# Pack a one-liner into 'a.out'
     % pp -c -e 'print q//'	# Creates a PAR file 'a.out.par'
 
-    % pp -I /foo hello		# Extra paths (notice the space after -I)
-    % pp -M Foo::Bar hello	# Extra modules (notice the space after -M)
-    % pp -X Foo::Bar hello	# Exclude modules (notice the space after -X)
+    % pp -I /foo hello		# Extra paths (notice space after -I)
+    % pp -M Foo::Bar hello	# Extra modules (notice space after -M)
+    % pp -X Foo::Bar hello	# Exclude modules (notice space after -X)
 
-    % pp -r hello		# Packages 'hello' into 'a.out', runs 'a.out'.
-    % pp -r hello a b c		# Packages 'hello' into 'a.out', runs 'a.out',
+    % pp -r hello		# Pack 'hello' into 'a.out', runs 'a.out'
+    % pp -r hello a b c		# Pack 'hello' into 'a.out', runs 'a.out'
 				# with arguments 'a b c' 
 
-    % pp hello -log c		# Packages 'hello' into 'a.out', logs
-				# messages into 'c'. 
+    % pp hello -log c		# Pack 'hello' into 'a.out', logs
+				# messages into 'c'
 
 =head1 DESCRIPTION
 
 F<pp> creates standalone executables from Perl programs, using the
-compressed packager provided by L<PAR>, and the dependency detection
-heuristics offered by L<Module::ScanDeps>.  The programs are stored
+compressed packager provided by L<PAR>, and dependency detection
+heuristics offered by L<Module::ScanDeps>.  Source files are compressed
 verbatim without compilation.
 
 You may think of F<pp> as "F<perlcc> that works without hassle". :-)
@@ -498,39 +498,40 @@ different expected settings:
 
 =over 4
 
-=item Perl with B<PAR.pm> and its dependencies installed:
+=item Stand-alone setup
 
-    % pp -p source.pl			# makes source.par
-    % echo "use PAR 'source.par';" > packed.pl;
-    % cat source.pl >> packed.pl;	# makes packed.pl
-    (now deploy 'source.par' and 'packed.pl' to target machine)
+    % pp -o packed.exe source.pl	# makes packed.exe
+    # Now, deploy 'packed.exe' to target machine...
+    $ packed.exe			# run it
+
+=item Perl interpreter only, without core modules:
+
+    % pp -B -p source.pl		# makes source.par
+    % par.pl -B -Opacked.pl source.par  # makes packed.pl
+    # Now, deploy 'packed.pl' to target machine...
     $ perl packed.pl			# run it
 
 =item Perl with core module installed:
 
     % pp -p source.pl			# makes source.par
     % par.pl -b -Opacked.pl source.par	# makes packed.pl
-    (now deploy 'packed.pl' to target machine)
+    # Now, deploy 'packed.pl' to target machine...
     $ perl packed.pl			# run it
 
-=item Perl interpreter only, without core module:
+=item Perl with PAR.pm and its dependencies installed:
 
-    % pp -B -p source.pl		# makes source.par
-    % par.pl -B -Opacked.pl source.par	# makes packed.pl
-    (now deploy 'packed.pl' to target machine)
-    $ perl packed.pl			# run it
-
-=item Clean setup:
-
-    % pp -o packed.exe source.pl	# makes packed.exe
-    (now deploy 'packed.exe' to target machine)
-    $ packed.exe			# run it
+    % pp -p source.pl                   # makes source.par
+    % echo "use PAR 'source.par';" > packed.pl;
+    % cat source.pl >> packed.pl;       # makes packed.pl
+    # Now, deploy 'source.par' and 'packed.pl' to target machine...
+    $ perl packed.pl                    # run it
 
 =back
 
-Note that if your perl was built as a shared library, the
-'Clean setup' above will still need a separate F<perl5x.dll> or
-F<libperl.so> to function correctly.
+Note that if your perl was built with a shared library, the
+'Stand-alone setup' above will still need a separate F<perl5x.dll> or
+F<libperl.so> to function correctly.  Patches to include a copy
+of libperl with the executable are most welcome.
 
 =head1 SEE ALSO
 
@@ -550,9 +551,15 @@ Jeff Goff for suggesting the name C<pp>.
 
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
+PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
+send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
+and participate in the discussion.
+
+Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+
 =head1 COPYRIGHT
 
-Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2002, 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

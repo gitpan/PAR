@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #58 $ $Change: 4103 $ $DateTime: 2003/02/06 00:30:50 $
+# $Revision: #61 $ $Change: 4503 $ $DateTime: 2003/03/01 15:17:57 $
 
 package PAR;
-$PAR::VERSION = '0.63';
+$PAR::VERSION = '0.64';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.62 of PAR, released January 7, 2002.
+This document describes version 0.64 of PAR, released March 1, 2003.
 
 =head1 SYNOPSIS
 
@@ -35,7 +35,7 @@ Same thing, but search F<foo.par> in the C<@INC>;
     % perl -MPAR -Ifoo.par -MHello
     % perl -MPAR -Ifoo -MHello		# ditto
 
-The search path for the above two examples are:
+Following paths inside the PAR file are searched:
 
     /
     /lib/
@@ -89,7 +89,8 @@ For maximal convenience, you can set the C<PERL5OPT> environment
 variable to C<-MPAR> to enable C<PAR> processing globally (the overhead
 is small if not used), or to C<-MPAR=/path/to/mylib.par> to load a
 specific PAR file.  Alternatively, consider using the F<par.pl> utility
-bundled with this module.
+bundled with this module, or the self-contained F<parl> utility on
+machines without PAR.pm installed.
 
 Note that self-containing scripts and executables created with F<par.pl>
 and F<pp> may also be used as F<.par> archives:
@@ -108,7 +109,8 @@ loading time of the next round.  To inhibit this behaviour, set the
 C<PAR_CLEARTEMP> environment to a true value.
 
 If you object to this feature, or think that only shared object files
-should be left for the next round, just mail me. :-)
+should be left for the next round, just mail E<lt>F<par@perl.org>E<gt>
+and let the list figure it out. :-)
 
 =cut
 
@@ -268,6 +270,7 @@ sub _tmpfile {
 	    $fh = File::Temp::tempfile( UNLINK => ($^O ne 'MSWin32') )
 		or die "Cannot create temporary file: $!";
 	}
+	binmode($fh);
 	return ($fh, 1);
     }
 
@@ -275,10 +278,12 @@ sub _tmpfile {
     my $filename = File::Spec->catfile( File::Spec->tmpdir, $_[0] );
     if (-r $filename) {
 	open my $fh, '<', $filename or die $!;
+	binmode($fh);
 	return ($fh, 0);
     }
 
     open my $fh, '+>', $filename or die $!;
+    binmode($fh);
     return ($fh, 1);
 }
 
@@ -287,7 +292,8 @@ sub _tmpfile {
 =head1 SEE ALSO
 
 My presentation, "Introduction to Perl Archive Toolkit":
-L<http://www.autrijus.org/par-intro/slide001.html>
+L<http://www.autrijus.org/par-intro/> and its Chinese
+version: L<http://www.autrijus.org/par-intro.zh/>
 
 L<par.pl>, L<parl>, L<pp>
 
@@ -316,9 +322,15 @@ have sent helpful patches, ideas or comments.
 
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
+PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
+send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
+and participate in the discussion.
+
+Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+
 =head1 COPYRIGHT
 
-Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2002, 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/script/parl.pod $ $Author: autrijus $
-# $Revision: #3 $ $Change: 4103 $ $DateTime: 2003/02/06 00:30:50 $
+# $Revision: #4 $ $Change: 4445 $ $DateTime: 2003/02/27 12:09:56 $
 
 =head1 NAME
 
@@ -83,6 +83,12 @@ L<PAR>, L<par.pl>, L<pp>
 =head1 AUTHORS
 
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
+
+PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
+send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
+and participate in the discussion.
+
+Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 

@@ -18,3 +18,9 @@ script/parl.pod
 t/0-signature.t
 t/1-basic.t
 t/hello.par
+inc/Module/Install.pm				Support file - Not installed
+inc/Module/Install/Win32.pm			Support file - Not installed
+inc/Module/Install/Run.pm			Support file - Not installed
+inc/Module/Install/Makefile.pm			Support file - Not installed
+inc/Module/Install/Fetch.pm			Support file - Not installed
+inc/Module/Install/Makefile/Version.pm		Support file - Not installed

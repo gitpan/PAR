@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #7 $ $Change: 3308 $ $DateTime: 2003/01/07 13:24:51 $
+# $Revision: #10 $ $Change: 4503 $ $DateTime: 2003/03/01 15:17:57 $
 
 package PAR::Heavy;
-$PAR::Heavy::VERSION = '0.03';
+$PAR::Heavy::VERSION = '0.05';
 
 =head1 NAME
 
@@ -21,8 +21,10 @@ No user-serviceable parts inside.
 ########################################################################
 # Dynamic inclusion of XS modules
 
-my ($bootstrap, $dl_findfile);	# caches for code references
+my ($bootstrap, $dl_findfile);	# Caches for code references
+my ($dl_dlext);			# Cache for $Config{dl_dlext}
 
+# Adds pre-hooks to Dynaloader's key methods
 sub _init_dynaloader {
     return if $bootstrap;
     return unless eval { require DynaLoader; DynaLoader::dl_findfile(); 1 };
@@ -35,14 +37,13 @@ sub _init_dynaloader {
     *{'DynaLoader::dl_findfile'} = \&_dl_findfile;
 }
 
+# Return the cached location of .dll inside PAR first, if possible.
 sub _dl_findfile {
-    # print "Finding $_[-1]. DLCache reads ", %DLCache, "\n";
-
     return $DLCache{$_[-1]} if exists $DLCache{$_[-1]};
     return $dl_findfile->(@_);
 }
 
-my $dl_dlext;
+# Find and extract .dll from PAR files for a given dynamic module.
 sub _bootstrap {
     my (@args) = @_;
     my ($module) = $args[0];
@@ -59,6 +60,7 @@ sub _bootstrap {
 	    $modfname = substr($modfname, 0, 8);
 	}
 
+	# XXX: Multi-platform .dll support in PARs needs better than $Config.
 	$dl_dlext ||= do { require Config; $Config::Config{dlext} };
 
 	my $modpname = join((($^O eq 'MacOS') ? ':' : '/'), @modparts);
@@ -90,6 +92,7 @@ sub _bootstrap {
 
 	    if ($fh) {
 		local $PAR::__reading = 1;
+		binmode($fh);
 		print $fh $member->contents;
 		close $fh;
 	    }
@@ -111,9 +114,15 @@ L<PAR>
 
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
+PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
+send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
+and participate in the discussion.
+
+Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+
 =head1 COPYRIGHT
 
-Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2002, 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

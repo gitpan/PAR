@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #37 $ $Change: 4103 $ $DateTime: 2003/02/06 00:30:50 $
+# $Revision: #39 $ $Change: 4500 $ $DateTime: 2003/03/01 14:48:38 $
 
 package __par_pl;
 
@@ -213,6 +213,8 @@ my ($start_pos, $data_pos);
 	    }
 	    delete $require_list{$key};
 	} or return;
+
+	$INC{$module} = "/loader/$filename/$module";
 
 	if (defined(&IO::File::new)) {
 	    my $fh = IO::File->new_tmpfile or die $!;
@@ -484,33 +486,33 @@ sub tmpdir {
 my ($tmpfile, @tmpfiles);
 sub _tempfile {
     my ($ext, $crc) = @_;
+    my ($fh, $filename);
     
     if (defined $crc and !$ENV{PAR_CLEARTEMP}) {
-	my $filename = tmpdir() . "/$crc$ext";
+	$filename = tmpdir() . "/$crc$ext";
 	return (undef, $filename) if (-r $filename);
 
-	open my $fh, '>', $filename or die $!;
-	return ($fh, $filename);
+	open $fh, '>', $filename or die $!;
     }
-
-    if (defined &File::Temp::tempfile) {
+    elsif (defined &File::Temp::tempfile) {
 	# under Win32, the file is created with O_TEMPORARY,
 	# and will be deleted by the C runtime; having File::Temp
 	# delete it has the only effect of giving an ugly warnings
-	return File::Temp::tempfile(
+	($fh, $filename) = File::Temp::tempfile(
 	    SUFFIX	=> $ext,
 	    UNLINK	=> ($^O ne 'MSWin32'),
-	);
+	) or die $!;
     }
     else {
-	my $file;
 	my $tmpdir = tmpdir();
 	$tmpfile ||= ($$ . '0000');
-	do { $tmpfile++ } while -e ($file = "$tmpdir/$tmpfile$ext");
-	push @tmpfiles, $file;
-	open my $fh, ">", $file or die $!;
-	return ($fh, $file);
+	do { $tmpfile++ } while -e ($filename = "$tmpdir/$tmpfile$ext");
+	push @tmpfiles, $filename;
+	open $fh, ">", $filename or die $!;
     }
+
+    binmode($fh);
+    return ($fh, $filename);
 }
 END { unlink @tmpfiles if @tmpfiles }
 
@@ -537,6 +539,12 @@ L<PAR>, L<parl>, L<pp>
 =head1 AUTHORS
 
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
+
+PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
+send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
+and participate in the discussion.
+
+Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 

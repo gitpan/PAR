@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #11 $ $Change: 4101 $ $DateTime: 2003/02/05 23:45:02 $
+# $Revision: #12 $ $Change: 4502 $ $DateTime: 2003/03/01 15:17:41 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -9,6 +9,7 @@ the appropriate patches.  Corrections, additions, deletions welcome:
 Andy Lester		(PETDANCE)
 Antti Lankila
 Arthur Bergman		(ABERGMAN)
+D. Menzel
 Bill Atkins		(BATKINS)
 Chia-Liang Kao		(CLKAO)
 Glenn Mabbutt

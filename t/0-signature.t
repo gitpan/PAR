@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/0-signature.t $ $Author: autrijus $
-# $Revision: #4 $ $Change: 2031 $ $DateTime: 2002/11/07 02:07:47 $
+# $Revision: #5 $ $Change: 4115 $ $DateTime: 2003/02/06 23:43:38 $
 
 use strict;
 print "1..1\n";
@@ -14,8 +14,8 @@ elsif (!eval { require Module::Signature; 1 }) {
     print "ok 1 # skip - Module::Signature not installed\n";
 }
 else {
-#    (Module::Signature::verify() == Module::Signature::SIGNATURE_OK())
-#	or print "not ";
+    (Module::Signature::verify() == Module::Signature::SIGNATURE_OK())
+	or print "not ";
     print "ok 1 # Valid signature\n";
 }
 

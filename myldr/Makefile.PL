@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #11 $ $Change: 3309 $ $DateTime: 2003/01/07 13:30:13 $
+# $Revision: #12 $ $Change: 4114 $ $DateTime: 2003/02/06 23:41:10 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -26,7 +26,7 @@ my $f2c = File::Spec->catfile(".", "file2c.pl");
 my $par_pl = File::Spec->catfile('..', 'script', "par.pl");
 my $par_exe = File::Spec->catfile('.', "par$exe");
 my $parl_exe = File::Spec->catfile('..', 'script', "parl$exe");
-my $lib_path = join(' ', map "-I$_", @INC);
+my $lib_path = join(' ', map qq(-I"$_"), @INC);
 
 system($^X, $f2c, $par_pl, 'my_par_pl.c', 'load_me_2');
 

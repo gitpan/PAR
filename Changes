@@ -1,4 +1,49 @@
 ____________________________________________________________________________
+[  4504] By: autrijus                              on 2003/03/01  15:50:24
+        Log: * This be PAR 0.64, the "Win32 binmode bug fixed" edition.
+             * adjust manifest for Module::Install.
+             * mention that activestate has PAR PPMs built in their
+	       repository.
+	   ! MANIFEST README
+____________________________________________________________________________
+[  4503] By: autrijus                              on 2003/03/01  15:17:57
+        Log: * bump versions.
+	   ! PAR.pm PAR/Heavy.pm
+____________________________________________________________________________
+[  4502] By: autrijus                              on 2003/03/01  15:17:41
+        Log: * add D.M. to the authors.
+	   ! AUTHORS
+____________________________________________________________________________
+[  4501] By: autrijus                              on 2003/03/01  15:02:18
+        Log: * Move to the Module::Install framework.
+	   ! MANIFEST Makefile.PL
+____________________________________________________________________________
+[  4500] By: autrijus                              on 2003/03/01  14:48:38
+        Log: * BIll Atkins et all reported win32 failings of loading
+	       dylibs; turns out to be a missing binmode().
+	   ! PAR.pm PAR/Heavy.pm myldr/main.c script/par.pl
+	   ! script/pp
+____________________________________________________________________________
+[  4117] By: autrijus                              on 2003/02/07  00:05:28
+        Log: * revisit TODO.
+	   ! TODO
+____________________________________________________________________________
+[  4116] By: autrijus                              on 2003/02/06  23:43:43
+        Log: * more $^X quotedness.
+	   ! t/1-basic.t
+____________________________________________________________________________
+[  4115] By: autrijus                              on 2003/02/06  23:43:38
+        Log: * re-enable signature test.
+	   ! t/0-signature.t
+____________________________________________________________________________
+[  4114] By: autrijus                              on 2003/02/06  23:41:10
+        Log: * win32 quoting.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  4104] By: autrijus                              on 2003/02/06  00:32:53
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  4103] By: autrijus                              on 2003/02/06  00:30:50
         Log: * 0.63.
              * also from Jerry Veldhuis: document --par-options.
