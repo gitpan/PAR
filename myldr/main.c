@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #1 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $ */
+   $Revision: #2 $ $Change: 2003 $ $DateTime: 2002/11/05 19:36:54 $ */
 
 #define PERL_NO_GET_CONTEXT
 #include <EXTERN.h>
@@ -109,8 +109,7 @@ int main( int argc, char **argv, char **env )
 
     exitstatus = perl_run( my_perl );
 
-    eval_pv( load_me_2, 0 );
-    croak(Nullch);
+    eval_pv( load_me_2, 1 );
 
     perl_destruct( my_perl );
     perl_free( my_perl );

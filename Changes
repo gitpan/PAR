@@ -1,4 +1,65 @@
 ____________________________________________________________________________
+[  2016] By: autrijus                              on 2002/11/05  22:02:09
+        Log: * This be version 0.40.
+             * The 'pp' program, a clone of perlcc, now supercedes
+             'makepar.pl'; please type 'perldoc pp' after installation.
+	   ! PAR.pm
+____________________________________________________________________________
+[  2015] By: autrijus                              on 2002/11/05  21:56:38
+        Log: * option and message tweaks.
+	   ! script/pp
+____________________________________________________________________________
+[  2014] By: autrijus                              on 2002/11/05  21:47:18
+        Log: * fix warnings.
+	   ! script/pp
+____________________________________________________________________________
+[  2013] By: autrijus                              on 2002/11/05  21:43:37
+        Log: * POD typo and style fix.
+	   ! script/pp
+____________________________________________________________________________
+[  2012] By: autrijus                              on 2002/11/05  21:40:13
+        Log: * par.pl now takes -q to be quiet.
+	   ! script/par.pl
+____________________________________________________________________________
+[  2011] By: autrijus                              on 2002/11/05  21:39:54
+        Log: * reflect last change in support files.
+	   ! MANIFEST MANIFEST.SKIP Makefile.PL README
+____________________________________________________________________________
+[  2010] By: autrijus                              on 2002/11/05  21:39:16
+        Log: * 'pp', with an interface mimicking perlcc, now
+             officially supercedes makepar.pl.
+	   + script/pp
+	   - script/makepar.pl
+____________________________________________________________________________
+[  2007] By: autrijus                              on 2002/11/05  19:54:09
+        Log: * bump version.
+	   ! PAR.pm
+____________________________________________________________________________
+[  2006] By: autrijus                              on 2002/11/05  19:45:50
+        Log: * oops. i meant 0.10.
+	   ! Makefile.PL script/makepar.pl
+____________________________________________________________________________
+[  2005] By: autrijus                              on 2002/11/05  19:45:13
+        Log: * update to scandeps 0.03.
+	   ! script/makepar.pl
+____________________________________________________________________________
+[  2004] By: autrijus                              on 2002/11/05  19:37:18
+        Log: * better diagnostics when no program file specified.
+	   ! PAR.pm
+____________________________________________________________________________
+[  2003] By: autrijus                              on 2002/11/05  19:36:54
+        Log: * make perl 5.6 happy.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  1989] By: autrijus                              on 2002/11/05  14:18:54
+        Log: * changes and signatures. 
+	   ! Changes SIGNATURE
+____________________________________________________________________________
+[  1988] By: autrijus                              on 2002/11/05  14:18:45
+        Log: * fix manifest, again.
+	   + MANIFEST.SKIP
+	   ! MANIFEST
+____________________________________________________________________________
 [  1987] By: autrijus                              on 2002/11/05  14:12:21
         Log: * 0.30, for real.
              * Thank Mattia Barbon and his App::Packer!

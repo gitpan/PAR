@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #31 $ $Change: 1923 $ $DateTime: 2002/11/04 13:29:44 $
+# $Revision: #34 $ $Change: 2016 $ $DateTime: 2002/11/05 22:02:09 $
 
 package PAR;
-$PAR::VERSION = '0.30';
+$PAR::VERSION = '0.40';
 
 use 5.006;
 use strict;
@@ -15,12 +15,12 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.30 of PAR, released November 5, 2002.
+This document describes version 0.40 of PAR, released November 6, 2002.
 
 =head1 SYNOPSIS
 
 (If you want to make an executable that contains all module, scripts and
-data files, please consult L<makepar.pl> instead.)
+data files, please consult L<pp> instead.)
 
 Following examples assume a F<foo.par> file in Zip format; support for
 compressed gzip (F<*.tgz>) format is under consideration.
@@ -131,7 +131,7 @@ sub import {
 	    $file = 'main.pl';
 	}
 	else {
-	    die qq(No program file specified) unless @ARGV;
+	    die "Usage: $0 script_file_name.\n" unless @ARGV;
 
 	    $file = shift(@ARGV);
 	    $member = $zip->memberNamed($file)
@@ -223,7 +223,7 @@ sub unpar {
 My presentation, "Introduction to Perl Archive Toolkit":
 L<http://www.autrijus.org/par-intro/slide001.html>
 
-L<par.pl>
+L<par.pl>, L<pp>
 
 L<Archive::Zip>, L<perlfunc/require>
 

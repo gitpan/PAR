@@ -1,7 +1,9 @@
-^myldr/Makefile
-^myldr/main.o
-^myldr/my_par_pl.c
-^myldr/perlxsi.c
+^\..*\.sw.$
+^myldr/Makefile$
+^myldr/Makefile\.old$
+^myldr/main.[^c].*$
+^myldr/my_par_pl.c$
+^myldr/perlxsi.c$
 ^script/par(?!.pl)
 ^MANIFEST.bak$
 ^Makefile$

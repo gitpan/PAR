@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #14 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $
+# $Revision: #16 $ $Change: 2011 $ $DateTime: 2002/11/05 21:39:54 $
 
 use 5.006;
 use Config;
@@ -20,8 +20,7 @@ WriteMakefile(
     BINARY_LOCATION	=> 'x86/PAR.tar.gz',
     EXE_FILES		=> [
 	'script/par.pl',
-	'script/makepar.pl',
-	$have_cc ? ("script/par$Config{_exe}") : (),
+	$have_cc ? ("script/par$Config{_exe}", "script/pp") : (),
     ],
     NEEDS_LINKING	=> 0,
 
@@ -29,7 +28,7 @@ WriteMakefile(
 	'Archive::Zip'	    => 1.0,
 	'IO::File'	    => 0,
 	'File::Temp'	    => 0,
-	'Module::ScanDeps'  => 0.02,
+	'Module::ScanDeps'  => 0.10,
     },
 
     dist		=> {

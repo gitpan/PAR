@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #18 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $
+# $Revision: #19 $ $Change: 2012 $ $DateTime: 2002/11/05 21:40:13 $
 
 package __par_pl;
 
@@ -120,10 +120,10 @@ to build a truly self-containing executable:
 
 # Argument processing {{{
 my @par_args;
-my ($out, $bundle);
+my ($out, $bundle, $quiet);
 
 while (@ARGV) {
-    $ARGV[0] =~ /^-([AIMOBb])(.*)/ or last;
+    $ARGV[0] =~ /^-([AIMOBbq])(.*)/ or last;
 
     if ($1 eq 'I') {
 	push @INC, $2;
@@ -142,6 +142,9 @@ while (@ARGV) {
     }
     elsif ($1 eq 'B') {
 	$bundle = 'all';
+    }
+    elsif ($1 eq 'q') {
+	$quiet = 1;
     }
 
     shift(@ARGV);
@@ -295,7 +298,7 @@ if ($out) {
 	    }
 
 	    next unless defined $file;
-	    print "$path$file\n";
+	    print "$path$file\n" unless $quiet;
 	    open FILE, "$path$file" or die "$file$path: $!";
 
 	    print OUT "FILE";

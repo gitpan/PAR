@@ -11,8 +11,8 @@ TODO
 myldr/Makefile.PL
 myldr/file2c.pl
 myldr/main.c
-script/makepar.pl
 script/par.pl
+script/pp
 t/0-signature.t
 t/1-basic.t
 t/hello.par

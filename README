@@ -1,13 +1,13 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #10 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $
+# $Revision: #11 $ $Change: 2011 $ $DateTime: 2002/11/05 21:39:54 $
 
 This is the README file for PAR, a toolkit to use perl scripts
 and modules stored inside compressed .par files.
 
-Please see the PAR.pm for typical uses, script/makepar.pl for
-bundling prerequisite modules of scripts into a PAR file (aka
-PerlApp or Perl2exe), and script/par.pl for running/making
-self-contained PAR executables.
+Please see the PAR.pm for typical uses, script/pp for bundling
+prerequisite modules of scripts into a PAR file (aka PerlApp or
+Perl2exe), and script/par.pl for running/making self-contained
+PAR executables.
 
 There is also a presentation "Introduction to PAR", available on
 the web as <http://www.autrijus.org/par-intro/slide001.html>.
@@ -22,21 +22,16 @@ make
 make test
 make install
 
-If your system has a C compiler, the stand-alone binary version of
-par.pl will be compiled and installed automatically.  You can generate
-self-executable binaries by:
+If your system has a C compiler, the 'pp' tool and a stand-alone binary
+version of par.pl will be compiled and installed automatically.
+You can generate self-executable binaries by:
 
-    % makepar.pl -B -O./foo.par /home/test.pl
-    % par.exe -B -O./foo.exe foo.par	# self-contained .exe
-    % foo.exe				# runs anywhere with same OS
-					# (but see TODO for caveats)
+    % pp -o foo.exe /home/test.pl
 
 If you want to make a self-contained script instead (without bundling
 the perl binary and core modules), do this:
 
-    % makepar.pl -S -B -O./foo.par /home/test.pl
-    % par.pl -b -O./foo.pl foo.par	# or -B to bundle core modules
-    % perl foo.pl			# runs anywhere with core modules
+    % pp -p -o foo.par /home/test.pl
 
 * Copyright
 

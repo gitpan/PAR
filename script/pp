@@ -1,0 +1,468 @@
+#!/usr/bin/perl
+# $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
+# $Revision: #4 $ $Change: 2015 $ $DateTime: 2002/11/05 21:56:38 $
+
+use strict;
+use warnings;
+use 5.006_000;
+
+use FileHandle;
+use Config;
+use Fcntl qw(:DEFAULT :flock);
+use File::Temp qw(tempfile);
+use Cwd;
+our $VERSION = 2.03;
+$| = 1;
+
+$SIG{INT} = sub { exit(); }; # exit gracefully and clean up after ourselves.
+
+sub opt(*); # imal quoting
+sub is_win32();
+sub vprint;
+
+our ($Options);
+our ($Input => $Output);
+our ($logfh);
+our ($par_file);
+
+main();
+
+sub main {
+    parse_argv();
+    check_write($Output);
+    generate_code();
+    run_code();
+    _die("XXX: Not reached?");
+}
+
+#######################################################################
+
+sub compile_par { 
+    use Module::ScanDeps 0.10;
+    use Archive::Zip;
+    use File::Basename;
+
+    my ($cfh, $lose);
+
+    if (opt(S) || opt(p)) {
+        # We need to keep it.
+        if (opt(e)) {
+            $par_file = "a.out.par";
+        } else {
+            $par_file = $Input;
+            # File off extension if present
+            # hold on: plx is executable; also, careful of ordering!
+            $par_file =~ s/\.(?:p(?:lx|l|h)|m)\z//i;
+            $par_file .= ".par";
+            $par_file = $Output if opt(p) && $Output =~ /\.par\z/i;
+        }
+        check_write($par_file);
+    } else {
+        # Don't need to keep it, be safe with a tempfile.
+        $lose = 1;
+        ($cfh, $par_file) = tempfile("ppXXXXX", SUFFIX => ".par"); 
+        close $cfh; # See comment just below
+    }
+    vprint 1, "Writing PAR on $par_file";
+
+    my @modules = map { s/::/\//g; "$_.pm" } split(/\s+/, opt(M));
+
+    my %map = %{Module::ScanDeps::scan_deps(@modules, $Input)};
+    $map{$_} = $map{$_}{file} for keys %map;
+    # XXX: adding @modules back to $map{$_} if not found yet
+
+    my $size = 0;
+    my $zip = Archive::Zip->new;
+    foreach (sort {$map{$a} cmp $map{$b}} grep length $map{$_}, keys %map) {
+	next if !opt(B) and ($map{$_} eq "$Config::Config{privlib}/$_"
+			  or $map{$_} eq "$Config::Config{archlib}/$_");
+
+	vprint 2, "... adding $map{$_}";
+	next unless $zip;
+	$size += -s $map{$_};
+	$zip->addFile($map{$_}, "lib/$_");
+    }
+
+    if ($Input !~ /\.pm\z/i) {
+	$size += -s $Input;
+	$zip->addFile($Input, "script/main.pl");
+    }
+
+    $zip->writeToFileNamed($par_file);
+    my $newsize = -s $par_file;
+    vprint 2, sprintf("*** %s: %d bytes read, %d compressed, %2.2d%% saved.\n",
+	$par_file, $size, $newsize, (100 - ($newsize / $size * 100)));
+
+    par_to_exe() unless opt(p);
+    
+    if ($lose) {
+        vprint 2, "unlinking $par_file";
+        unlink $par_file or _die("can't unlink $par_file: $!"); 
+    }
+}
+
+sub par_to_exe { 
+    my $PAR = _can_run("par$Config{_exe}") or _die("can't find par executable");
+    vprint ("Running $PAR -q -B -O$Output $par_file");
+    system($PAR, "-q", "-B", "-O$Output", $par_file);
+}
+
+sub generate_code { 
+
+    vprint 0, "Compiling $Input";
+
+    compile_par();
+
+    exit(0) if (!opt('r'));
+}
+
+sub run_code {
+    vprint 0, "Running code";
+    run("$Output @ARGV");
+    exit(0);
+}
+
+# usage: vprint [level] msg args
+sub vprint {
+    my $level;
+    if (@_ == 1) {
+        $level = 1;
+    } elsif ($_[0] =~ /^\d$/) {
+        $level = shift;
+    } else {
+        # well, they forgot to use a number; means >0
+        $level = 0;
+    } 
+    my $msg = "@_";
+    $msg .= "\n" unless substr($msg, -1) eq "\n";
+    if (opt(v) > $level)
+    {
+         print        "$0: $msg" if !opt('log');
+	 print $logfh "$0: $msg" if  opt('log');
+    }
+}
+
+sub parse_argv {
+
+    use Getopt::Long; 
+
+    # disallows using long arguments
+    # Getopt::Long::Configure("bundling");
+
+    Getopt::Long::Configure("no_ignore_case");
+
+    # no difference in exists and defined for %ENV; also, a "0"
+    # argument or a "" would not help cc, so skip
+    unshift @ARGV, split ' ', $ENV{PERLCC_OPTS} if $ENV{PERLCC_OPTS};
+
+    $Options = {};
+    Getopt::Long::GetOptions( $Options,
+        'M:s',          # module directory
+        'I:s',          # include directories (FOR PERL, NOT FOR C)
+        'o:s',          # Output executable
+        'v:i',          # Verbosity level
+        'e:s',          # One-liner
+        'p',            # Compile only
+        'h',            # Help me
+        'S',            # Dump PAR files
+        'B',            # Bundle core modules
+	'r',            # run the resulting executable
+	'log:s',        # where to log compilation process information
+    );
+
+    $Options->{v} += 0;
+    $Options->{B} = 1 unless $Options->{p} and !$Options->{o};
+
+    helpme() if opt(h); # And exit
+
+    $Output = opt(o) || ( is_win32 ? 'a.exe' : 'a.out' );
+    $Output = is_win32() ? $Output : relativize($Output);
+    $logfh  = new FileHandle(">> " . opt('log')) if (opt('log'));
+
+    if (opt(e)) {
+        warn "$0: using -e 'code' as input file, ignoring @ARGV\n" if @ARGV;
+        my ($fh, $fake_input) = tempfile("ppXXXXX", SUFFIX => ".pl", UNLINK => 1); 
+	print $fh $Options->{e};
+	close $fh;
+	$Input = $fake_input;
+    } else {
+        $Input = shift @ARGV;  # XXX: more files?
+        _usage_and_die("$0: No input file specified\n") unless $Input;
+        warn "$0: using $Input as input file, ignoring @ARGV\n" if @ARGV;
+        check_read($Input);
+        check_perl($Input);
+        sanity_check();
+    }
+
+}
+
+sub opt(*) {
+    my $opt = shift;
+    return exists($Options->{$opt}) && ($Options->{$opt} || 0);
+} 
+
+# Check the input and output files make sense, are read/writeable.
+sub sanity_check {
+    if ($Input eq $Output) {
+        if ($Input eq 'a.out') {
+            _die("$0: Compiling a.out is probably not what you want to do.\n");
+            # You fully deserve what you get now. No you *don't*. typos happen.
+        } else {
+            warn "$0: Will not write output on top of input file, ",
+                "compiling to a.out instead\n";
+            $Output = "a.out";
+        }
+    }
+}
+
+sub check_read { 
+    my $file = shift;
+    unless (-r $file) {
+        _die("$0: Input file $file is a directory, not a file\n") if -d _;
+        unless (-e _) {
+            _die("$0: Input file $file was not found\n");
+        } else {
+            _die("$0: Cannot read input file $file: $!\n");
+        }
+    }
+    unless (-f _) {
+        # XXX: die?  don't try this on /dev/tty
+        warn "$0: WARNING: input $file is not a plain file\n";
+    } 
+}
+
+sub check_write {
+    my $file = shift;
+    if (-d $file) {
+        _die("$0: Cannot write on $file, is a directory\n");
+    }
+    if (-e _) {
+        _die("$0: Cannot write on $file: $!\n") unless -w _;
+    } 
+    unless (-w cwd()) { 
+        _die("$0: Cannot write in this directory: $!\n");
+    }
+}
+
+sub check_perl {
+    my $file = shift;
+    unless (-T $file) {
+        warn "$0: Binary `$file' sure doesn't smell like perl source!\n";
+        print "Checking file type... ";
+        system("file", $file);  
+        _die("Please try a perlier file!\n");
+    } 
+
+    open(my $handle, "<", $file)    or _die("XXX: can't open $file: $!");
+    local $_ = <$handle>;
+    if (/^#!/ && !/perl/) {
+        _die("$0: $file is a ", /^#!\s*(\S+)/, " script, not perl\n");
+    } 
+
+} 
+
+sub helpme {
+       print "perlcc compiler frontend, version $VERSION\n\n";
+       { no warnings;
+       exec "pod2usage $0";
+       exec "perldoc $0";
+       exec "pod2text $0";
+       }
+}
+
+sub relativize {
+	my ($args) = @_;
+
+	return() if ($args =~ m"^[/\\]");
+	return("./$args");
+}
+
+sub _die {
+    $logfh->print(@_) if opt('log');
+    print STDERR @_;
+    exit(); # should die eventually. However, needed so that a 'make compile'
+            # can compile all the way through to the end for standard dist.
+}
+
+sub _usage_and_die {
+    _die(<<EOU);
+$0: Usage:
+$0 [-o executable] [-r] [-O|-B|-c|-S] [-log log] [source[.pl] | -e oneliner]
+EOU
+}
+
+sub run {
+    my (@commands) = @_;
+
+    print interruptrun(@commands) if (!opt('log'));
+    $logfh->print(interruptrun(@commands)) if (opt('log'));
+}
+
+sub interruptrun
+{
+    my (@commands) = @_;
+
+    my $command = join('', @commands);
+    local(*FD);
+    my $pid = open(FD, "$command |");
+    my $text;
+    
+    local($SIG{HUP}) = sub { kill 9, $pid; exit };
+    local($SIG{INT}) = sub { kill 9, $pid; exit };
+
+    my $needalarm = 
+          ($ENV{PERLCC_TIMEOUT} && 
+	  $Config{'osname'} ne 'MSWin32' && 
+	  $command =~ m"(^|\s)perlcc\s");
+
+    eval 
+    {
+         local($SIG{ALRM}) = sub { die "INFINITE LOOP"; };
+         alarm($ENV{PERLCC_TIMEOUT}) if ($needalarm);
+	 $text = join('', <FD>);
+	 alarm(0) if ($needalarm);
+    };
+
+    if ($@)
+    {
+        eval { kill 'HUP', $pid };
+        vprint 0, "SYSTEM TIMEOUT (infinite loop?)\n";
+    }
+
+    close(FD);
+    return($text);
+}
+
+sub is_win32() { $^O =~ m/^MSWin/ }
+
+# check if we can run some command
+sub _can_run {
+    use File::Spec;
+    use ExtUtils::MakeMaker; # for maybe_command()
+
+    my $command = shift;
+
+    for my $dir (split(/$Config{path_sep}/, $ENV{PATH}), File::Basename::dirname($0)) {
+        my $abs = File::Spec->catfile($dir, $command);
+        return $abs if $abs = MM->maybe_command($abs);
+    }
+
+    return;
+}
+
+END {
+    unlink $par_file if ($par_file && !opt(S) && !opt(p));
+}
+
+### makepar ####
+
+__END__
+
+=head1 NAME
+
+pp - generate executables from Perl programs
+
+=head1 SYNOPSIS
+
+    $ pp hello			# Compiles into executable 'a.out'
+    $ pp -o hello hello.pl	# Compiles into executable 'hello'
+
+    $ pp -p file		# Creates a PAR file, 'file.par'
+    $ pp -S -o hello file	# Creates a PAR file, 'file.par',
+				# then compiles it to executable 'hello'
+    $ pp -p -o out.par file	# Creates a PAR file, 'out.par' from 'file'
+    $ pp -B -p -o out.par file	# same as above, but bundles core modules
+				# (-B is assumed when making executables)
+
+    $ pp -e 'print q//'		# Compiles a one-liner into 'a.out'
+    $ pp -c -e 'print q//'	# Creates a PAR file 'a.out.par'
+
+    $ pp -I /foo hello		# extra paths (notice the space after -I)
+    $ pp -M /foo hello		# extra modules (notice the space after -M)
+
+    $ pp -r hello		# compiles 'hello' into 'a.out', runs 'a.out'.
+    $ pp -r hello a b c		# compiles 'hello' into 'a.out', runs 'a.out'.
+				# with arguments 'a b c' 
+
+    $ pp hello -log c		# compiles 'hello' into 'a.out' logs compile
+				# log into 'c'. 
+
+=head1 DESCRIPTION
+
+F<pp> creates standalone executables from Perl programs, using the
+compressed packager provided by the L<PAR> module.  The programs
+are stored verbatim without compilation.
+
+You may think of F<pp> as "F<perlcc> that works without hassle". :-)
+
+=head1 OPTIONS
+
+=over 4
+
+=item -MI<module names>
+
+Adds the given modules to the dependency search patch and to the
+binary.
+
+=item -II<library directories>
+
+Adds the given directories to the perl library file search path.
+
+=item -o I<output file name>
+
+Specifies the file name for the final compiled executable.
+
+=item -p I<PAR file name>
+
+Create PAR archives only; do not compile to a standalone binary.
+
+=item -e I<perl code>
+
+Compile a one-liner, much the same as C<perl -e '...'>
+
+=item -S
+
+Do not delete generated PAR file after compilation.
+
+=item -v
+
+Increase verbosity of output; can be repeated for more verbose output.
+
+=item -r 
+
+Run the resulting compiled script after compiling it.
+
+=item -log
+
+Log the output of compiling to a file rather than to stdout.
+
+=back
+
+=head1 SEE ALSO
+
+L<PAR>, L<par.pl>, L<perlcc>
+
+=head1 ACKNOWLEDGMENTS
+
+Simon Cozens, Tom Christiansen and Edward Peschko for writing
+F<perlcc>; this program try to mimick its interface as close
+as possible, and used liberally from their code.
+
+Mattia Barbon for providing the C<myldr> binary loader code.
+
+Jeff Goff for suggesting the name C<pp>.
+
+=head1 AUTHORS
+
+Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+See L<http://www.perl.com/perl/misc/Artistic.html>
+
+=cut
