@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #28 $ $Change: 2104 $ $DateTime: 2002/11/13 10:59:21 $
+# $Revision: #29 $ $Change: 2576 $ $DateTime: 2002/12/03 00:32:31 $
 
 package __par_pl;
 
@@ -121,58 +121,6 @@ to build a truly self-containing executable:
 
 =cut
 
-# Argument processing {{{
-my @par_args;
-my ($out, $bundle, $quiet);
-
-while (@ARGV) {
-    $ARGV[0] =~ /^-([AIMOBbq])(.*)/ or last;
-
-    if ($1 eq 'I') {
-	push @INC, $2;
-    }
-    elsif ($1 eq 'M') {
-	eval "use $2";
-    }
-    elsif ($1 eq 'A') {
-	push @par_args, $2;
-    }
-    elsif ($1 eq 'O') {
-	$out = $2;
-    }
-    elsif ($1 eq 'b') {
-	$bundle = 'site';
-    }
-    elsif ($1 eq 'B') {
-	$bundle = 'all';
-    }
-    elsif ($1 eq 'q') {
-	$quiet = 1;
-    }
-
-    shift(@ARGV);
-}
-
-# fix $0 if invoked from PATH
-unless (-f $0) {
-    $Config{path_sep} = ($^O =~ /^MSWin/ ? ';' : ':');
-    $Config{_exe} = ($^O =~ /^MSWin|OS2/ ? '.exe' : '');
-    $Config{_delim} = ($^O =~ /^MSWin|OS2/ ? '\\' : '/');
-    if (-f "$0$Config{_exe}") {
-        $0 = "$0$Config{_exe}";
-    }
-    else {
-        foreach my $dir (split /$Config{path_sep}/, $ENV{PATH}) {
-	    (($0 = "$dir$Config{_delim}$0$Config{_exe}"), last)
-		if -f "$dir$Config{_delim}$0$Config{_exe}";
-	    (($0 = "$dir$Config{_delim}$0"), last)
-		if -f "$dir$Config{_delim}$0";
-	}
-    }
-}
-
-# }}}
-
 # Magic string checking and extracting bundled modules {{{
 my ($start_pos, $data_pos);
 {
@@ -276,6 +224,61 @@ my ($start_pos, $data_pos);
     last unless $buf eq "PK\003\004";
     $start_pos = (tell _FH) - 4;
 }
+# }}}
+
+# Argument processing {{{
+my @par_args;
+my ($out, $bundle, $quiet);
+
+# Don't swallow arguments for compiled executables without --par-options
+if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
+    while (@ARGV) {
+	$ARGV[0] =~ /^-([AIMOBbq])(.*)/ or last;
+
+	if ($1 eq 'I') {
+	    push @INC, $2;
+	}
+	elsif ($1 eq 'M') {
+	    eval "use $2";
+	}
+	elsif ($1 eq 'A') {
+	    push @par_args, $2;
+	}
+	elsif ($1 eq 'O') {
+	    $out = $2;
+	}
+	elsif ($1 eq 'b') {
+	    $bundle = 'site';
+	}
+	elsif ($1 eq 'B') {
+	    $bundle = 'all';
+	}
+	elsif ($1 eq 'q') {
+	    $quiet = 1;
+	}
+
+	shift(@ARGV);
+    }
+}
+
+# fix $0 if invoked from PATH
+unless (-f $0) {
+    $Config{path_sep} = ($^O =~ /^MSWin/ ? ';' : ':');
+    $Config{_exe} = ($^O =~ /^MSWin|OS2/ ? '.exe' : '');
+    $Config{_delim} = ($^O =~ /^MSWin|OS2/ ? '\\' : '/');
+    if (-f "$0$Config{_exe}") {
+        $0 = "$0$Config{_exe}";
+    }
+    else {
+        foreach my $dir (split /$Config{path_sep}/, $ENV{PATH}) {
+	    (($0 = "$dir$Config{_delim}$0$Config{_exe}"), last)
+		if -f "$dir$Config{_delim}$0$Config{_exe}";
+	    (($0 = "$dir$Config{_delim}$0"), last)
+		if -f "$dir$Config{_delim}$0";
+	}
+    }
+}
+
 # }}}
 
 # Output mode (-O) handling {{{

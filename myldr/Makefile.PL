@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #3 $ $Change: 2060 $ $DateTime: 2002/11/08 20:31:07 $
+# $Revision: #5 $ $Change: 2575 $ $DateTime: 2002/12/03 00:31:38 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -16,7 +16,7 @@ xsinit(undef);
 my $debug = 0;
 
 my $exe = $Config{_exe};
-my $o = $Config{_o};
+my $o = $Config{obj_ext};
 my $pccflags = ccopts;
 my $pldflags = ldopts;
 my $ld = $Config{ld};
@@ -35,12 +35,12 @@ if( $is_MSVC ) {
   $out = '-out:';
   $ccdebug = $debug ? '-Zi ' : '';
   $lddebug = $debug ? '-debug ' : '-release ';
-  $warn = '-W3';
+  $warn = $debug ? '-W3' : '';
 } else {
   $out = '-o ';
   $ccdebug = $debug ? '-g ' : '';
   $lddebug = $debug ? '' : '-s ';
-  $warn = '-Wall -Wno-comments ';
+  $warn = $debug ? '-Wall -Wno-comments ' : '';
 }
 
 $rm = $^O eq 'MSWin32' ? '$(PERL) -MExtUtils::Command -e rm_f' : 'rm';

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #19 $ $Change: 2193 $ $DateTime: 2002/11/15 17:58:13 $
+# $Revision: #20 $ $Change: 2574 $ $DateTime: 2002/12/03 00:27:26 $
 
 use 5.006;
 use Config;
@@ -63,9 +63,12 @@ EOT
 sub _can_run {
     my $command = shift;
 
+    # absoluate pathname?
+    return $command if (-x $command or $command = MM->maybe_command($command));
+
     for my $dir (split /$Config{path_sep}/, $ENV{PATH}) {
         my $abs = File::Spec->catfile($dir, $command);
-        return $abs if $abs = MM->maybe_command($abs);
+        return $abs if (-x $abs or $abs = MM->maybe_command($abs));
     }
 
     return;

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #6 $ $Change: 2075 $ $DateTime: 2002/11/10 06:33:51 $
+# $Revision: #8 $ $Change: 2577 $ $DateTime: 2002/12/03 00:33:18 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -16,9 +16,11 @@ Indy Singh
 Jan Dubois	(JDB)
 Jeff Goff	(JGOFF)
 Jesse Vincent	(JESSE)
+Markus Jansen
 Mattia Barbon	(MBARBON)
 Matt Sergeant	(MSERGEANT)
 Nicholas Clark	(NWCLARK)
+Robert Allerstorfer
 Robert Creager	(RCREAGER)
 Tim Conrow
 Ton Hospel
