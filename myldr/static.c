@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #25 $ $Change: 9608 $ $DateTime: 2004/01/04 20:17:28 $
+   $Revision: #26 $ $Change: 9612 $ $DateTime: 2004/01/05 06:11:27 $
    vim: expandtab shiftwidth=4
 */
 
@@ -122,9 +122,6 @@ int main ( int argc, char **argv, char **env )
     return 2;
 #endif
 
-    if ( (getenv("PAR_CLEAN") != NULL) && (strlen(getenv("PAR_CLEAN")) > 0) ) {
-        par_rmtmpdir(stmpdir);
-        par_rmtmpdir(par_dirname(stmpdir));
-    }
+    par_cleanup(stmpdir);
     return i;
 }

@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #17 $ $Change: 9608 $ $DateTime: 2004/01/04 20:17:28 $ vim: expandtab shiftwidth=4
+# $Revision: #18 $ $Change: 9622 $ $DateTime: 2004/01/06 20:48:51 $ vim: expandtab shiftwidth=4
 
 package PAR::Heavy;
-$PAR::Heavy::VERSION = '0.07';
+$PAR::Heavy::VERSION = '0.08';
 
 =head1 NAME
 
@@ -48,39 +48,41 @@ sub _dl_findfile {
 # Find and extract .dll from PAR files for a given dynamic module.
 sub _bootstrap {
     my (@args) = @_;
-    my ($module) = $args[0];
-    my (@dirs, $file);
+    my ($module) = $args[0] or return;
 
-    if ($module) {
-        my @modparts = split(/::/, $module);
-        my $modfname = $modparts[-1];
+    my @modparts = split(/::/, $module);
+    my $modfname = $modparts[-1];
 
-        $modfname = &DynaLoader::mod2fname(\@modparts)
-            if defined &DynaLoader::mod2fname;
+    $modfname = &DynaLoader::mod2fname(\@modparts)
+        if defined &DynaLoader::mod2fname;
 
-        if (($^O eq 'NetWare') && (length($modfname) > 8)) {
-            $modfname = substr($modfname, 0, 8);
-        }
+    if (($^O eq 'NetWare') && (length($modfname) > 8)) {
+        $modfname = substr($modfname, 0, 8);
+    }
 
-        # XXX: Multi-platform .dll support in PARs needs better than $Config.
-        $dlext ||= do { require Config; $Config::Config{dlext} };
+    # XXX: Multi-platform .dll support in PARs needs better than $Config.
+    $dlext ||= do {
+        require Config;
+        (defined %Config::Config) ? $Config::Config{dlext} : '';
+    };
 
-        my $modpname = join((($^O eq 'MacOS') ? ':' : '/'), @modparts);
-        my $file = $cache_key = "auto/$modpname/$modfname.$dlext";
+    my $modpname = join((($^O eq 'MacOS') ? ':' : '/'), @modparts);
+    my $file = $cache_key = "auto/$modpname/$modfname.$dlext";
 
-        if ($FullCache{$file}) {
-            local $DynaLoader::do_expand = 1;
-            return $bootstrap->(@args);
-        }
+    if ($FullCache{$file}) {
+        local $DynaLoader::do_expand = 1;
+        return $bootstrap->(@args);
+    }
 
-        my $member = PAR::find_par(undef, $file, 1) if defined &PAR::find_par;
-        return $bootstrap->(@args) unless $member;
+    my $member = PAR::find_par(undef, $file, 1) if defined &PAR::find_par;
+    return $bootstrap->(@args) unless $member;
 
-        $FullCache{$file} = _dl_extract($member, $file);
+    $FullCache{$file} = _dl_extract($member, $file);
 
-        # Now extract all associated shared objs in the same auto/ path
-        my $pat = $member->fileName;
-        $pat =~ s{[^/]*$}{};
+    # Now extract all associated shared objs in the same auto/ path
+    my $pat = $member->fileName;
+    $pat =~ s{[^/]*$}{};
+    if ($PAR::LastAccessedPAR) {
         foreach my $member ( $PAR::LastAccessedPAR->members ) {
             next if $member->isDirectory;
 
@@ -89,10 +91,10 @@ sub _bootstrap {
             $name =~ s{.*/}{};
             _dl_extract($member, $file, $name);
         }
-
-        local $DynaLoader::do_expand = 1;
-        return $bootstrap->(@args);
     }
+
+    local $DynaLoader::do_expand = 1;
+    return $bootstrap->(@args);
 }
 
 sub _dl_extract {

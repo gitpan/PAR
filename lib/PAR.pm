@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #54 $ $Change: 9609 $ $DateTime: 2004/01/04 20:20:53 $ vim: expandtab shiftwidth=4
+# $Revision: #55 $ $Change: 9623 $ $DateTime: 2004/01/06 21:02:47 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.77_99';
+$PAR::VERSION = '0.78';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.77_99 of PAR, released January 5, 2004.
+This document describes version 0.78 of PAR, released January 7, 2004.
 
 =head1 SYNOPSIS
 
@@ -60,7 +60,7 @@ Run F<script/test.pl> or F<test.pl> from F<foo.par>:
 However, if the F<.par> archive contains either F<script/main.pl> or
 F<main.pl>, then it is used instead:
 
-    % perl -MPAR foo.par test.pl        # runs main.pl, with 'test.pl' as @ARGV
+    % perl -MPAR foo.par test.pl        # runs main.pl; @ARGV is 'test.pl'
 
 Use in a program:
 
@@ -116,22 +116,41 @@ Please see L</SYNOPSIS> for most typical use cases.
 
 =head1 NOTES
 
-In the next few releases, it is expected that the F<META.yml> packed
-inside the PAR file will control the default behavior of temporary file
-creation, among other things; F<pp> will also provide options to set those
-PAR-specific attributes.
+Settings in F<META.yml> packed inside the PAR file may affect PAR's
+operation.  For example, F<pp> provides the C<-C> (C<--clean>) option
+to control the default behavior of temporary file creation.
  
-Currently, F<pp>-generated PAR files will attach four such PAR-specific
+Currently, F<pp>-generated PAR files may attach four PAR-specific
 attributes in F<META.yml>:
 
     par:
       clean: 0          # default value of PAR_CLEAN
       signature: ''     # key ID of the SIGNATURE file
-      verbatim: 0       # were packed prerequisite's PODs preserved?
+      verbatim: 0       # was packed prerequisite's PODs preserved?
       version: x.xx     # PAR.pm version that generated this PAR
 
-Additional attributes, like C<cipher> and C<decrypt_key>, are being
-discussed on the mailing list.  Join us if you have an idea or two!
+User-defined environment variables, like I<PAR_CLEAN>, always
+overrides the ones set in F<META.yml>.  The algorithm for generating
+caching/temporary directory is as follows:
+
+=over 4
+
+=item *
+
+If I<PAR_TEMP> is specified, use it as the cache directory for
+extracted libraries, and do not clean it up after execution.
+
+=item *
+
+If I<PAR_TEMP> is not set, but I<PAR_CLEAN> is specified, set
+I<PAR_TEMP> to C<I<TEMP>\par-I<USER>\temp-I<PID>\>, cleaning it
+after execution.
+
+=item *
+
+If both are not set, use C<I<TEMP>\par-I<USER>\temp-I<MTIME>\>
+as the I<PAR_TEMP>, reusing any existing files inside.  I<MTIME>
+is the last-modified timestamp of the program.
 
 =cut
 
@@ -403,7 +422,7 @@ sub _tempfile {
 
         # under Win32, the file is created with O_TEMPORARY,
         # and will be deleted by the C runtime; having File::Temp
-        # delete it has the only effect of giving an ugly warnings
+        # delete it has the only effect of giving ugly warnings
         my $fh = File::Temp::tempfile(
             DIR     => $par_temp,
             UNLINK  => ($^O ne 'MSWin32'),

@@ -118,7 +118,7 @@ char *par_dirname (const char *path) {
 void par_init_env () {
     char par_clean[] = "__ENV_PAR_CLEAN__               \0";
 
-    if ( (getenv("PAR_TEMP") != NULL) && (getenv("PAR_INTIALIZED") == NULL) ) {
+    if ( (getenv("PAR_TEMP") != NULL) && (getenv("PAR_INITIALIZED") == NULL) ) {
         putenv("PAR_CLEAN=");
     }
     else if ( getenv("PAR_CLEAN") == NULL ) {
@@ -126,5 +126,16 @@ void par_init_env () {
     }
 
     return;
+}
+
+int par_env_clean () {
+    static int rv = -1;
+
+    if (rv == -1) {
+        char *buf = getenv("PAR_CLEAN");
+        rv = ( ((buf != NULL) && (*buf != '\0') && (*buf != '0')) ? 1 : 0);
+    }
+
+    return rv;
 }
 

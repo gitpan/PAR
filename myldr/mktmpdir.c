@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #26 $ $Change: 9604 $ $DateTime: 2004/01/04 18:08:49 $
+   $Revision: #27 $ $Change: 9612 $ $DateTime: 2004/01/05 06:11:27 $
    vim: expandtab shiftwidth=4
 */
 
@@ -77,7 +77,7 @@ char *par_mktmpdir ( char **argv ) {
 
     progname = par_findprog(argv[0], getenv("TEMP"));
 
-    if ( (!getenv("PAR_CLEAN")) && (par_lstat(progname, &PL_statbuf) == 0)) {
+    if ( par_env_clean() && (par_lstat(progname, &PL_statbuf) == 0)) {
         /* "$TEMP/par-$USER/cache-$MTIME" */
 
         sprintf(
@@ -202,3 +202,11 @@ void par_rmtmpdir ( char *stmpdir ) {
     if (stmpdir) rmdir(stmpdir);
 }
 #endif
+
+void par_cleanup (char *stmpdir) {
+    if ( par_env_clean() ) {
+        par_rmtmpdir(stmpdir);
+        par_rmtmpdir(par_dirname(stmpdir));
+    }
+}
+
