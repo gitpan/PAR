@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #1 $ $Change: 1518 $ $DateTime: 2002/10/18 21:59:19 $
+# $Revision: #2 $ $Change: 1521 $ $DateTime: 2002/10/19 02:30:49 $
 
 This is the README file for PAR, a module to use perl scripts
 and modules stored inside compressed .par files.
@@ -16,6 +16,15 @@ perl Makefile.PL
 make
 make test
 make install
+
+After installation, if you want to enable stand-alone binary support,
+please apply the included patch to the B::C module first (5.8.0 only):
+
+patch `perl -MB::C -e'print $INC{"B/C.pm"}'` < patches/perl580.diff
+
+And then:
+
+perlcc -o /usr/local/bin/par script/par.pl
 
 * Copyright
 

@@ -1,4 +1,22 @@
 ____________________________________________________________________________
+[  1522] By: autrijus                              on 2002/10/19  02:31:09
+        Log: * This be 0.04.
+             * updated manifest and test files.
+	   ! MANIFEST t/1-basic.t t/hello.par
+____________________________________________________________________________
+[  1521] By: autrijus                              on 2002/10/19  02:30:49
+        Log: * feature request from Antti Lankila: stand-alone
+             par executable via -O.
+             * now automatically executes 'main.pl' from .par files.
+             * incoporate a patch for 5.8.0's broken B::C.
+             * updated manpage and instructions.
+	   + patches/perl580.diff
+	   ! PAR.pm README script/par.pl
+____________________________________________________________________________
+[  1520] By: autrijus                              on 2002/10/18  22:22:27
+        Log: * changes and signature.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1519] By: autrijus                              on 2002/10/18  22:00:34
         Log: * oops.
 	   ! Makefile.PL

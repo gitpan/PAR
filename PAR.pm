@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 1518 $ $DateTime: 2002/10/18 21:59:19 $
+# $Revision: #5 $ $Change: 1521 $ $DateTime: 2002/10/19 02:30:49 $
 
 package PAR;
-$PAR::VERSION = '0.03';
+$PAR::VERSION = '0.04';
 
 use 5.006;
 use strict;
@@ -13,9 +13,12 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.03 of PAR.
+This document describes version 0.04 of PAR.
 
 =head1 SYNOPSIS
+
+(If you want to make an executable that contains all module,
+scrip and data files, please consult L<par.pl> instead.)
 
 Following examples assume a F<foo.par> file in Zip format;
 support for compressed gzip (F<*.tgz>) format is planned.
@@ -33,6 +36,7 @@ Same thing, but search F<foo.par> in the F<@INC>;
 Run F<test.pl> or F<script/test.pl> from F<foo.par>:
 
     % perl -MPAR foo.par test.pl	# only when $0 ends in '.par'
+    % perl -MPAR foo.par		# looks for 'main.pl' by default
 
 Used in a program:
 
@@ -81,20 +85,20 @@ sub import {
 	push @PAR_INC, $par if unpar($par);
     }
 
-    push @INC, \&incpar;
+    push @INC, \&incpar unless grep { $_ == \&incpar } @INC;
 
-    if ($0 =~ /\.par$/i) {
-	die "No program file specified" unless @ARGV;
+    if (unpar($0)) {
+	push @PAR_INC, $0;
 
-	push @PAR_INC, $0 if unpar($0);
-
-	my $file = shift(@ARGV);
-	my $zip = Archive::Zip->new;
-	$zip->read($0);
-
+	my $has_argv = @ARGV;
+	my $file = $has_argv ? shift(@ARGV) : 'main.pl';
+	my $zip = $LibCache{$0};
 	my $member = $zip->memberNamed($file)
 		  || $zip->memberNamed("script/$file")
-	    or die qq(Can't open perl script "$file": No such file or directory);
+	    or die ( $has_argv
+		? qq(Can't open perl script "$file": No such file or directory)
+		: qq(No program file specified)
+	    );
 
 	$0 = $file;
 	eval $member->contents;
@@ -132,15 +136,14 @@ sub par_handle {
 
 sub unpar {
     my ($par, $file) = @_;
-
-    unless ($par =~ /\.par$/i and -e $par) {
-	$par .= ".par";
-	return unless -e $par;
-    }
-
     my $zip = $LibCache{$par};
 
     unless ($zip) {
+	unless ($par =~ /\.par$/i and -e $par) {
+	    $par .= ".par";
+	    return unless -e $par;
+	}
+
 	require Archive::Zip;
 	$zip = Archive::Zip->new;
 	next unless $zip->read($par) == Archive::Zip::AZ_OK();
@@ -189,7 +192,7 @@ Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2001 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or 
 modify it under the same terms as Perl itself.

@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/1-basic.t $ $Author: autrijus $
-# $Revision: #2 $ $Change: 1515 $ $DateTime: 2002/10/18 20:51:53 $
+# $Revision: #3 $ $Change: 1522 $ $DateTime: 2002/10/19 02:31:09 $
 
 use Test;
-BEGIN { plan tests => 6 }
+BEGIN { plan tests => 8 }
 
 ok(
     `$^X -Mblib -MPAR -It/hello -MHello -e 'Hello::hello'`,
@@ -13,6 +13,16 @@ ok(
 ok(
     `$^X -Mblib -MPAR t/hello.par hello.pl`,
     "Hello, world!\nGoodbye, world!\n",
+);
+
+ok(
+    `$^X -Mblib -MPAR t/hello.par`,
+    "Good day!\n",
+);
+
+ok(
+    `$^X -Mblib script/par.pl t/hello.par`,
+    "Good day!\n",
 );
 
 require PAR;
