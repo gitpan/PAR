@@ -2,23 +2,21 @@
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
 # $Revision: #5 $ $Change: 2021 $ $DateTime: 2002/11/06 12:04:04 $
 
+use 5.006;
 use strict;
 use warnings;
-use 5.006_000;
 
-use FileHandle;
 use Config;
-use Fcntl qw(:DEFAULT :flock);
 use File::Temp qw(tempfile);
 use Cwd;
-our $VERSION = 2.03;
+our $VERSION = 0.02;
 $| = 1;
 
 $SIG{INT} = sub { exit(); }; # exit gracefully and clean up after ourselves.
 
 sub opt(*); # imal quoting
 sub is_win32();
-sub vprint;
+sub vprint($@);
 
 our ($Options);
 our ($Input => $Output);
@@ -71,7 +69,10 @@ sub compile_par {
     } split(/\s+/, opt(M));
 
     my %map;
-    Module::ScanDeps::add_deps( rv => \%map, modules => \@modules );
+    Module::ScanDeps::add_deps(
+	rv	=> \%map,
+	modules	=> \@modules,
+    );
     Module::ScanDeps::scan_deps(
 	rv	=> \%map,
 	files	=> [ @modules, $Input ],
@@ -99,8 +100,10 @@ sub compile_par {
 
     $zip->writeToFileNamed($par_file);
     my $newsize = -s $par_file;
-    vprint 2, sprintf("*** %s: %d bytes read, %d compressed, %2.2d%% saved.\n",
-	$par_file, $size, $newsize, (100 - ($newsize / $size * 100)));
+    vprint 2, sprintf(
+	"*** %s: %d bytes read, %d compressed, %2.2d%% saved.\n",
+	$par_file, $size, $newsize, (100 - ($newsize / $size * 100))
+    );
 
     par_to_exe() unless opt(p);
     
@@ -112,57 +115,39 @@ sub compile_par {
 
 sub par_to_exe { 
     my $PAR = _can_run("par$Config{_exe}") or _die("can't find par executable");
-    vprint ("Running $PAR -q -B -O$Output $par_file");
+    vprint 0, "Running $PAR -q -B -O$Output $par_file";
     system($PAR, "-q", "-B", "-O$Output", $par_file);
 }
 
 sub generate_code { 
-
     vprint 0, "Compiling $Input";
-
     compile_par();
-
     exit(0) if (!opt('r'));
 }
 
 sub run_code {
     vprint 0, "Running code";
-    run("$Output @ARGV");
+    system($Output, @ARGV);
     exit(0);
 }
 
-# usage: vprint [level] msg args
-sub vprint {
-    my $level;
-    if (@_ == 1) {
-        $level = 1;
-    } elsif ($_[0] =~ /^\d$/) {
-        $level = shift;
-    } else {
-        # well, they forgot to use a number; means >0
-        $level = 0;
-    } 
+sub vprint ($@) {
+    my $level = shift;
     my $msg = "@_";
     $msg .= "\n" unless substr($msg, -1) eq "\n";
-    if (opt(v) > $level)
-    {
+    if (opt(v) > $level) {
          print        "$0: $msg" if !opt('log');
 	 print $logfh "$0: $msg" if  opt('log');
     }
 }
 
 sub parse_argv {
-
     use Getopt::Long; 
-
-    # disallows using long arguments
-    # Getopt::Long::Configure("bundling");
-
     Getopt::Long::Configure("no_ignore_case");
 
     # no difference in exists and defined for %ENV; also, a "0"
     # argument or a "" would not help cc, so skip
-    unshift @ARGV, split ' ', $ENV{PERLCC_OPTS} if $ENV{PERLCC_OPTS};
+    unshift @ARGV, split ' ', $ENV{PP_OPTS} if $ENV{PP_OPTS};
 
     $Options = {};
     Getopt::Long::GetOptions( $Options,
@@ -171,38 +156,37 @@ sub parse_argv {
         'o:s',          # Output executable
         'v:i',          # Verbosity level
         'e:s',          # One-liner
-        'p',            # Compile only
+        'p',            # Generate PAR only
         'h',            # Help me
         'S',            # Dump PAR files
         'B',            # Bundle core modules
 	'r',            # run the resulting executable
-	'log:s',        # where to log compilation process information
+	'log:s',        # where to log packaging process information
     );
 
     $Options->{v} += 0;
-    $Options->{B} = 1 unless $Options->{p} and !$Options->{o};
+    $Options->{B} = 1 unless opt(p) and !opt(o);
 
     helpme() if opt(h); # And exit
 
-    $Output = opt(o) || ( is_win32 ? 'a.exe' : 'a.out' );
-    $Output = is_win32() ? $Output : relativize($Output);
-    $logfh  = new FileHandle(">> " . opt('log')) if (opt('log'));
+    $Output = opt(o) || ( 'a' . ($Config{_exe} || '.out') );
+    open $logfh, '>>', opt('log') or die ("XXX: Cannot open log: $!") if (opt('log'));
 
     if (opt(e)) {
-        warn "$0: using -e 'code' as input file, ignoring @ARGV\n" if @ARGV;
+        warn "$0: using -e 'code' as input file, ignoring @ARGV\n" if @ARGV and !opt(r);
         my ($fh, $fake_input) = tempfile("ppXXXXX", SUFFIX => ".pl", UNLINK => 1); 
 	print $fh $Options->{e};
 	close $fh;
 	$Input = $fake_input;
-    } else {
-        $Input = shift @ARGV;  # XXX: more files?
+    }
+    else {
+        $Input = shift @ARGV;
         _usage_and_die("$0: No input file specified\n") unless $Input;
-        warn "$0: using $Input as input file, ignoring @ARGV\n" if @ARGV;
+        warn "$0: using $Input as input file, ignoring @ARGV\n" if @ARGV and !opt(r);
         check_read($Input);
         check_perl($Input);
         sanity_check();
     }
-
 }
 
 sub opt(*) {
@@ -210,8 +194,8 @@ sub opt(*) {
     return exists($Options->{$opt}) && ($Options->{$opt} || 0);
 } 
 
-# Check the input and output files make sense, are read/writeable.
 sub sanity_check {
+    # Check the input and output files make sense, are read/writable.
     if ($Input eq $Output) {
         if ($Input eq 'a.out') {
             _die("$0: Compiling a.out is probably not what you want to do.\n");
@@ -262,7 +246,7 @@ sub check_perl {
         _die("Please try a perlier file!\n");
     } 
 
-    open(my $handle, "<", $file)    or _die("XXX: can't open $file: $!");
+    open(my $handle, "<", $file) or _die("XXX: can't open $file: $!");
     local $_ = <$handle>;
     if (/^#!/ && !/perl/) {
         _die("$0: $file is a ", /^#!\s*(\S+)/, " script, not perl\n");
@@ -271,83 +255,31 @@ sub check_perl {
 } 
 
 sub helpme {
-       print "perlcc compiler frontend, version $VERSION\n\n";
-       { no warnings;
-       exec "pod2usage $0";
-       exec "perldoc $0";
-       exec "pod2text $0";
-       }
-}
-
-sub relativize {
-	my ($args) = @_;
-
-	return() if ($args =~ m"^[/\\]");
-	return("./$args");
+    print "Perl Packager, version $VERSION\n\n";
+    {
+	no warnings;
+	exec "pod2usage $0";
+	exec "perldoc $0";
+	exec "pod2text $0";
+    }
 }
 
 sub _die {
     $logfh->print(@_) if opt('log');
     print STDERR @_;
-    exit(); # should die eventually. However, needed so that a 'make compile'
-            # can compile all the way through to the end for standard dist.
+    exit();
 }
 
 sub _usage_and_die {
     _die(<<EOU);
 $0: Usage:
-$0 [-o executable] [-r] [-O|-B|-c|-S] [-log log] [source[.pl] | -e oneliner]
+$0 [-o executable] [-r] [-O|-B|-p|-S] [-log log] [source[.pl] | -e oneliner]
 EOU
 }
 
-sub run {
-    my (@commands) = @_;
-
-    print interruptrun(@commands) if (!opt('log'));
-    $logfh->print(interruptrun(@commands)) if (opt('log'));
-}
-
-sub interruptrun
-{
-    my (@commands) = @_;
-
-    my $command = join('', @commands);
-    local(*FD);
-    my $pid = open(FD, "$command |");
-    my $text;
-    
-    local($SIG{HUP}) = sub { kill 9, $pid; exit };
-    local($SIG{INT}) = sub { kill 9, $pid; exit };
-
-    my $needalarm = 
-          ($ENV{PERLCC_TIMEOUT} && 
-	  $Config{'osname'} ne 'MSWin32' && 
-	  $command =~ m"(^|\s)perlcc\s");
-
-    eval 
-    {
-         local($SIG{ALRM}) = sub { die "INFINITE LOOP"; };
-         alarm($ENV{PERLCC_TIMEOUT}) if ($needalarm);
-	 $text = join('', <FD>);
-	 alarm(0) if ($needalarm);
-    };
-
-    if ($@)
-    {
-        eval { kill 'HUP', $pid };
-        vprint 0, "SYSTEM TIMEOUT (infinite loop?)\n";
-    }
-
-    close(FD);
-    return($text);
-}
-
-sub is_win32() { $^O =~ m/^MSWin/ }
-
-# check if we can run some command
 sub _can_run {
     use File::Spec;
-    use ExtUtils::MakeMaker; # for maybe_command()
+    use ExtUtils::MakeMaker; # just for maybe_command()
 
     my $command = shift;
 
@@ -363,75 +295,82 @@ END {
     unlink $par_file if ($par_file && !opt(S) && !opt(p));
 }
 
-### makepar ####
-
 __END__
 
 =head1 NAME
 
-pp - generate executables from Perl programs
+pp - Perl Packager
 
 =head1 SYNOPSIS
 
-    $ pp hello			# Compiles into executable 'a.out'
-    $ pp -o hello hello.pl	# Compiles into executable 'hello'
+    % pp hello			# Packages 'hello' into executable 'a.out'
+    % pp -o hello hello.pl	# Packages 'hello.pl' into executable 'hello'
 
-    $ pp -p file		# Creates a PAR file, 'file.par'
-    $ pp -S -o hello file	# Creates a PAR file, 'file.par',
-				# then compiles it to executable 'hello'
-    $ pp -p -o out.par file	# Creates a PAR file, 'out.par' from 'file'
-    $ pp -B -p -o out.par file	# same as above, but bundles core modules
+    % pp -p file		# Creates a PAR file, 'file.par'
+    % pp -S -o hello file	# Creates a PAR file, 'file.par',
+				# then packages it to executable 'hello'
+    % pp -p -o out.par file	# Creates a PAR file, 'out.par' from 'file'
+    % pp -B -p -o out.par file	# same as above, but bundles core modules
 				# (-B is assumed when making executables)
 
-    $ pp -e 'print q//'		# Compiles a one-liner into 'a.out'
-    $ pp -c -e 'print q//'	# Creates a PAR file 'a.out.par'
+    % pp -e 'print q//'		# Packages a one-liner into 'a.out'
+    % pp -c -e 'print q//'	# Creates a PAR file 'a.out.par'
 
-    $ pp -I /foo hello		# extra paths (notice the space after -I)
-    $ pp -M /foo hello		# extra modules (notice the space after -M)
+    % pp -I /foo hello		# Extra paths (notice the space after -I)
+    % pp -M Foo::Bar hello	# Extra modules (notice the space after -M)
 
-    $ pp -r hello		# compiles 'hello' into 'a.out', runs 'a.out'.
-    $ pp -r hello a b c		# compiles 'hello' into 'a.out', runs 'a.out'.
+    % pp -r hello		# Packages 'hello' into 'a.out', runs 'a.out'.
+    % pp -r hello a b c		# Packages 'hello' into 'a.out', runs 'a.out',
 				# with arguments 'a b c' 
 
-    $ pp hello -log c		# compiles 'hello' into 'a.out' logs compile
-				# log into 'c'. 
+    % pp hello -log c		# Packages 'hello' into 'a.out', logs
+				# messages into 'c'. 
 
 =head1 DESCRIPTION
 
 F<pp> creates standalone executables from Perl programs, using the
-compressed packager provided by the L<PAR> module.  The programs
-are stored verbatim without compilation.
+compressed packager provided by L<PAR>, and the dependency detection
+heuristics offered by L<Module::ScanDeps>.  The programs are stored
+verbatim without compilation.
 
 You may think of F<pp> as "F<perlcc> that works without hassle". :-)
+
+It does not provide the compilation-step acceleration provided
+by F<perlcc> (although a ByteLoader variant of F<pp> is entirely
+possible), but makes up for it with better reliability, smaller
+executable size, and full retrieval of original source code.
+
+On Microsoft Windows platforms, F<a.exe> is used instead of F<a.out>
+as the default executable name.
 
 =head1 OPTIONS
 
 =over 4
 
-=item -MI<module names>
+=item -M I<module names>
 
 Adds the given modules to the dependency search patch and to the
 binary.
 
-=item -II<library directories>
+=item -I I<library directories>
 
 Adds the given directories to the perl library file search path.
 
 =item -o I<output file name>
 
-Specifies the file name for the final compiled executable.
+Specifies the file name for the final packaged executable.
 
 =item -p I<PAR file name>
 
-Create PAR archives only; do not compile to a standalone binary.
+Create PAR archives only; do not package to a standalone binary.
 
 =item -e I<perl code>
 
-Compile a one-liner, much the same as C<perl -e '...'>
+Package a one-liner, much the same as C<perl -e '...'>
 
 =item -S
 
-Do not delete generated PAR file after compilation.
+Do not delete generated PAR file after packaging.
 
 =item -v
 
@@ -439,23 +378,34 @@ Increase verbosity of output; can be repeated for more verbose output.
 
 =item -r 
 
-Run the resulting compiled script after compiling it.
+Run the resulting packaged script after packaging it.
 
 =item -log
 
-Log the output of compiling to a file rather than to stdout.
+Log the output of packaging to a file rather than to stdout.
+
+=back
+
+=head1 ENVIRONMENT
+
+=over 4
+
+=item PP_OPTS
+
+Command-line options (switches).  Switches in this variable are taken
+as if they were on every F<pp> command line.
 
 =back
 
 =head1 SEE ALSO
 
-L<PAR>, L<par.pl>, L<perlcc>
+L<PAR>, L<Module::ScanDeps>, L<par.pl>, L<perlcc>
 
 =head1 ACKNOWLEDGMENTS
 
 Simon Cozens, Tom Christiansen and Edward Peschko for writing
-F<perlcc>; this program try to mimick its interface as close
-as possible, and used liberally from their code.
+F<perlcc>; this program try to mimic its interface as close
+as possible, and copied liberally from their code.
 
 Mattia Barbon for providing the C<myldr> binary loader code.
 

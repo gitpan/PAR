@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #22 $ $Change: 2028 $ $DateTime: 2002/11/07 00:13:50 $
+# $Revision: #23 $ $Change: 2041 $ $DateTime: 2002/11/07 14:20:27 $
 
 package __par_pl;
 
@@ -358,13 +358,13 @@ if ($out) {
     my $tell_ref  = $fh->can('tell');
 
     *{'IO::File::seek'} = sub {
-	return $seek_ref->(@_) unless $PAR::__reading;
+	# return $seek_ref->(@_) unless $PAR::__reading;
 	my ($fh, $pos, $whence) = @_;
 	$pos += $start_pos if $whence == 0;
 	$seek_ref->($fh, $pos, $whence);
     };
     *{'IO::File::tell'} = sub {
-	return $tell_ref->(@_) unless $PAR::__reading;
+	# return $tell_ref->(@_) unless $PAR::__reading;
 	return $tell_ref->(@_) - $start_pos;
     };
     # }}}
