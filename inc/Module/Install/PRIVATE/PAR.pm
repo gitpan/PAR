@@ -1,6 +1,6 @@
 #line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.0/Module/Install/PRIVATE/PAR.pm"
 # $File: //member/autrijus/Module-Install-PRIVATE/lib/Module/Install/PRIVATE/PAR.pm $ $Author: autrijus $
-# $Revision: #2 $ $Change: 5848 $ $DateTime: 2003/05/14 20:24:03 $ vim: expandtab shiftwidth=4
+# $Revision: #3 $ $Change: 5903 $ $DateTime: 2003/05/16 17:14:46 $ vim: expandtab shiftwidth=4
 
 package Module::Install::PRIVATE::PAR;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
@@ -16,6 +16,7 @@ sub Autrijus_PAR {
     my $cc   = $self->can_cc unless $bork;
     my $par  = $self->fetch_par('', '', !$cc) unless $cc or $bork;
     my $exe  = $Config::Config{_exe};
+    my $dynperl = $Config::Config{libperl} =~ /\b$Config::Config{dlext}$/i;
 
     if ($bork) {
         warn "Binary loading known to fail on $^O; won't generate 'script/parl$exe'!\n";
@@ -36,6 +37,7 @@ sub Autrijus_PAR {
     } 
 
     my @bin = ("script/parl$exe", "myldr/par$exe");
+    push @bin, ("script/parldyn$exe", "myldr/static$exe") if $dynperl;
 
     if ($par) {
         open _, "> $bin[1]" or die $!;
@@ -60,6 +62,9 @@ sub Autrijus_PAR {
             'script/pp',
           (!$par and $cc) ? (
             "script/parl$exe",
+            $dynperl ? (
+                "script/parldyn$exe",
+            ) : (),
           ) : (),
         ],
         DIR                     => [

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #66 $ $Change: 6997 $ $DateTime: 2003/07/16 07:46:33 $ vim: expandtab shiftwidth=4
+# $Revision: #67 $ $Change: 7148 $ $DateTime: 2003/07/27 07:21:03 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -15,6 +15,19 @@ par.pl - Make and run Perl Archives
 
 (Please see L<pp> for convenient ways to make self-contained
 executables, scripts or PAR archives from perl programs.)
+
+To make a I<PAR distribution> from a CPAN module distribution:
+
+    % par.pl -p                 # make a PAR dist under the current path
+    % par.pl -p Foo-0.01        # assume unpacked CPAN dist in Foo-0.01/
+
+To manipulate a I<PAR distribution>:
+
+    % par.pl -i Foo-0.01-i386-freebsd-5.8.0.par     # install
+    % par.pl -i http://example.com/foo.par          # also works
+    % par.pl -u Foo-0.01-i386-freebsd-5.8.0.par     # uninstall
+    % par.pl -s Foo-0.01-i386-freebsd-5.8.0.par     # sign
+    % par.pl -v Foo-0.01-i386-freebsd-5.8.0.par     # verify
 
 To use F<Hello.pm> from F<./foo.par>:
 
@@ -56,6 +69,10 @@ executables; see L<pp> for details.
 This stand-alone command offers roughly the same feature as C<perl
 -MPAR>, except that it takes the pre-loaded F<.par> files via
 C<-Afoo.par> instead of C<-MPAR=foo.par>.
+
+Additionally, it lets you convert a CPAN distribution to a PAR
+distribution, as well as manipulate such distributions.  For more
+information about PAR distributions, see L<PAR::Dist>.
 
 =head2 Binary PAR loader (L<parl>)
 
@@ -291,8 +308,15 @@ $quiet = 0 unless $ENV{PAR_DEBUG};
 
 # Don't swallow arguments for compiled executables without --par-options
 if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
+    my %dist_cmd = qw(
+        p   blib_to_par
+        i   install_par
+        u   uninstall_par
+        s   sign_par
+        v   verify_par
+    );
     while (@ARGV) {
-        $ARGV[0] =~ /^-([AIMOBbq])(.*)/ or last;
+        $ARGV[0] =~ /^-([AIMOBbqpiusv])(.*)/ or last;
 
         if ($1 eq 'I') {
             unshift @INC, $2;
@@ -317,6 +341,13 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
         }
 
         shift(@ARGV);
+
+        if (my $cmd = $dist_cmd{$1}) {
+            require PAR::Dist;
+            &{"PAR::Dist::$cmd"}() unless @ARGV;
+            &{"PAR::Dist::$cmd"}($_) for @ARGV;
+            exit;
+        }
     }
 }
 
@@ -533,6 +564,7 @@ sub require_modules {
     require Archive::Zip;
     require PAR;
     require PAR::Heavy;
+    require PAR::Dist;
 }
 
 # N.B. we set PAR_TMP_DIR and PAR_TEMP in myldr/main.c
@@ -636,7 +668,7 @@ exit;
 
 =head1 SEE ALSO
 
-L<PAR>, L<parl>, L<pp>
+L<PAR>, L<PAR::Dist>, L<parl>, L<pp>
 
 =head1 AUTHORS
 

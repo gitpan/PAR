@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #58 $ $Change: 6997 $ $DateTime: 2003/07/16 07:46:33 $ vim: expandtab shiftwidth=4
+# $Revision: #59 $ $Change: 7153 $ $DateTime: 2003/07/27 08:39:43 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -226,14 +226,14 @@ YAML
     );
 
     if ( opt('s') ) {
-        if (eval { require Module::Signature; Module::Signature->VERSION >= 0.24 } and
-            my $cpansign = _can_run("cpansign")
-        ) {
-            vprint 0, "Running cpansign -s $par_file";
-            system($cpansign, "-s", $par_file);
+        if (eval {
+            require PAR::Dist; require Module::Signature; Module::Signature->VERSION >= 0.24
+        }) {
+            vprint 0, "Signing $par_file";
+            PAR::Dist::sign_par($par_file);
         }
         else {
-            vprint -1, "*** Signing requires Module::Signature 0.24 or later.  Skipping";
+            vprint -1, "*** Signing requires PAR::Dist with Module::Signature 0.24 or later.  Skipping";
         }
     }
 
@@ -246,7 +246,11 @@ YAML
 }
 
 sub par_to_exe { 
-    $PARL ||= _can_run("parl$Config{_exe}") or _die("Can't find par loader");
+    my $parl = 'parl';
+    if (opt(d) and $Config{libperl} =~ /\b$Config{dlext}$/i) {
+        $parl = 'parldyn';
+    }
+    $PARL ||= _can_run("$parl$Config{_exe}") or _die("Can't find par loader");
     my @quiet = (opt(v) ? () : ('-q'));
     vprint 0, "Running $PARL @quiet -B -O$Output $par_file";
     system($PARL, @quiet, "-B", "-O$Output", $par_file);
@@ -320,6 +324,7 @@ sub parse_argv {
     Getopt::Long::GetOptions( $Options,
         'M|add:s@',     # Include modules
         'B|bundle',     # Bundle core modules
+        'd|dependent',  # One-liner
         'e|eval:s',     # One-liner
         'X|exclude:s@', # Exclude modules
         'g|gui',        # No console window
@@ -656,6 +661,13 @@ C</lib/> inside the PAR file.
 Bundles core modules in the resulting package.  This option is enabled
 by default, except when C<-p> is specified and C<-o> is unspecified.
 
+=item B<-d>, B<--dependent>
+
+Reduce the executable size by not including a copy of perl interpreter.
+Executables built this way will need a separate F<perl5x.dll>
+or F<libperl.so> to function correctly.  This option is only available
+if perl is built as a shared library.
+
 =item B<-e>, B<--eval>=I<STRING>
 
 Package a one-liner, much the same as C<perl -e '...'>
@@ -771,10 +783,11 @@ different expected settings:
 
 =back
 
-Note that if your perl was built with a shared library, the
-'Stand-alone setup' above will still need a separate F<perl5x.dll> or
-F<libperl.so> to function correctly.  Patches to include a copy
-of libperl with the executable are most welcome.
+Note that even if your perl was built with a shared library, the
+'Stand-alone setup' above will I<not> need a separate F<perl5x.dll>
+or F<libperl.so> to function correctly.  Use C<--dependent> if you
+are willing to ship the shared library with the application, which
+can significantly reduce the executable size.
 
 =head1 SEE ALSO
 

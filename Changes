@@ -1,4 +1,40 @@
 ____________________________________________________________________________
+[  7159] By: autrijus                              on 2003/07/27  14:05:08
+        Log: * This be 0.69_93.
+	   ! ChangeLog lib/PAR.pm
+____________________________________________________________________________
+[  7153] By: autrijus                              on 2003/07/27  08:39:43
+        Log: * "pp --dependent"
+	   ! MANIFEST MANIFEST.SKIP script/pp
+____________________________________________________________________________
+[  7152] By: autrijus                              on 2003/07/27  08:39:23
+        Log: * tentative changelog for 0.70.
+	   ! ChangeLog
+____________________________________________________________________________
+[  7151] By: autrijus                              on 2003/07/27  08:31:51
+        Log: * new static wrapper (static.c) that extracts libperl first
+             and loads it, for dynamically-linked perls
+             * faster file2c.pl; high-bit chars is now properly handled
+	   + myldr/static.c
+	   ! myldr/Makefile.PL myldr/file2c.pl myldr/main.c
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[  7148] By: autrijus                              on 2003/07/27  07:21:03
+        Log: * "par.pl" and "parl" now interfaces PAR::Dist
+             with -p, -i, -u, -s and -v.
+             * PAR::Dist is now a mandatory prerequisite and
+             bundled inside parl.
+	   ! Makefile.PL script/par.pl script/parl.pod
+____________________________________________________________________________
+[  7002] By: autrijus                              on 2003/07/16  08:18:03
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
+[  7001] By: autrijus                              on 2003/07/16  08:16:33
+        Log: * Richard Soderberg's last-minute suggestion about
+             explicitly stating "pp" is bunbled by PAR.pm.
+	   ! AUTHORS lib/PAR.pm
+____________________________________________________________________________
 [  7000] By: autrijus                              on 2003/07/16  08:10:37
         Log: * This be 0.69_91.
              * upgrade to Module::Install 0.22.

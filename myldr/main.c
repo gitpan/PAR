@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #20 $ $Change: 6649 $ $DateTime: 2003/06/20 15:30:05 $
+   $Revision: #21 $ $Change: 7151 $ $DateTime: 2003/07/27 08:31:51 $
    vim: expandtab shiftwidth=4
 */
 
@@ -11,7 +11,6 @@
 #include "perl.h"
 #include "mktmpdir.c"
 #include "XSUB.h"
-#include "my_par_pl.c"
 #include "perlxsi.c"
 
 /* Workaround for mapstart: the only op which needs a different ppaddr */
@@ -21,6 +20,9 @@
 #define OP_MAPSTART OP_GREPSTART
 
 static PerlInterpreter *my_perl;
+extern char * name_load_me_2;
+extern unsigned long size_load_me_2;
+extern char load_me_2[];
 
 #ifdef HAS_PROCSELFEXE
 /* This is a function so that we don't hold on to MAXPATHLEN
@@ -68,10 +70,8 @@ int main ( int argc, char **argv, char **env )
     DIR *partmp_dirp;
     Direntry_t *dp;
     char *subsubdir;
-
 #ifdef PAR_MKTMPDIR
     char *stmpdir;
-    par_mktmpdir( argv );
 #endif
 
 #if (defined(USE_5005THREADS) || defined(USE_ITHREADS)) && defined(HAS_PTHREAD_ATFORK)
@@ -139,13 +139,19 @@ int main ( int argc, char **argv, char **env )
     TAINT;
 
     if ((tmpgv = gv_fetchpv("0", TRUE, SVt_PV))) {/* $0 */
+#ifdef PAR_MKTMPDIR
+        if ( ( stmpdir = getenv("PAR_TEMP") ) ) {
+            sv_setpv(GvSV(tmpgv), argv[0]);
+        }
+        else
+#endif
 #ifdef HAS_PROCSELFEXE
-        S_procself_val(aTHX_ GvSV(tmpgv), argv[0]);
+            S_procself_val(aTHX_ GvSV(tmpgv), argv[0]);
 #else
 #ifdef OS2
-        sv_setpv(GvSV(tmpgv), os2_execname(aTHX));
+            sv_setpv(GvSV(tmpgv), os2_execname(aTHX));
 #else
-        sv_setpv(GvSV(tmpgv), argv[0]);
+            sv_setpv(GvSV(tmpgv), argv[0]);
 #endif
 #endif
         SvSETMAGIC(GvSV(tmpgv));
@@ -168,12 +174,17 @@ int main ( int argc, char **argv, char **env )
 #ifdef PAR_MKTMPDIR
     /* create temporary PAR directory */
     stmpdir = getenv("PAR_TEMP");
-    if ( stmpdir != NULL ) {
-        i = PerlDir_mkdir(stmpdir, 0755);
-        if ( (i != 0) && (i != EEXIST) && (i != -1) ) {
-            PerlIO_printf(PerlIO_stderr(), "%s: creation of private temporary subdirectory %s failed - aborting with %i.\n", argv[0], stmpdir, i);
-            return 2;
-        }
+    if ( stmpdir == NULL ) {
+        stmpdir = par_mktmpdir( argv );
+#ifndef WIN32
+        execv(SvPV_nolen(GvSV(tmpgv)), argv);
+#endif
+    }
+
+    i = PerlDir_mkdir(stmpdir, 0755);
+    if ( (i != 0) && (i != EEXIST) && (i != -1) ) {
+        PerlIO_printf(PerlIO_stderr(), "%s: creation of private temporary subdirectory %s failed - aborting with %i.\n", argv[0], stmpdir, i);
+        return 2;
     }
 #endif
 

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/script/parl.pod $ $Author: autrijus $
-# $Revision: #7 $ $Change: 6198 $ $DateTime: 2003/05/31 09:34:02 $
+# $Revision: #8 $ $Change: 7148 $ $DateTime: 2003/07/27 07:21:03 $
 
 =head1 NAME
 
@@ -9,6 +9,19 @@ parl - Binary PAR Loader
 
 (Please see L<pp> for convenient ways to make self-contained
 executables, scripts or PAR archives from perl programs.)
+
+To make a I<PAR distribution> from a CPAN module distribution:
+
+    % parl -p                 # make a PAR dist under the current path
+    % parl -p Foo-0.01        # assume unpacked CPAN dist in Foo-0.01/
+
+To manipulate a I<PAR distribution>:
+
+    % parl -i Foo-0.01-i386-freebsd-5.8.0.par     # install
+    % parl -i http://example.com/foo.par          # also works
+    % parl -u Foo-0.01-i386-freebsd-5.8.0.par     # uninstall
+    % parl -s Foo-0.01-i386-freebsd-5.8.0.par     # sign
+    % parl -v Foo-0.01-i386-freebsd-5.8.0.par     # verify
 
 To use F<Hello.pm> from F<./foo.par>:
 
@@ -51,6 +64,10 @@ This stand-alone command offers roughly the same feature as C<perl
 -MPAR>, except that it takes the pre-loaded F<.par> files via
 C<-Afoo.par> instead of C<-MPAR=foo.par>.
 
+Additionally, it lets you convert a CPAN distribution to a PAR
+distribution, as well as manipulate such distributions.  For more
+information about PAR distributions, see L<PAR::Dist>.
+
 You can use it to run F<.par> files:
 
     # runs script/run.pl in archive, uses its lib/* as libraries
@@ -78,7 +95,7 @@ For an explanation of stand-alone executable format, please see L<par.pl>.
 
 =head1 SEE ALSO
 
-L<PAR>, L<par.pl>, L<pp>
+L<PAR>, L<PAR::Dist>, L<par.pl>, L<pp>
 
 =head1 AUTHORS
 

@@ -1,14 +1,20 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #6 $ $Change: 6141 $ $DateTime: 2003/05/28 04:45:51 $
+   $Revision: #7 $ $Change: 7151 $ $DateTime: 2003/07/27 08:31:51 $
    vim: expandtab shiftwidth=4
 */
 
 #ifdef PAR_MKTMPDIR
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef HAS_LSTAT
 #define PAR_lstat lstat
 #else
 #define PAR_lstat stat
+#endif
+
+#ifndef Pid_t
+typedef pid_t Pid_t;
 #endif
 
 char* par_mktmpdir ( char **argv ) {
@@ -35,7 +41,7 @@ char* par_mktmpdir ( char **argv ) {
     const char *subdirbuf_suffix = ".tmp";
     int maxlen_procid;
 
-    if ( (envtmp = getenv("PAR_TEMP")) ) {
+    if ( (envtmp = (char *)getenv("PAR_TEMP")) ) {
         return envtmp;
     }
 
@@ -44,7 +50,7 @@ char* par_mktmpdir ( char **argv ) {
 
     for ( i = 0 ; tmpdir == NULL && strlen(tmpval = tmpenv[i]) > 0 ; i++ ) {
         /* fprintf(stderr, "%s: testing env var %s.\n", argv[0], tmpval); */
-        if ( (envtmp = getenv(tmpval)) )
+        if ( (envtmp = (char *)getenv(tmpval)) )
         {
             if ( PAR_lstat(envtmp, &statbuf) == 0 &&
                  ( S_ISDIR(statbuf.st_mode) ||
@@ -95,7 +101,7 @@ char* par_mktmpdir ( char **argv ) {
 
         for ( i = 0 ; i < 5 ; i++ ) {
             lddir = ldlibpthname[i];
-            if ( ( cur_ld_library_path = getenv(lddir) ) == NULL ) {
+            if ( ( cur_ld_library_path = (char *)getenv(lddir) ) == NULL ) {
                 cur_ld_library_path = "";
             }
             if ( strlen(cur_ld_library_path) == 0 ) {
@@ -115,13 +121,7 @@ char* par_mktmpdir ( char **argv ) {
         }
     }
 
-#ifdef WIN32
     return(stmpdir);
-#else
-    /* restart ourselves so LD_LIBRARY_PATH takes effect */
-    execv(argv[0], argv);
-    exit(2);
-#endif
 }
 
 #endif

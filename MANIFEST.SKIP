@@ -2,7 +2,7 @@
 ^myldr/Makefile$
 ^myldr/Makefile\.old$
 ^myldr/main.[^c].*$
-^myldr/my_par_pl.c$
+^myldr/my_par_pl\..*$
 ^myldr/perlxsi.c$
 ^myldr/par(?:\.\w+)?$
 ^package/parl-.*$

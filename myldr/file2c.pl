@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #8 $ $Change: 6487 $ $DateTime: 2003/06/12 13:24:11 $
+# $Revision: #9 $ $Change: 7151 $ $DateTime: 2003/07/27 08:31:51 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -37,22 +37,35 @@ undef $/;
 my $pl_text = <IN>;
 close IN;
 
-$pl_text = pod_strip($pl_text, basename($pl_file)) if -e $pl_file;
+$pl_text = pod_strip($pl_text, basename($pl_file)) if -e $pl_file and $pl_file =~ /\.p[lm]/i;
+$pl_text = reverse $pl_text;
 
 #  make a c-array
-sub map_fun { local $_ = $_[0];
-              m/[\\"']/ and return "\\$_";
-              ord() >= 32 && ord() <= 127 && return $_;
-              return sprintf '\0%o', ord };
 
-my @c_chars = map { map_fun($_) } split '', $pl_text;
-my $c_arr = "static char $c_var\[] = {\n" .
-  ( join ', ', map { "'$_'" } @c_chars ) .
-  ", '\\0'\n};\n";
+print OUT "char * name_$c_var = \"" . basename($pl_file) . "\";\n";
+print OUT "unsigned long size_$c_var = " . length($pl_text) . ";\n";
+print OUT "char $c_var\[] = {\n";
+my $i = 0;
+while (length($_ = chop($pl_text))) {
+    print OUT "'";
+    if (m/[\\"']/) {
+	print OUT "\\$_";
+    }
+    elsif ( ord() >= 32 && ord() <= 126 ) {
+	print OUT $_;
+    }
+    elsif ( ord() ) {
+	print OUT sprintf '\%03o', ord()
+    }
+    else {
+	print OUT '\0';
+    }
+    print OUT "', ";
+    print OUT "\n" unless ($i++ % 16);
+}
+print OUT "'\\0'\n};\n";
 
-$c_arr =~ s/((?:'.*?',\s){16})/$1\n/sg;
-
-print OUT $c_arr;
+#$c_arr =~ s/((?:'.*?',\s){16})/$1\n/sg;
 close OUT;
 
 sub pod_strip {
