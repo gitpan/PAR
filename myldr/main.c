@@ -1,19 +1,20 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #4 $ $Change: 2061 $ $DateTime: 2002/11/08 20:34:22 $ */
+   $Revision: #5 $ $Change: 2076 $ $DateTime: 2002/11/10 06:34:19 $ */
 
-#define PERL_NO_GET_CONTEXT
-#include <EXTERN.h>
-#include <perl.h>
-#include <XSUB.h>
-
-/* expletive */
-#undef malloc
-#undef free
-
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
 #include "my_par_pl.c"
 #include "perlxsi.c"
 
+/* Workaround for mapstart: the only op which needs a different ppaddr */
+#undef Perl_pp_mapstart
+#define Perl_pp_mapstart Perl_pp_grepstart
+#undef OP_MAPSTART
+#define OP_MAPSTART OP_GREPSTART
+
 static PerlInterpreter *my_perl;
+static void dl_init(pTHX);
 
 #ifdef HAS_PROCSELFEXE
 /* This is a function so that we don't hold on to MAXPATHLEN
@@ -65,7 +66,9 @@ int main( int argc, char **argv, char **env )
             exit(1);
         perl_construct( my_perl );
         PL_perl_destruct_level = 0;
+#ifdef PERL_EXIT_DESTRUCT_END
         PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+#endif
     }
 
 #ifdef CSH

@@ -1,4 +1,21 @@
 ____________________________________________________________________________
+[  2076] By: autrijus                              on 2002/11/10  06:34:19
+        Log: * This be 0.47.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  2075] By: autrijus                              on 2002/11/10  06:33:51
+        Log: * Perl 5.6.1 doesn't have PERL_EXIT_DESTRUCT_END, and
+             needs some additional tweaking. (Reported by Hirosi Taguti)
+	   ! AUTHORS PAR.pm
+____________________________________________________________________________
+[  2073] By: autrijus                              on 2002/11/09  23:35:00
+        Log: * pod nits.
+	   ! script/pp
+____________________________________________________________________________
+[  2072] By: autrijus                              on 2002/11/09  23:34:48
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  2071] By: autrijus                              on 2002/11/09  22:42:14
         Log: * This be 0.46, the 'Win32 standalone exe works' edition.
              * Updates information about a shared Perl58.dll (or
