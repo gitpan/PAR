@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #1 $ $Change: 1512 $ $DateTime: 2002/10/18 20:23:57 $
+# $Revision: #3 $ $Change: 1516 $ $DateTime: 2002/10/18 20:52:38 $
 
 package PAR;
-$PAR::VERSION = '0.01';
+$PAR::VERSION = '0.02';
 
 use 5.006;
 use strict;
@@ -13,7 +13,7 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.01 of PAR.
+This document describes version 0.02 of PAR.
 
 =head1 SYNOPSIS
 
@@ -30,8 +30,7 @@ Same thing, but search F<foo.par> in the F<@INC>;
     % perl -MPAR -Ifoo.par -MHello
     % perl -MPAR -Ifoo -MHello		# ditto
 
-If you have B<Filter::Simple> installed, this will run F<test.pl> or
-F<script/test.pl> from F<foo.par>:
+Run F<test.pl> or F<script/test.pl> from F<foo.par>:
 
     % perl -MPAR foo.par test.pl	# only when $0 ends in '.par'
 
@@ -85,15 +84,22 @@ sub import {
     push @INC, \&incpar;
 
     if ($0 =~ /\.par$/i) {
+	die "No program file specified" unless @ARGV;
+
 	push @PAR_INC, $0 if unpar($0);
 
-	eval {
-	    package main;
-	    require PAR::Filter;
-	    PAR::Filter->import($class);
-	};
+	my $file = shift(@ARGV);
+	my $zip = Archive::Zip->new;
+	$zip->read($0);
 
-	die "Cannot initialize .par filter for $0: $@" if $@;
+	my $member = $zip->memberNamed($file)
+		  || $zip->memberNamed("script/$file")
+	    or die qq(Can't open perl script "$file": No such file or directory);
+
+	$0 = $file;
+	eval $member->contents;
+	die $@ if $@;
+	exit;
     }
 }
 
@@ -163,7 +169,7 @@ sub unpar {
 
 =head1 SEE ALSO
 
-L<PAR::Filter>, L<Archive::Zip>, L<perlfunc/require>
+L<Archive::Zip>, L<perlfunc/require>
 
 L<ex::lib::zip>, L<Acme::use::strict::with::pride>
 
@@ -172,7 +178,8 @@ L<ex::lib::zip>, L<Acme::use::strict::with::pride>
 Nicholas Clark for pointing out the mad source filter hook within
 the (also mad) coderef C<@INC> hook.
 
-Ton Hospel for convincing me to factor out B<JAR::Filter>.
+Ton Hospel for convincing me to ditch the C<Filter::Simple>
+implementation.
 
 =head1 AUTHORS
 

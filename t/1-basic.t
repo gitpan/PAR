@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/1-basic.t $ $Author: autrijus $
-# $Revision: #1 $ $Change: 1512 $ $DateTime: 2002/10/18 20:23:57 $
+# $Revision: #2 $ $Change: 1515 $ $DateTime: 2002/10/18 20:51:53 $
 
 use Test;
 BEGIN { plan tests => 6 }
@@ -10,8 +10,7 @@ ok(
     "Hello, world!\n",
 );
 
-skip(
-    (not eval { require Filter::Simple; require IO::Scalar; 1 }),
+ok(
     `$^X -Mblib -MPAR t/hello.par hello.pl`,
     "Hello, world!\nGoodbye, world!\n",
 );
