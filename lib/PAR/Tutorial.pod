@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Tutorial.pod $
-# $Revision: #2 $ $Change: 8582 $ $DateTime: 2003/10/27 11:27:03 $ vim: expandtab shiftwidth=4
+# $Revision: #3 $ $Change: 8653 $ $DateTime: 2003/11/01 17:30:44 $ vim: expandtab shiftwidth=4
 
 =head1 NAME
 
@@ -228,7 +228,7 @@ L<http://aut.dyndns.org/par-tutorial/>.
 
 =item * Works on Perl 5.6.0 or above
 
-=item * Tested on Win32, FreeBSD, Linux, Darwin, Cygwin, AIX, Solaris, HP-UX...
+=item * Tested on Win32, FreeBSD, NetBSD, Linux, Darwin, Cygwin, AIX, Solaris, HP-UX...
 
 =back
 

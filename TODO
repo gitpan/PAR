@@ -1,5 +1,9 @@
 # $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #17 $ $Change: 7268 $ $DateTime: 2003/07/30 14:01:04 $
+# $Revision: #18 $ $Change: 9275 $ $DateTime: 2003/12/11 22:45:00 $
+
+- Let static.c rename par.exe to whatever basename(argv[0]) is.
+
+- Win32 T_VERSION support as --info, using Win32::EXE.
 
 - Implement inflate algorithm in perl, xor implement Archive::Zip,
   Compress::Zlib and friends in C.
@@ -8,8 +12,6 @@
   versions of a module on the same machine.  Or use Ingy's only.pm.
 
 - Refactor pp to use App::Packer.
-
-- Win32 T_VERSION support as --info.
 
 - caller() from pp'ed executable should return nothing, instead
   of the current calling stacks.  Currently there's a workaround

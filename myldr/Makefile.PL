@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #49 $ $Change: 7615 $ $DateTime: 2003/08/20 08:55:55 $
+# $Revision: #50 $ $Change: 8981 $ $DateTime: 2003/11/20 13:29:03 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -32,7 +32,7 @@ my $par_exe = File::Spec->catfile('.', "par$exe");
 my $static_exe = File::Spec->catfile('.', "static$exe");
 my $parl_exe = File::Spec->catfile('..', 'script', "parl$exe");
 my $parldyn_exe = File::Spec->catfile('..', 'script', "parldyn$exe");
-my $lib_path = join(' ', map qq(-I"$_"), map { $^O eq 'MSWin32' ? Win32::GetShortPathName($_) : $_ } @INC);
+my $lib_path = join(' ', map qq(-I"$_"), @INC);
 
 my $libperl;
 

@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #81 $ $Change: 8557 $ $DateTime: 2003/10/26 02:36:51 $ vim: expandtab shiftwidth=4
+# $Revision: #82 $ $Change: 9273 $ $DateTime: 2003/12/11 22:09:17 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -386,8 +386,14 @@ if ($out) {
         die "$par is not a PAR file" unless <PAR> eq "PK\003\004";
     }
 
-    open OUT, '>', $out or die $!;
-    binmode(OUT);
+    require IO::File;
+    require Archive::Zip;
+    my $fh = IO::File->new(
+	$out,
+	IO::File::O_CREAT() | IO::File::O_WRONLY() | IO::File::O_TRUNC(),
+	0777,
+    ) or die $!;
+    binmode($fh);
 
     $/ = (defined $data_pos) ? \$data_pos : undef;
     seek _FH, 0, 0;
@@ -396,12 +402,11 @@ if ($out) {
         require PAR::Filter::PodStrip;
         PAR::Filter::PodStrip->new->apply(\$loader, $file)
     }
-    print OUT $loader;
+    $fh->print($loader);
     $/ = undef;
     # }}}
 
     # Write bundled modules {{{
-    my $data_len = 0;
     if ($bundle) {
         require PAR::Heavy;
         PAR::Heavy::_init_dynaloader();
@@ -470,31 +475,26 @@ if ($out) {
             }
 
             outs(qq(Written as "$name"));
-            print OUT "FILE";
-            print OUT pack('N', length($name) + 9);
-            print OUT sprintf(
+            $fh->print("FILE");
+            $fh->print(pack('N', length($name) + 9));
+            $fh->print(sprintf(
                 "%08x/%s", Archive::Zip::computeCRC32($content), $name
-            );
-            print OUT pack('N', length($content));
-            print OUT $content;
-
-            $data_len += 12 + length($name) + 9 + length($content);
+            ));
+            $fh->print(pack('N', length($content)));
+            $fh->print($content);
         }
     }
     # }}}
 
     # Now write out the PAR and magic strings {{{
     if (defined($par)) {
-        print OUT "PK\003\004";
-        print OUT <PAR>;
-        print OUT pack('N', $data_len + (stat($par))[7]);
-    }
-    else {
-        print OUT pack('N', $data_len);
+        my $zip = Archive::Zip->new($par);
+        $zip->writeToFileHandle($fh);
     }
 
-    print OUT "\nPAR.pm\n";
-    close OUT;
+    $fh->print(pack('N', $fh->tell - length($loader)));
+    $fh->print("\nPAR.pm\n");
+    $fh->close;
     chmod 0755, $out;
     # }}}
 

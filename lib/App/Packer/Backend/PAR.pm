@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/lib/App/Packer/PAR.pm $ $Author: autrijus $
-# $Revision: #3 $ $Change: 7349 $ $DateTime: 2003/08/05 17:22:57 $ vim: expandtab shiftwidth=4
+# $File: //member/autrijus/PAR/lib/App/Packer/Backend/PAR.pm $ $Author: autrijus $
+# $Revision: #1 $ $Change: 9196 $ $DateTime: 2003/12/08 11:00:42 $ vim: expandtab shiftwidth=4
 
 package App::Packer::Backend::PAR;
 

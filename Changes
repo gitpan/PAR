@@ -1,4 +1,66 @@
 ____________________________________________________________________________
+[  9276] By: autrijus                              on 2003/12/11  22:46:02
+        Log: * This be PAR 0.76_98, the version that fixes
+             interoperation with newer Archive::Zip.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  9275] By: autrijus                              on 2003/12/11  22:45:00
+        Log: * update todo.
+	   ! TODO
+____________________________________________________________________________
+[  9274] By: autrijus                              on 2003/12/11  22:42:56
+        Log: * starting to implement Morbus Iff's suggestiong
+             in renaming par.exe to agree with static.exe's
+             current name.
+	   ! myldr/static.c
+____________________________________________________________________________
+[  9273] By: autrijus                              on 2003/12/11  22:09:17
+        Log: * Ned Konz enlightened me on how to write correct
+             EOCD headers into embedded PAR files.
+	   ! AUTHORS script/par.pl
+____________________________________________________________________________
+[  9196] By: autrijus                              on 2003/12/08  11:00:42
+        Log: * Ryan Briones pointed out that App::Packer::Backend::PAR
+             has been misplaced into App/Packer/PAR.
+	  +> lib/App/Packer/Backend/PAR.pm
+	   - lib/App/Packer/PAR.pm
+	   ! AUTHORS MANIFEST
+____________________________________________________________________________
+[  8985] By: autrijus                              on 2003/11/22  00:22:08
+        Log: * Scott R. Godin pointed out that new EU::MM
+             warrants a new entry in MANIFEST.SKIP.
+	   ! MANIFEST.SKIP
+____________________________________________________________________________
+[  8981] By: autrijus                              on 2003/11/20  13:29:03
+        Log: * patch from Roderish to fix win32 short/long pathname
+             confusions
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  8889] By: autrijus                              on 2003/11/15  16:49:10
+        Log: * fix autobuilder for activestate ppm machine.
+	   ! MANIFEST.SKIP
+____________________________________________________________________________
+[  8777] By: autrijus                              on 2003/11/11  07:05:37
+        Log: * _find_in_inc could return an empty list.
+	   ! script/pp
+____________________________________________________________________________
+[  8653] By: autrijus                              on 2003/11/01  17:30:44
+        Log: * we gained NetBSD.
+	   ! lib/PAR/Tutorial.pod
+____________________________________________________________________________
+[  8621] By: autrijus                              on 2003/10/29  17:03:20
+        Log: * add podmaster to authors.
+	   ! AUTHORS
+____________________________________________________________________________
+[  8611] By: autrijus                              on 2003/10/29  03:25:28
+        Log: * depend on Zlib 1.30 for its static compilation.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  8609] By: autrijus                              on 2003/10/28  23:22:25
+        Log: * Forgot to add Doug Gruber (author of tkpp)
+             to AUTHORS.  Sorry, Doug.
+	   ! AUTHORS
+____________________________________________________________________________
 [  8607] By: autrijus                              on 2003/10/28  12:04:24
         Log: * This be PAR, Version 0.76.
 	   ! lib/PAR.pm

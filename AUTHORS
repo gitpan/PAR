@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #42 $ $Change: 8581 $ $DateTime: 2003/10/27 11:26:34 $
+# $Revision: #46 $ $Change: 9273 $ $DateTime: 2003/12/11 22:09:17 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -20,6 +20,7 @@ Bruce Winter
 Chia-Liang Kao		(CLKAO)
 D. Menzel
 Daniel Shane		(DSHANE)
+Doug Gruber
 Doug Miles
 Edward Wildgoose
 Germain Garand		(GGARAND)
@@ -48,11 +49,13 @@ Matthew Braid		(MDBGRIZ)
 Mattia Barbon		(MBARBON)
 Mike Stok		(MIKESTOK)
 Nathan Byrd		(NBYRD)
+Ned Konz		(NEDKONZ)
 Nicholas Clark		(NWCLARK)
 Nomota KIM
 Paritosh Tyagi
 Paul Miller
 Phil Sallee
+PodMaster		(PODMASTER)
 Randal L. Schwartz	(MERLYN)
 Reini Urban
 Richard Soderberg	(RSOD)
@@ -60,6 +63,7 @@ Rob Casey		(ROBAU)
 Robert Allerstorfer
 Robert Creager		(RCREAGER)
 Roderich Schupp		(RSCHUPP)
+Ryan Briones
 Simon Andrews
 Simon Cozens		(SIMON)
 Sisyphus

@@ -1,25 +1,25 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #10 $ $Change: 7519 $ $DateTime: 2003/08/14 08:11:54 $
+   $Revision: #11 $ $Change: 9274 $ $DateTime: 2003/12/11 22:42:56 $
    vim: expandtab shiftwidth=4
 */
 
 #ifdef WIN32
-#include <io.h>
-#include <process.h>
-#include <direct.h>
-#include <errno.h>
-
-#undef mkdir
-#define mkdir(x, y) _mkdir(x)
-#define W_OK 2
-#define S_ISDIR(x) 1
-#define S_ISLNK(x) 0
-
+#   include <io.h>
+#   include <process.h>
+#   include <direct.h>
+#   include <errno.h>
+#   undef mkdir
+#   define mkdir(x, y) _mkdir(x)
+#   define W_OK 2
+#   define S_ISDIR(x) 1
+#   define S_ISLNK(x) 0
+#   define ISSLASH(C) ((C) == '\\')
 #else
-#include <unistd.h>
-#include <sys/errno.h>
-#include <dirent.h>
-typedef struct dirent Direntry_t;
+#   include <unistd.h>
+#   include <sys/errno.h>
+#   include <dirent.h>
+    typedef struct dirent Direntry_t;
+#   define ISSLASH(C) ((C) == '/')
 #endif
 
 typedef int Pid_t;
@@ -61,6 +61,17 @@ int my_mkfile (char* argv0, char* stmpdir, const char* name) {
     return i;
 }
 
+char *_basename (const char *name) {
+    const char *base = name;
+    const char *p;
+
+    for (p = name; *p; p++) {
+        if (ISSLASH (*p)) base = p + 1;
+    }
+
+    return (char *)base;
+}
+
 int main ( int argc, char **argv, char **env )
 {
     int i;
@@ -83,6 +94,8 @@ int main ( int argc, char **argv, char **env )
     close(i); chmod(my_file, 0755);
 
     i = my_mkfile( argv[0], stmpdir, name_load_me_1 );
+    /* i = my_mkfile( argv[0], stmpdir, _basename(argv[0]) ) */;
+
     if (!i) return 2;
     WRITE_load_me_1(i);
     close(i); chmod(my_file, 0755);
@@ -108,4 +121,3 @@ int main ( int argc, char **argv, char **env )
     par_rmtmpdir(stmpdir);
     return i;
 }
-

@@ -1,5 +1,34 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #25 $ $Change: 8586 $ $DateTime: 2003/10/27 12:08:42 $
+# $Revision: #26 $ $Change: 9277 $ $DateTime: 2003/12/11 22:55:44 $
+
+[Changes for 0.76_98 - December 12, 2003]
+
+* New Features
+
+    - External Zlib is no longer required to run pp-generated binaries.
+
+* Bug fixes
+
+    - The "bad signature" problem with newer Archive::Zip versions is fixed.
+
+    - App::Packer::Backend::PAR was misplaced into App/Packer/PAR.
+
+    - Signature tests were failing under new ExtUtils::MakeMaker versions.
+
+    - ActiveState's PPM building machine was having problem with PAR;
+      a ".pdb" entry in MANIFEST.SKIP is added to fix that.
+
+    - Some self-built PAR instances on Windows were failing due to
+      mismatching short and long pathnames.
+
+* TODO before 0.77
+
+    - Implement Ned Konz's suggestion of writing out par.exe as
+      basename(argv[0]), in myldr/static.c.
+
+    - Merge new version of tkpp from Doug Gruber.
+
+    - Investigate and try to fix sporadic WinXP failures.
 
 [Changes for 0.76 - October 28, 2003]
 
