@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #5 $ $Change: 2021 $ $DateTime: 2002/11/06 12:04:04 $
+# $Revision: #6 $ $Change: 2051 $ $DateTime: 2002/11/08 14:34:59 $
 
 use 5.006;
 use strict;
@@ -9,7 +9,7 @@ use warnings;
 use Config;
 use File::Temp qw(tempfile);
 use Cwd;
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 $| = 1;
 
 $SIG{INT} = sub { exit(); }; # exit gracefully and clean up after ourselves.
@@ -44,7 +44,7 @@ sub compile_par {
 
     if (opt(S) || opt(p)) {
         # We need to keep it.
-        if (opt(e)) {
+        if (opt(e) or !$Input) {
             $par_file = "a.out.par";
         } else {
             $par_file = $Input;
@@ -64,41 +64,63 @@ sub compile_par {
     vprint 1, "Writing PAR on $par_file";
 
     my @modules = map {
-	s/::/\//g;
-	Module::ScanDeps::_find_in_inc("$_.pm")
+	s/::/\//g; "$_.pm"
     } split(/\s+/, opt(M));
 
     my %map;
+    Module::ScanDeps::scan_deps(
+	rv	=> \%map,
+	files	=> [
+	    (map Module::ScanDeps::_find_in_inc($_), @modules),
+	    ($Input ? $Input : ()),
+	],
+	recurse	=> 1,
+    );
     Module::ScanDeps::add_deps(
 	rv	=> \%map,
 	modules	=> \@modules,
     );
-    Module::ScanDeps::scan_deps(
-	rv	=> \%map,
-	files	=> [ @modules, $Input ],
-	recurse	=> 1,
-    );
 
     $map{$_} = $map{$_}{file} for keys %map;
 
+    my @manifest = ('MANIFEST', 'META.yaml');
     my $size = 0;
     my $zip = Archive::Zip->new;
-    foreach (sort {$map{$a} cmp $map{$b}} grep length $map{$_}, keys %map) {
+    foreach (sort grep length $map{$_}, keys %map) {
 	next if !opt(B) and ($map{$_} eq "$Config::Config{privlib}/$_"
 			  or $map{$_} eq "$Config::Config{archlib}/$_");
 
 	vprint 2, "... adding $map{$_}";
 	next unless $zip;
 	$size += -s $map{$_};
-	$zip->addFile($map{$_}, "lib/$_");
+	$zip->addFile($map{$_} => "lib/$_");
+	push @manifest, "lib/$_";
     }
 
-    if ($Input !~ /\.pm\z/i) {
+    if ($Input and $Input !~ /\.pm\z/i) {
 	$size += -s $Input;
-	$zip->addFile($Input, "script/main.pl");
+	$zip->addFile($Input => "script/main.pl");
+	push @manifest, "script/main.pl";
     }
 
+    my $manifest    = join("\n", @manifest);
+    my $meta_yaml   = << "YAML";
+--- #YAML:1.0
+conflicts: {}
+dist_name: $Output
+distribution_type: par
+dynamic_config: 0
+generated_by: 'Perl Packager version $VERSION'
+name: $Input
+YAML
+
+    $size += length($_) for ($manifest, $meta_yaml);
+    vprint 2, "... making $_" for qw(MANIFEST META.yaml);
+
+    $zip->addString($manifest	=> 'MANIFEST');
+    $zip->addString($meta_yaml	=> 'META.yaml');
     $zip->writeToFileNamed($par_file);
+
     my $newsize = -s $par_file;
     vprint 2, sprintf(
 	"*** %s: %d bytes read, %d compressed, %2.2d%% saved.\n",
@@ -181,10 +203,10 @@ sub parse_argv {
     }
     else {
         $Input = shift @ARGV;
-        _usage_and_die("$0: No input file specified\n") unless $Input;
+        _usage_and_die("$0: No input file specified\n") unless $Input or opt(M);
         warn "$0: using $Input as input file, ignoring @ARGV\n" if @ARGV and !opt(r);
-        check_read($Input);
-        check_perl($Input);
+        check_read($Input) if $Input;
+        check_perl($Input) if $Input;
         sanity_check();
     }
 }
@@ -394,6 +416,44 @@ Log the output of packaging to a file rather than to stdout.
 
 Command-line options (switches).  Switches in this variable are taken
 as if they were on every F<pp> command line.
+
+=back
+
+=head1 NOTES
+
+Here are some recipes showing how to utilize F<pp> to bundle
+F<source.pl> with all its dependencies, on target machines with
+different expected settings:
+
+=over 4
+
+=item Perl with B<PAR.pm> and its dependencies installed:
+
+    % pp -p source.pl			# makes source.par
+    % echo "use PAR 'source.par';" > packed.pl;
+    % cat source.pl >> packed.pl;	# makes packed.pl
+    (now deploy 'source.par' and 'packed.pl' to target machine)
+    $ perl packed.pl			# run it
+
+=item Perl with core module installed:
+
+    % pp -p source.pl			# makes source.par
+    % par.pl -b -Opacked.pl source.par	# makes packed.pl
+    (now deploy 'packed.pl' to target machine)
+    $ perl packed.pl			# run it
+
+=item Perl interpreter only, without core module:
+
+    % pp -B -p source.pl		# makes source.par
+    % par.pl -B -Opacked.pl source.par	# makes packed.pl
+    (now deploy 'packed.pl' to target machine)
+    $ perl packed.pl			# run it
+
+=item Clean setup:
+
+    % pp -Opacked.exe source.pl		# makes packed.exe
+    (now deploy 'packed.exe' to target machine)
+    $ packed.exe			# run it
 
 =back
 

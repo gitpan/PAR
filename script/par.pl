@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #23 $ $Change: 2041 $ $DateTime: 2002/11/07 14:20:27 $
+# $Revision: #24 $ $Change: 2054 $ $DateTime: 2002/11/08 14:37:27 $
 
 package __par_pl;
 
@@ -12,6 +12,9 @@ package __par_pl;
 par.pl - Make and Run Perl Archives
 
 =head1 SYNOPSIS
+
+(Please see L<pp> for convenient ways to make self-contained
+executables, scripts or PAR archives from perl programs.)
 
 To use F<Hello.pm> from F<./foo.par>:
 
@@ -358,13 +361,13 @@ if ($out) {
     my $tell_ref  = $fh->can('tell');
 
     *{'IO::File::seek'} = sub {
-	# return $seek_ref->(@_) unless $PAR::__reading;
+	return $seek_ref->(@_) unless $PAR::__reading;
 	my ($fh, $pos, $whence) = @_;
 	$pos += $start_pos if $whence == 0;
 	$seek_ref->($fh, $pos, $whence);
     };
     *{'IO::File::tell'} = sub {
-	# return $tell_ref->(@_) unless $PAR::__reading;
+	return $tell_ref->(@_) unless $PAR::__reading;
 	return $tell_ref->(@_) - $start_pos;
     };
     # }}}
@@ -474,7 +477,7 @@ exit;
 
 =head1 SEE ALSO
 
-L<PAR>, L<makepar.pl>
+L<PAR>, L<pp>
 
 =head1 AUTHORS
 

@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #3 $ $Change: 1856 $ $DateTime: 2002/11/03 12:42:26 $
+# $Revision: #4 $ $Change: 2054 $ $DateTime: 2002/11/08 14:37:27 $
 
 package PAR::Heavy;
-$PAR::Heavy::VERSION = '0.01';
+$PAR::Heavy::VERSION = '0.02';
 
 =head1 NAME
 
@@ -76,6 +76,7 @@ sub _bootstrap {
 		UNLINK	=> 1
 	    );
 
+	    local $PAR::__reading = 1;
 	    print $fh $member->contents;
 	    close $fh;
 

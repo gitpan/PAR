@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #11 $ $Change: 2011 $ $DateTime: 2002/11/05 21:39:54 $
+# $Revision: #12 $ $Change: 2055 $ $DateTime: 2002/11/08 14:37:59 $
 
 This is the README file for PAR, a toolkit to use perl scripts
 and modules stored inside compressed .par files.
@@ -28,10 +28,39 @@ You can generate self-executable binaries by:
 
     % pp -o foo.exe /home/test.pl
 
-If you want to make a self-contained script instead (without bundling
-the perl binary and core modules), do this:
+Here are some recipes showing how to utilize pp to bundle source.pl with
+all its dependencies, on target machines with different expected
+settings:
 
-    % pp -p -o foo.par /home/test.pl
+- Perl with PAR.pm and its dependencies installed:
+
+    % pp -p source.pl                   # makes source.par
+    % echo "use PAR 'source.par';" > packed.pl;
+    % cat source.pl >> packed.pl;       # makes packed.pl
+    (now deploy 'source.par' and 'packed.pl' to target machine)
+    $ perl packed.pl                    # run it
+
+- Perl with core module installed:
+
+    % pp -p source.pl			# makes source.par
+    % par.pl -b -Opacked.pl source.par	# makes packed.pl
+    (now deploy 'packed.pl' to target machine)
+    $ perl packed.pl			# run it
+
+- Perl interpreter only, without core module:
+
+    % pp -B -p source.pl		# makes source.par
+    % par.pl -B -Opacked.pl source.par  # makes packed.pl
+    (now deploy 'packed.pl' to target machine)
+    $ perl packed.pl			# run it
+
+- Clean setup:
+
+    % pp -Opacked.exe source.pl		# makes packed.exe
+    (now deploy 'packed.exe' to target machine)
+    $ packed.exe			# run it
+
+Please consult the documentation of 'pp' for more information.
 
 * Copyright
 

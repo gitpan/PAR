@@ -1,4 +1,35 @@
 ____________________________________________________________________________
+[  2055] By: autrijus                              on 2002/11/08  14:37:59
+        Log: * This be 0.44.
+             * Documentation changes.
+	   ! README TODO
+____________________________________________________________________________
+[  2054] By: autrijus                              on 2002/11/08  14:37:27
+        Log: * fixed the mis-loading SO files problem in Heavy.pm.
+	   ! PAR/Heavy.pm script/par.pl
+____________________________________________________________________________
+[  2053] By: autrijus                              on 2002/11/08  14:36:57
+        Log: * mention 'pp' in docs.
+             * allows using pp-packaged executables as PAR files.
+             * applied Martia Barbon's _tempfile patch as a fail-back
+             to IO::File->new_tmpfile.
+	   ! PAR.pm
+____________________________________________________________________________
+[  2052] By: autrijus                              on 2002/11/08  14:35:33
+        Log: * 'pp' is useful without binary 'par', so install it
+	       anyway.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  2051] By: autrijus                              on 2002/11/08  14:34:59
+        Log: * refactored 'pp' to excise unused code.
+             * MANIFEST and META.yaml are now generated.
+             * s/compile/package/ in docs.
+	   ! script/pp
+____________________________________________________________________________
+[  2045] By: autrijus                              on 2002/11/07  14:40:23
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  2041] By: autrijus                              on 2002/11/07  14:20:27
         Log: * 0.43.
              * retracted par.pl unzip hook because it breaks dynamic

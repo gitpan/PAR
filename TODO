@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #5 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $
+# $Revision: #6 $ $Change: 2055 $ $DateTime: 2002/11/08 14:37:59 $
 
 - Use Archive::Any and Archive::Tar to get rid of the only XS module
   dependency (Compress::Zlib), or implement inflate algorithm in perl.
@@ -7,4 +7,8 @@
 - Overrides CORE::require to provide coexistence support for multiple
   versions of a module on the same machine.
 
-- Install .par files using EU::MM logic with par.pl.
+- Install .par files using EU::MM or M::B logic with par.pl.
+
+- A separate 'jar' clone 'par' to replace the current 'par.pl'.
+
+- SIGNATURE support via Module::Signature.

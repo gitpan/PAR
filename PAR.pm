@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #39 $ $Change: 2041 $ $DateTime: 2002/11/07 14:20:27 $
+# $Revision: #40 $ $Change: 2053 $ $DateTime: 2002/11/08 14:36:57 $
 
 package PAR;
-$PAR::VERSION = '0.43';
+$PAR::VERSION = '0.44';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.43 of PAR, released November 7, 2002.
+This document describes version 0.44 of PAR, released November 8, 2002.
 
 =head1 SYNOPSIS
 
@@ -87,6 +87,13 @@ is small if not used), or to C<-MPAR=/path/to/mylib.par> to load a
 specific PAR file.  Alternatively, consider using the F<par.pl>
 utility bundled with this module.
 
+Note that self-containing scripts and executables created with F<par.pl>
+and F<pp> may also be used as F<.par> archives:
+
+    % pp -O packed.exe source.pl	# generate packed.exe
+    % perl -MPAR=packed.exe other.pl	# this can also work
+    % perl -MPAR -Ipacked.exe other.pl	# ditto
+
 Please see L</SYNOPSIS> for most typical use cases.
 
 =head1 NOTES
@@ -111,7 +118,7 @@ sub import {
     return if !@_ and $_reentrant++;
 
     foreach my $par (@_) {
-	push @PAR_INC, $par if unpar($par);
+	push @PAR_INC, $par if unpar($par, undef, undef, 1);
     }
 
     push @INC, \&find_par unless grep { $_ eq \&find_par } @INC;
@@ -140,7 +147,7 @@ sub import {
 		or die qq(Can't open perl script "$file": No such file or directory);
 	}
 
-	my $fh = IO::File->new_tmpfile or die $!;
+	my $fh = _tmpfile();
 	print $fh "package main; shift \@INC;\n#line 1 \"$file\"\n";
 	$member->extractToFileHandle($fh);
 	seek ($fh, 0, 0);
@@ -157,8 +164,7 @@ sub find_par {
     my ($self, $file, $member_only) = @_;
 
     foreach my $path (@PAR_INC ? @PAR_INC : @INC) {
-	next if ref $file;
-	my $rv = unpar($path, $file, $member_only);
+	my $rv = unpar($path, $file, $member_only, 1);
 	return $rv if defined($rv);
     }
 
@@ -182,23 +188,22 @@ sub par_handle {
 }
 
 sub unpar {
-    my ($par, $file, $member_only) = @_;
+    my ($par, $file, $member_only, $allow_other_ext) = @_;
     my $zip = $LibCache{$par};
 
     local $PAR::__reading = 1;
 
     unless ($zip) {
-	unless ($par =~ /\.par$/i and -e $par) {
+	unless (($allow_other_ext or $par =~ /\.par\z/i) and -f $par) {
 	    $par .= ".par";
-	    return unless -e $par;
+	    return unless -f $par;
 	}
 
 	require Compress::Zlib;
 	require Archive::Zip;
 
 	$zip = Archive::Zip->new;
-	# XXX: add support for pp-packaged PAR via readFromFileHandle()
-	next unless $zip->read($par) == Archive::Zip::AZ_OK();
+	return unless $zip->read($par) == Archive::Zip::AZ_OK();
 
 	push @LibCache, $zip;
 	$LibCache{$par} = $zip;
@@ -215,10 +220,21 @@ sub unpar {
 
     return $member if $member_only;
 
-    my $fh = IO::File->new_tmpfile;
+    my $fh = _tmpfile();
+    die "Bad Things Happened..." unless $fh;
     $member->extractToFileHandle($fh);
     seek ($fh, 0, 0);
 
+    return $fh;
+}
+
+sub _tmpfile {
+    my $fh = IO::File->new_tmpfile;
+    unless( $fh ) {
+	require File::Temp;
+	$fh = File::Temp::tempfile( UNLINK => 1)
+	    or die "Cannot create temporary file: $!";
+    }
     return $fh;
 }
 
