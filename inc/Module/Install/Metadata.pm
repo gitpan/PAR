@@ -1,6 +1,6 @@
 #line 1 "inc/Module/Install/Metadata.pm - /usr/local/lib/perl5/site_perl/5.8.0/Module/Install/Metadata.pm"
-# $File: //depot/cpan/Module-Install/lib/Module/Install/Metadata.pm $ $Author: iain $
-# $Revision: #21 $ $Change: 1617 $ $DateTime: 2003/06/22 17:26:18 $ vim: expandtab shiftwidth=4
+# $File: //depot/cpan/Module-Install/lib/Module/Install/Metadata.pm $ $Author: autrijus $
+# $Revision: #24 $ $Change: 1645 $ $DateTime: 2003/07/16 01:05:06 $ vim: expandtab shiftwidth=4
 
 package Module::Install::Metadata;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
@@ -12,7 +12,7 @@ use vars qw($VERSION);
 
 sub Meta { shift }
 
-my @scalar_keys = qw(name version abstract author license distribution_type);
+my @scalar_keys = qw(name module_name version abstract author license distribution_type);
 my @tuple_keys  = qw(build_requires requires recommends bundles);
 
 foreach my $key (@scalar_keys) {
@@ -57,6 +57,11 @@ sub _dump {
     my $version = $self->_top->VERSION;
     my %values = %{$self->{values}};
     $values{distribution_type} ||= 'module';
+    $values{name} ||= do {
+        my $name = $values{module_name};
+        $name =~ s/::/-/g;
+        $name;
+    } if $values{module_name};
 
     my $dump = '';
     foreach my $key (@scalar_keys) {
@@ -94,9 +99,19 @@ sub read {
 sub write {
     my $self = shift;
     return $self unless $self->admin;
-    return if -f "META.yml";
-    warn "Creating META.yml\n";
-    open META, "> META.yml" or die $!;
+
+    META_NOT_OURS: {
+        local *FH;
+        if (open FH, "META.yml") {
+            while (<FH>) {
+                last META_NOT_OURS if /^generated_by: Module::Install\b/;
+            }
+            return $self;
+        }
+    }
+
+    warn "Writing META.yml\n";
+    open META, "> META.yml" or warn "Cannot write to META.yml: $!";
     print META $self->_dump;
     close META;
     return $self;

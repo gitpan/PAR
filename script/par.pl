@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #65 $ $Change: 6460 $ $DateTime: 2003/06/11 17:57:47 $ vim: expandtab shiftwidth=4
+# $Revision: #66 $ $Change: 6997 $ $DateTime: 2003/07/16 07:46:33 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -489,13 +489,13 @@ if ($out) {
     outs(qq(\$ENV{PAR_TEMP} = "$ENV{PAR_TEMP}"));
 
     foreach my $member ( $zip->members ) {
+        next if $member->isDirectory or !$ENV{PAR_TEMP};
         my $member_name = $member->fileName;
-        if ( $member_name =~ m|^/?shlib/(.+)$| and $ENV{PAR_TEMP} ) {
-            my $extract_name = $1;
-            my $dest_name = File::Spec->catfile($ENV{PAR_TEMP}, $extract_name);
-            $member->extractToFileNamed($dest_name);
-            outs(qq(Extracting "$member_name" to "$dest_name"));
-        }
+        next unless $member_name =~ m{^/?shlib/(?:$Config::Config{version}/)?(?:$Config::Config{archname}/)?([^/]+)$};
+        my $extract_name = $1;
+        my $dest_name = File::Spec->catfile($ENV{PAR_TEMP}, $extract_name);
+        $member->extractToFileNamed($dest_name);
+        outs(qq(Extracting "$member_name" to "$dest_name"));
     }
     # }}}
 }

@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #19 $ $Change: 6898 $ $DateTime: 2003/07/08 15:29:29 $ vim: expandtab shiftwidth=4
+# $Revision: #21 $ $Change: 7001 $ $DateTime: 2003/07/16 08:16:33 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.69_90';
+$PAR::VERSION = '0.69_91';
 
 use 5.006;
 use strict;
@@ -15,12 +15,12 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.69_90 of PAR, released May 31, 2003.
+This document describes version 0.69_91 of PAR, released July 16, 2003.
 
 =head1 SYNOPSIS
 
 (If you want to make an executable that contains all module, scripts and
-data files, please consult L<pp> instead.)
+data files, please consult the bundled L<pp> utility instead.)
 
 Following examples assume a F<foo.par> file in Zip format; support for
 compressed tar (F<*.tgz>/F<*.tbz2>) format is under consideration.
@@ -44,9 +44,14 @@ Following paths inside the PAR file are searched:
     /5.8.0/i386-freebsd/        # both of the above
     /
 
-PAR files may also (recursively) contain other PAR files
-under F</par/>.  All files under it will be considered as
-PAR files and searched as well.
+PAR files may also (recursively) contain other PAR files.
+All files under following paths will be considered as PAR
+files and searched as well:
+
+    /par/i386-freebsd/          # i.e. $Config{archname}
+    /par/5.8.0/                 # i.e. $Config{version}
+    /par/5.8.0/i386-freebsd/    # both of the above
+    /par/
 
 Run F<script/test.pl> or F<test.pl> from F<foo.par>:
 
@@ -251,7 +256,7 @@ sub unpar {
             require File::Spec;
             require LWP::Simple;
             $ENV{PAR_TEMP} ||= File::Spec->catdir(File::Spec->tmpdir, 'par');
-            mkdir $ENV{PAR_TEMP};
+            mkdir $ENV{PAR_TEMP}, 0777;
 
             my $file = $par;
             if (!%escapes) {
@@ -283,7 +288,9 @@ sub unpar {
         push @LibCache, $zip;
         $LibCache{$_[0]} = $zip;
 
-        foreach my $member ( $zip->members('^par/') ) {
+        foreach my $member ( $zip->members(
+            "^par/(?:$Config::Config{version}/)?(?:$Config::Config{archname}/)?"
+        ) ) {
             next if $member->isDirectory;
             my $content = $member->contents();
             next unless $content =~ /^PK\003\004/;
@@ -356,6 +363,8 @@ sub _tmpfile {
 1;
 
 =head1 SEE ALSO
+
+L<http://www.autrijus.org/par-tutorial/>
 
 L<PAR::Intro>
 

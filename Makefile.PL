@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #36 $ $Change: 6898 $ $DateTime: 2003/07/08 15:29:29 $
+# $Revision: #37 $ $Change: 6998 $ $DateTime: 2003/07/16 07:50:06 $
 
 use 5.006;
 use inc::Module::Install;
@@ -15,7 +15,8 @@ requires    ('Module::ScanDeps' => 0.19);
 features    (
     'Digital signature support'	=> [
 	-default => 0,
-	recommends  ('Module::Signature' => 0.24)
+	recommends  ('PAR::Dist' => 0),
+	recommends  ('Module::Signature' => 0.25),
     ],
 );
 

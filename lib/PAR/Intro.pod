@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Intro.pod $
-# $Revision: #5 $ $Change: 5894 $ $DateTime: 2003/05/16 15:58:18 $ vim: expandtab shiftwidth=4
+# $Revision: #6 $ $Change: 6997 $ $DateTime: 2003/07/16 07:46:33 $ vim: expandtab shiftwidth=4
 
 =head1 NAME
 
@@ -8,6 +8,10 @@ PAR::Intro - Introduction to Perl Archive Toolkit
 =head1 SYNOPSIS
 
 # This is a presentation, not a module.
+
+Note that a more extensive tutorial is now available online
+as L<http://aut.dyndns.org/par-tutorial/> and has superceded
+materials in this introduction.
 
 =head1 DESCRIPTION
 
@@ -216,9 +220,15 @@ Scripts are stored in one of the two locations:
 
 =item *
 
-Shared libraries are currently stored in a single location:
+Shared libraries may be architecture- or perl-version-specific:
  
-    /shlib/                     # standard location
+    /shlib/(5.8.0/)?(i386-freebsd/)?
+
+=item *
+
+PAR files may recursively contain other PAR files:
+ 
+    /par/(5.8.0/)?(i386-freebsd/)?
  
 =item *
 
@@ -900,6 +910,8 @@ Patches welcome!
 
 
 =head1 SEE ALSO
+
+L<http://www.autrijus.org/par-tutorial/>
 
 L<http://www.autrijus.org/par-intro/> (English version)
 

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #28 $ $Change: 6650 $ $DateTime: 2003/06/20 15:32:48 $
+# $Revision: #30 $ $Change: 7001 $ $DateTime: 2003/07/16 08:16:33 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -13,6 +13,7 @@ Arthur Bergman		(ABERGMAN)
 Ask Bjoern Hansen	(ABH)
 Barry Jaspan 
 Bill Atkins		(BATKINS)
+Brigitte Jellinek
 Bruce Winter
 Chia-Liang Kao		(CLKAO)
 D. Menzel
@@ -37,6 +38,7 @@ Paritosh Tyagi
 Phil Sallee
 Randal L. Schwartz	(MERLYN)
 Reini Urban
+Richard Soderberg	(RSOD)
 Robert Allerstorfer
 Robert Creager		(RCREAGER)
 Roderich Schupp		(RSCHUPP)

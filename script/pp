@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #57 $ $Change: 6898 $ $DateTime: 2003/07/08 15:29:29 $ vim: expandtab shiftwidth=4
+# $Revision: #58 $ $Change: 6997 $ $DateTime: 2003/07/16 07:46:33 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -166,15 +166,16 @@ sub compile_par {
         push @manifest, "script/$name";
     }
 
-    $zip->addDirectory('', 'shlib') if @SharedLibs and $] >= 5.008;
+    my $shlib = "shlib/$Config::Config{archname}";
+    $zip->addDirectory('', $shlib) if @SharedLibs and $] >= 5.008;
     foreach my $input (@SharedLibs) {
         next unless -e $input;
         $size += -s $input;
 
         my $name = basename($input);
-        vprint 2, "... adding $input as shlib/$name";
-        $zip->addFile($input => "shlib/$name");
-        push @manifest, "shlib/$name";
+        vprint 2, "... adding $input as $shlib/$name";
+        $zip->addFile($input => "$shlib/$name");
+        push @manifest, "$shlib/$name";
     }
 
     foreach my $input (@data) {

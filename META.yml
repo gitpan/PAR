@@ -1,5 +1,5 @@
 name: PAR
-version: 0.69
+version: 0.69_91
 abstract: Perl Archive Tookit
 distribution_type: module
 requires:
@@ -7,7 +7,10 @@ requires:
   Compress::Zlib: 1.14
   Archive::Zip: 1
   Module::ScanDeps: 0.19
+recommends:
+  PAR::Dist: 0
+  Module::Signature: 0.25
 private:
   directory:
     - inc
-generated_by: Module::Install version 0.19_99
+generated_by: Module::Install version 0.22
