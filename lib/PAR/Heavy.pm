@@ -1,6 +1,3 @@
-# $File: /depot/local/PAR/trunk/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #8 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
-
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.08';
 
@@ -24,7 +21,11 @@ No user-serviceable parts inside.
 my ($bootstrap, $dl_findfile);  # Caches for code references
 my ($dlext);                    # Cache for $Config{dlext}
 my ($cache_key);                # The current file to find
-my $is_insensitive_fs = (-s $0 and (-s lc($0) || -1) == (-s uc($0) || -1));
+my $is_insensitive_fs = (
+    -s $0
+        and (-s lc($0) || -1) == (-s uc($0) || -1)
+        and (-s lc($0) || -1) == -s $0
+);
 
 # Adds pre-hooks to Dynaloader's key methods
 sub _init_dynaloader {
@@ -86,15 +87,17 @@ sub _bootstrap {
 
     $FullCache{$file} = _dl_extract($member, $file);
 
-    # Now extract all associated shared objs in the same auto/ path
-    my $pat = $member->fileName;
+    # Now extract all associated shared objs in the same auto/ dir
+    my $first = $member->fileName;
+    my $pat = $first;
     $pat =~ s{[^/]*$}{};
     if ($PAR::LastAccessedPAR) {
         foreach my $member ( $PAR::LastAccessedPAR->members ) {
             next if $member->isDirectory;
 
             my $name = $member->fileName;
-            next unless $name =~ m{^/?\Q$pat\E.*?\.\Q$dlext\E[^/]*$};
+            next if $name eq $first;
+            next unless $name =~ m{^/?\Q$pat\E\/[^/]?\.\Q$dlext\E[^/]*$};
             $name =~ s{.*/}{};
             _dl_extract($member, $file, $name);
         }
@@ -138,7 +141,7 @@ sub _dl_extract {
 
     if ($fh) {
         binmode($fh);
-        print $fh scalar $member->contents;
+        $member->extractToFileHandle($fh);
         close $fh;
         chmod 0755, $filename;
     }

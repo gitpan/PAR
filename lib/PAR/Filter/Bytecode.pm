@@ -1,6 +1,3 @@
-# $File: /depot/local/PAR/trunk/lib/PAR/Filter/Bytecode.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-
 package PAR::Filter::Bytecode;
 
 use strict;

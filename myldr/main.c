@@ -1,8 +1,3 @@
-/* $File: /depot/local/PAR/trunk/myldr/main.c $ $Author: autrijus $
-   $Revision: #25 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-   vim: expandtab shiftwidth=4
-*/
-
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -22,17 +17,6 @@ extern char load_me_2[];
 static char *stmpdir;
 static int options_count;
 static char **fakeargv;
-
-#if defined(NeXT) || defined(__NeXT)
-#    include <mach-o/dyld.h>
-#    define environ (*environ_pointer)
-EXT char *** environ_pointer;
-#else
-#    if defined(PERL_DARWIN) || defined(__APPLE__)
-#        include <crt_externs.h>
-#        define environ (*_NSGetEnviron())
-#    endif
-#endif
 
 #ifdef HAS_PROCSELFEXE
 /* This is a function so that we don't hold on to MAXPATHLEN
@@ -140,7 +124,7 @@ int main ( int argc, char **argv, char **env )
     fakeargv[argc + options_count - 1] = 0;
 
     exitstatus = perl_parse(my_perl, par_xs_init, argc + options_count - 1,
-                            fakeargv, environ);
+                            fakeargv, (char **)NULL);
 
     if (exitstatus == 0)
 	exitstatus = perl_run( my_perl );

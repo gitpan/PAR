@@ -1,6 +1,4 @@
 #!/usr/bin/perl -w
-# $File: /depot/local/PAR/trunk/contrib/automated_pp_test/hello_tk.pl $ $Author: autrijus $
-# $Revision: #3 $ $Change: 11731 $ $DateTime: 2004/03/03 15:18:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any
@@ -25,7 +23,7 @@
 #
 #
 ########################################################################
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 use POSIX qw (EXIT_SUCCESS EXIT_FAILURE);
 

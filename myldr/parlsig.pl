@@ -1,5 +1,4 @@
-# $File: /depot/local/PAR/trunk/myldr/parlsig.pl $ $Author: autrijus $
-# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
+use strict;
 
 my ($parl_exe, $par_exe, $dynperl, $chunk_size) = @ARGV;
 exit unless $dynperl;

@@ -1,6 +1,3 @@
-# $File: /depot/local/PAR/trunk/TODO $ $Author: autrijus $
-# $Revision: #17 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-
 - Implement inflate algorithm in perl as a non-XS fallback.
 
 - Implement Archive::Zip, Compress::Zlib and friends in C for performance.
@@ -35,4 +32,3 @@
 
 - Skip some binary modules (such as IO.dll) inside .par when packing standalone
   executables, if parl already contains a copy of them.
-  

@@ -1,6 +1,4 @@
 #!/usr/local/bin/perl
-# $File: /depot/local/PAR/trunk/script/par.pl $ $Author: autrijus $
-# $Revision: #71 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -308,6 +306,7 @@ my ($start_pos, $data_pos);
 
     # load rest of the group in
     while (my $filename = (sort keys %require_list)[0]) {
+        local $INC{'Cwd.pm'} = __FILE__;
         require $filename unless $INC{$filename} or $filename =~ /BSDPAN/;
         delete $require_list{$filename};
     }
@@ -321,7 +320,7 @@ my ($start_pos, $data_pos);
 
 # Argument processing {{{
 my @par_args;
-my ($out, $bundle, $logfh);
+my ($out, $bundle, $logfh, $cache_name);
 
 $quiet = 0 unless $ENV{PAR_DEBUG};
 
@@ -335,7 +334,7 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
         v   verify_par
     );
     while (@ARGV) {
-        $ARGV[0] =~ /^-([AIMOBLbqpiusv])(.*)/ or last;
+        $ARGV[0] =~ /^-([AIMOBLbqpiusTv])(.*)/ or last;
 
         if ($1 eq 'I') {
             unshift @INC, $2;
@@ -361,6 +360,9 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
         elsif ($1 eq 'L') {
             open $logfh, ">>", $2 or die "XXX: Cannot open log: $!";
         }
+        elsif ($1 eq 'T') {
+            $cache_name = $2;
+        }
 
         shift(@ARGV);
 
@@ -381,11 +383,28 @@ if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
 
 # Output mode (-O) handling {{{
 if ($out) {
-    require IO::File;
-    require Archive::Zip;
+    {
+        local $INC{'Cwd.pm'} = __FILE__;
+        require IO::File;
+        require Archive::Zip;
+    }
+
 
     my $par = shift(@ARGV);
-    my $zip = Archive::Zip->new($par) if defined($par);
+    my $zip;
+
+    
+    if (defined $par) {
+        open my $fh, '<', $par or die "Cannot find '$par': $!";
+        binmode($fh);
+        bless($fh, 'IO::File');
+
+        $zip = Archive::Zip->new;
+        ( $zip->readFromFileHandle($fh, $par) == Archive::Zip::AZ_OK() )
+            or die "Read '$par' error: $!";
+    }
+
+
     my %env = do {
         if ($zip and my $meta = $zip->contents('META.yml')) {
             $meta =~ s/.*^par:$//ms;
@@ -520,6 +539,23 @@ if ($out) {
     # Now write out the PAR and magic strings {{{
     $zip->writeToFileHandle($fh) if $zip;
 
+    $cache_name = substr $cache_name, 0, 40;
+    if (!$cache_name and my $mtime = (stat($out))[9]) {
+        my $ctx = eval { require Digest::SHA; Digest::SHA->new(1) }
+            || eval { require Digest::SHA1; Digest::SHA1->new }
+            || eval { require Digest::MD5; Digest::MD5->new };
+
+        if ($ctx and open(my $fh, "<", $out)) {
+            binmode($fh);
+            $ctx->addfile($fh);
+            close($fh);
+        }
+
+        $cache_name = $ctx ? $ctx->hexdigest : $mtime;
+    }
+    $cache_name .= "\0" x (41 - length $cache_name);
+    $cache_name .= "CACHE";
+    $fh->print($cache_name);
     $fh->print(pack('N', $fh->tell - length($loader)));
     $fh->print("\nPAR.pm\n");
     $fh->close;
@@ -540,11 +576,16 @@ if ($out) {
     require PAR;
     PAR::Heavy::_init_dynaloader();
 
-    require Archive::Zip;
+
+    {
+        local $INC{'Cwd.pm'} = __FILE__;
+        require File::Find;
+        require Archive::Zip;
+    }
     my $zip = Archive::Zip->new;
     my $fh = IO::File->new;
     $fh->fdopen(fileno(_FH), 'r') or die "$!: $@";
-    $zip->readFromFileHandle($fh) == Archive::Zip::AZ_OK() or die "$!: $@";
+    $zip->readFromFileHandle($fh, $progname) == Archive::Zip::AZ_OK() or die "$!: $@";
 
     push @PAR::LibCache, $zip;
     $PAR::LibCache{$progname} = $zip;
@@ -583,6 +624,8 @@ Usage: $0 [ -Alib.par ] [ -Idir ] [ -Mmodule ] [ src.par ] [ program.pl ]
 # }}}
 
 sub require_modules {
+    local $INC{'Cwd.pm'} = __FILE__;
+
     require lib;
     require DynaLoader;
     require integer;
@@ -594,7 +637,6 @@ sub require_modules {
     require Exporter::Heavy;
     require Exporter;
     require Fcntl;
-    require Cwd;
     require File::Temp;
     require File::Spec;
     require XSLoader;
@@ -629,17 +671,29 @@ sub _set_par_temp {
         my $stmpdir = "$path$Config{_delim}par-$username";
         mkdir $stmpdir, 0755;
         if (!$ENV{PAR_CLEAN} and my $mtime = (stat($progname))[9]) {
-            my $ctx = eval { require Digest::SHA1; Digest::SHA1->new }
-                   || eval { require Digest::MD5; Digest::MD5->new };
-
-            if ($ctx and open(my $fh, "<", $progname)) {
-                binmode($fh);
-                $ctx->addfile($fh);
-                close($fh);
+            open (my $fh, "<". $progname);
+            seek $fh, -18, 2;
+            sysread $fh, my $buf, 6;
+            if ($buf eq "\0CACHE") {
+                seek $fh, -58, 2;
+                sysread $fh, $buf, 41;
+                $buf =~ s/\0//g;
+                $stmpdir .= "$Config{_delim}cache-" . $buf;
             }
+            else {
+                my $ctx = eval { require Digest::SHA; Digest::SHA->new(1) }
+                    || eval { require Digest::SHA1; Digest::SHA1->new }
+                    || eval { require Digest::MD5; Digest::MD5->new };
 
-            $stmpdir .= "$Config{_delim}cache-"
-                     . ( $ctx ? $ctx->hexdigest : $mtime );
+                if ($ctx and open(my $fh, "<", $progname)) {
+                    binmode($fh);
+                    $ctx->addfile($fh);
+                    close($fh);
+                }
+
+                $stmpdir .= "$Config{_delim}cache-" . ( $ctx ? $ctx->hexdigest : $mtime );
+            }
+            close($fh);
         }
         else {
             $ENV{PAR_CLEAN} = 1;
@@ -773,6 +827,10 @@ die $@ if $@;
 };
 
 $::__ERROR = $@ if $@;
+}
+
+if ($::__ERROR =~/^_TK_EXIT_\((\d+)\)/) {
+    CORE::exit($1);
 }
 
 die $::__ERROR if $::__ERROR;

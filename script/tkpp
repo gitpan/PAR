@@ -1,6 +1,4 @@
 #!/usr/bin/perl
-# $File: /depot/local/PAR/trunk/script/tkpp $ $Author: autrijus $
-# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
 
 our $VERSION = '1.11';
 

@@ -1,8 +1,5 @@
-# $File: /depot/local/PAR/trunk/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #26 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
-
 package PAR;
-$PAR::VERSION = '0.85_01';
+$PAR::VERSION = '0.86';
 
 use 5.006;
 use strict;
@@ -15,7 +12,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.85_01 of PAR, released August 31, 2004.
+This document describes version 0.86 of PAR, released December 11, 2004.
 
 =head1 SYNOPSIS
 
@@ -164,7 +161,11 @@ use vars qw($LastAccessedPAR $LastTempFile);
 my $ver  = $Config{version};
 my $arch = $Config{archname};
 my $progname = $ENV{PAR_PROGNAME} || $0;
-my $is_insensitive_fs = (-s $progname and (-s lc($progname) || -1) == (-s uc($progname) || -1));
+my $is_insensitive_fs = (
+    -s $progname
+        and (-s lc($progname) || -1) == (-s uc($progname) || -1)
+        and (-s lc($progname) || -1) == -s $progname
+);
 my $par_temp;
 
 sub import {
@@ -262,10 +263,27 @@ sub _run_member {
 sub _extract_inc {
     my $file = shift;
     my $inc = "$par_temp/inc";
+    my $dlext = do {
+        require Config;
+        (defined %Config::Config) ? $Config::Config{dlext} : '';
+    };
 
     if (!-d $inc) {
         for (1 .. 10) { mkdir("$inc.lock", 0755) and last; sleep 1 }
-        Archive::Zip->new($file)->extractTree( '' => "$inc/" );
+
+        open my $fh, '<', $file or die "Cannot find '$file': $!";
+        binmode($fh);
+        bless($fh, 'IO::File');
+
+        my $zip = Archive::Zip->new;
+        ( $zip->readFromFileHandle($fh, $file) == Archive::Zip::AZ_OK() )
+            or die "Read '$file' error: $!";
+
+        for ( $zip->memberNames() ) {
+            next if m{\.\Q$dlext\E[^/]*$};
+            s{^/}{};
+            $zip->extractMember($_, "$inc/" . $_);
+        }
         rmdir("$inc.lock");
     }
 
@@ -375,10 +393,20 @@ sub unpar {
 
         require Archive::Zip;
         $zip = Archive::Zip->new;
-        my $method = (ref($par) ? 'readFromFileHandle' : 'read');
+
+	my @file;
+        if (!ref $par) {
+	    @file = $par;
+
+            open my $fh, '<', $par;
+            binmode($fh);
+
+            $par = $fh;
+            bless($par, 'IO::File');
+        }
 
         Archive::Zip::setErrorHandler(sub {});
-        my $rv = $zip->$method($par);
+        my $rv = $zip->readFromFileHandle($par, @file);
         Archive::Zip::setErrorHandler(undef);
         return unless $rv == Archive::Zip::AZ_OK();
 
@@ -444,9 +472,10 @@ sub _set_par_temp {
         my $stmpdir = File::Spec->catdir($path, "par-$username");
         mkdir $stmpdir, 0755;
         if (!$ENV{PAR_CLEAN} and my $mtime = (stat($progname))[9]) {
-            my $ctx = eval { require Digest::SHA1; Digest::SHA1->new }
+            my $ctx = eval { require Digest::SHA; Digest::SHA->new(1) }
+                   || eval { require Digest::SHA1; Digest::SHA1->new }
                    || eval { require Digest::MD5; Digest::MD5->new };
-                
+
             if ($ctx and open(my $fh, "<$progname")) {
                 binmode($fh);
                 $ctx->addfile($fh);

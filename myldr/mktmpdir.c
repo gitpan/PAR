@@ -1,8 +1,3 @@
-/* $File: /depot/local/PAR/trunk/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #11 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-   vim: expandtab shiftwidth=4
-*/
-
 #include "ctype.h"
 #include "mktmpdir.h"
 
@@ -14,6 +9,35 @@
 #  define OPEN_O_BINARY 0
 #endif
 
+void par_setup_libpath( const char * stmpdir )
+{
+   const char *key = NULL , *val = NULL;
+   int i;
+   const char *ld_path_keys[6] = {
+      "LD_LIBRARY_PATH", "LIBPATH", "LIBRARY_PATH",
+      "PATH", "DYLD_LIBRARY_PATH", ""
+   };
+    char *ld_path_env;
+    for ( i = 0 ; strlen(key = ld_path_keys[i]) > 0 ; i++ ) {
+        if ( ((val = (char *)par_getenv(key)) == NULL) || (strlen(val) == 0) ) {
+            par_setenv(key, stmpdir);
+        }
+        else if(!strstr(val, stmpdir)) {
+            ld_path_env = (char *)malloc(
+                strlen(stmpdir) +
+                strlen(path_sep) +
+                strlen(val) + 2
+            );
+            sprintf(
+                ld_path_env,
+                "%s%s%s",
+                stmpdir, path_sep, val
+            );
+            par_setenv(key, ld_path_env);
+        }
+    }
+}
+
 char *par_mktmpdir ( char **argv ) {
     int i;
     char *c;
@@ -23,24 +47,20 @@ char *par_mktmpdir ( char **argv ) {
     const char *temp_dirs[4] = { "C:\\TEMP", "/tmp", ".", "" };
     const char *temp_keys[4] = { "TMPDIR", "TEMP", "TMP", "" };
     const char *user_keys[3] = { "USER", "USERNAME", "" };
-    const char *ld_path_keys[6] = {
-        "LD_LIBRARY_PATH", "LIBPATH", "LIBRARY_PATH",
-        "PATH", "DYLD_LIBRARY_PATH", ""
-    };
 
     const char *subdirbuf_prefix = "par-";
     const char *subdirbuf_suffix = "";
 
     char *progname = NULL, *username = NULL;
-    char *ld_path_env;
     char *stmpdir;
     int f, j, k;
     char sha1[41];
     SHA_INFO sha_info;
-    unsigned char buf[1000];
+    unsigned char buf[32768];
     unsigned char sha_data[20];
 
-    if ( (val = (char *)par_getenv("PAR_TEMP")) && strlen(val) ) {
+    if ( (val = (char *)par_getenv(PAR_TEMP)) && strlen(val) ) {
+        par_setup_libpath(val);
         return strdup(val);
     }
 
@@ -104,23 +124,38 @@ char *par_mktmpdir ( char **argv ) {
     if (progname == NULL) progname = argv[0];
 
     if ( !par_env_clean() && (f = open( progname, O_RDONLY | OPEN_O_BINARY ))) {
-        /* "$TEMP/par-$USER/cache-$SHA1" */
-        sha_init( &sha_info );
-        while( ( j = read( f, buf, sizeof( buf ) ) ) > 0 )
-        {
-            sha_update( &sha_info, buf, j );
+        lseek(f, -18, 2);
+        read(f, buf, 6);
+        if(buf[0] == 0 && buf[1] == 'C' && buf[2] == 'A' && buf[3] == 'C' && buf[4] == 'H' && buf[5] == 'E') {
+            /* pre-computed cache_name in this file */
+            /* "$TEMP/par-$USER/cache-$cache_name" */
+            lseek(f, -58, 2);
+            read(f, buf, 41);
+            sprintf(
+                stmpdir,
+                "%s%scache-%s%s",
+                stmpdir, dir_sep, buf, subdirbuf_suffix
+            );
         }
-        close( f );
-        sha_final( sha_data, &sha_info );
-        for( k = 0; k < 20; k++ )
-        {
-            sprintf( sha1+k*2, "%02x", sha_data[k] );
+        else {
+            /* "$TEMP/par-$USER/cache-$SHA1" */
+            sha_init( &sha_info );
+            while( ( j = read( f, buf, sizeof( buf ) ) ) > 0 )
+            {
+                sha_update( &sha_info, buf, j );
+            }
+            close( f );
+            sha_final( sha_data, &sha_info );
+            for( k = 0; k < 20; k++ )
+            {
+                sprintf( sha1+k*2, "%02x", sha_data[k] );
+            }
+            sprintf(
+                stmpdir,
+                "%s%scache-%s%s",
+                stmpdir, dir_sep, sha1, subdirbuf_suffix
+            );
         }
-        sprintf(
-            stmpdir,
-            "%s%scache-%s%s",
-            stmpdir, dir_sep, sha1, subdirbuf_suffix
-        );
     }
     else {
         /* "$TEMP/par-$USER/temp-$PID" */
@@ -136,24 +171,7 @@ char *par_mktmpdir ( char **argv ) {
     /* set dynamic loading path */
     par_setenv(PAR_TEMP, stmpdir);
 
-    for ( i = 0 ; strlen(key = ld_path_keys[i]) > 0 ; i++ ) {
-        if ( ((val = (char *)par_getenv(key)) == NULL) || (strlen(val) == 0) ) {
-            par_setenv(key, stmpdir);
-        }
-        else {
-            ld_path_env = (char *)malloc(
-                strlen(stmpdir) +
-                strlen(path_sep) +
-                strlen(val) + 2
-            );
-            sprintf(
-                ld_path_env,
-                "%s%s%s",
-                stmpdir, path_sep, val
-            );
-            par_setenv(key, ld_path_env);
-        }
-    }
+    par_setup_libpath( stmpdir );
 
     return(stmpdir);
 }

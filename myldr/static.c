@@ -1,8 +1,3 @@
-/* $File: /depot/local/PAR/trunk/myldr/static.c $ $Author: autrijus $
-   $Revision: #5 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-   vim: expandtab shiftwidth=4
-*/
-
 #include "EXTERN.h"
 #include "perl.h"
 

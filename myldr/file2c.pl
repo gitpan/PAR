@@ -1,7 +1,5 @@
 #!/usr/bin/perl -w
-# $File: /depot/local/PAR/trunk/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #13 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-#
+
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
 # This package is free software; you can redistribute it and/or

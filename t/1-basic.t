@@ -1,6 +1,4 @@
 #!/usr/bin/perl
-# $File: /depot/local/PAR/trunk/t/1-basic.t $ $Author: autrijus $
-# $Revision: #13 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 use Test;
 BEGIN { plan tests => 8 }

@@ -1,7 +1,4 @@
-#line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.4/Module/Install/PRIVATE/PAR.pm"
-# $File: //member/autrijus/Module-Install-PRIVATE/lib/Module/Install/PRIVATE/PAR.pm $ $Author: autrijus $
-# $Revision: #14 $ $Change: 10724 $ $DateTime: 2004/06/02 09:57:09 $ vim: expandtab shiftwidth=4
-
+#line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.5/Module/Install/PRIVATE/PAR.pm"
 package Module::Install::PRIVATE::PAR;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
 

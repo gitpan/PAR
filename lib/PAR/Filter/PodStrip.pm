@@ -1,6 +1,3 @@
-# $File: /depot/local/PAR/trunk/lib/PAR/Filter/PodStrip.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-
 package PAR::Filter::PodStrip;
 
 use strict;
@@ -38,7 +35,7 @@ sub apply {
     $$ref =~ s{(
 	(.*?\n)
 	(?:=(?:head\d|pod|begin|item|over|for|back|end)\b
-	.*?\n)?
+    .*?\n)
 	(?:=cut[\t ]*[\r\n]*?|\Z)
 	(\r?\n)?
     )}{

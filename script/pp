@@ -1,6 +1,4 @@
 #!/usr/bin/perl
-# $File: /depot/local/PAR/trunk/script/pp $ $Author: autrijus $
-# $Revision: #63 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use PAR ();
@@ -71,7 +69,7 @@ pp - Perl Packager
 
 =head1 SYNOPSIS
 
-B<pp> S<[ B<-BILMSVXdeghilmoprsv> ]> S<[ I<parfile> | I<scriptfile> ]>...
+B<pp> S<[ B<-BILMTSVXdeghilmoprsvz> ]> S<[ I<parfile> | I<scriptfile> ]>...
 
 =head1 EXAMPLES
 
@@ -206,8 +204,10 @@ Run C<perl inputfile> to determine additonal run-time dependencies.
 
 =item B<-X>, B<--exclude>=I<MODULE>
 
-Exclude the given module from the dependency search patch and from the
-package.
+Exclude the given module from the dependency search path and from the
+package. If the given file is a zip or par or par executable, all the files
+in the given file (except MANIFEST, META.yml and script/*) will be
+excluded and the output file will "use" the given file at runtime.
 
 =item B<-f>, B<--filter>=I<FILTER>
 
@@ -320,6 +320,12 @@ Do not delete generated PAR file after packaging.
 Cryptographically sign the generated PAR or binary file using
 L<Module::Signature>.
 
+=item B<-T>, B<--tempcache>
+
+Set the program unique part of the cache directory name that is used
+if the program is run without -C. If not set, a hash of the executable
+is used.
+
 =item B<-v>, B<--verbose>[=I<NUMBER>]
 
 Increase verbosity of output; I<NUMBER> is an integer from C<1> to C<3>,
@@ -330,6 +336,12 @@ sets it to C<3>.
 =item B<-V>, B<--version>
 
 Display the version number and copyrights of this program.
+
+=item B<-z>, B<--compress>=I<NUMBER>
+
+Set zip compression level; I<NUMBER> is an integer from C<0> to C<9>,
+C<0> = no compression, C<9> = max compression.  Defaults to C<6> if
+B<-z> is not used.
 
 =back
 

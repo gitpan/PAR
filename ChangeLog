@@ -1,19 +1,71 @@
-# $File: /depot/local/PAR/trunk/ChangeLog $
-# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-
-[Changes for 0.86 (tentative)]
+[Changes for 0.86 - December 11, 2004]
 
 * New Features
 
-    - Add "pare" (a utility to pare down the size of PAR files) and
-      "additional_docs" (two articles that covers PAR usage and internals)
-      to contrib/.
+    - New "pp -z" (--compress) option to set compression level (0-9).
+
+    - New "pp -T" (--tempcache) option to override the per-executable
+      directory name; it defaults to a hash of the executable, computed at
+      compile time.  This makes startup much faster for large executables.
+
+    - The hash algorithm described above now prefers Digest::SHA if installed,
+      otherwise Digest::SHA1, then fallbacks to Digest::MD5.
+
+    - Functionality of "pp -X" is now extended: if the argument after -X is a
+      zip or par file, files in it are excluded from the produced executable,
+      and the executable will "use" the zip/par instead. For multiple -X args,
+      successive args are only "use"d if they contain additional unique files.
+
+    - "pp -l" now searches for libraries in "." and PATH in Win32.
+
+    - "pp -l" shared libraries are now added to %skip, so it will not
+      be included in both shlib/ and lib/.
+
+    - "pp -l" now chases symbolic links.  For example, if "libsomelib.so"
+      is a symlink to "libsomelib.so.1", which is another symlink to
+      "libsomelib.so.1.2", pp now follows these symlinks and add the real
+      file the par, rather than "libsomelib.so".
+
+    - New contributed code in "contrib/stdio/": Useful Tk console for
+      "pp -g" users.
+
+    - New contributed tutorial documents, currently in "contrib/docs/",
+      which will eventually be turned into POD documents.
+
+    - Running "perl Makefile.PL" with $ENV{DEBUG} set to true now produces
+      "parl" with debug symbols.
+
+    - Remove Cwd.pm (and Cwd.so) from the bundled dependencies.
 
 * Bug Fixes
 
-    - On Gentoo and Debian GNU/Linux, pp-generated standalone binaries
-      packed libperl.so under the wrong name, resulting in failed execution
-      with messages like "libperl5.8.so not found".
+    - More robust probing for case-insensitive file systems.
+
+    - PodStrip now attempts to match "standard" pod start before =cut,
+      otherwise =cut gets removed by itself.
+
+    - Win32 slashes are now normalized in privlib and archlib directories.
+
+    - Don't extract shared libraries to inc/, since they were extracted
+      in $PAR_TEMP already.
+
+    - Don't re-extract shared libraries in subdirectories, since they
+      are picked up by corresponding "use".
+
+    - Tk now exits properly with a non-zero exit() value.
+
+    - Fix libperl probing problem on Debian and Gentoo that manifests as a
+     "libperl5.8.so not found" error during runtime.
+
+    - gpp: Fixed typo in options with multiple filenames; cleaned up
+      pp parameters.
+
+    - When PAR_TEMP is set, shlib/ was not correctly added to the dynamic
+      load path environment variables.
+
+    - PAR now builds with Win32 VC++ without CVTRES.EXE available.
+
+    - Detection of cl.exe, gcc.exe and cc.exe is now case-insensitive.
 
 [Changes for 0.85 - July 2, 2004]
 

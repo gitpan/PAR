@@ -1,7 +1,4 @@
 #!/usr/bin/perl -w
-# $File: /depot/local/PAR/trunk/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #30 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-#
 # Copyright 2002, 2003, 2004 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
 # This package is free software; you can redistribute it and/or
@@ -16,7 +13,7 @@ use File::Basename;
 
 xsinit(undef);
 
-my $debug = 0;
+my $debug = $ENV{DEBUG};
 my $chunk_size = 30000;
 my $perl = $^X;
 my $exe = $Config{_exe};
@@ -42,6 +39,38 @@ my $static_exe_link = File::Spec->catfile('.', "static$link_exe");
 my $parl_exe = File::Spec->catfile('..', 'script', "parl$exe");
 my $parldyn_exe = File::Spec->catfile('..', 'script', "parldyn$exe");
 my $lib_path = join(' ', map qq(-I"$_"), @INC);
+
+my( $out, $ccdebug, $lddebug, $warn, $rm, $mv, $res, $long_literal );
+
+if( $cc =~ m/^cl\b/i ) {
+    $out = '-out:';
+    $ccdebug = $debug ? '-Zi -Zm1000 ' : '-Zm1000 ';
+    $lddebug = $debug ? '-debug ' : '-release ';
+    $warn = $debug ? '-W3' : '';
+    $res = 'win32.obj';
+    $long_literal = 0;
+} elsif ($cc =~ m/^gcc\b/i or ($cc =~ m/^cc\b/i and $gccversion)) {
+    $out = '--output ';
+    $ccdebug = $debug ? '-g ' : '';
+    $lddebug = ($debug or $^O eq 'darwin') ? '' : '-s ';
+    $warn = $debug ? '-Wall -Wno-comments ' : '';
+    $res = ($^O =~ /^(?:MSWin|cygwin)/) ? 'win32.coff' : '';
+    $long_literal = 1;
+} else {
+    $out = '-o ';
+    $ccdebug = '';
+    $lddebug = '';
+    $warn = '';
+    $res = '';
+    $long_literal = 0; # better safe than sorry
+}
+
+
+my  $cflags = "$ccdebug$warn$pccflags";
+my $ldflags = "$lddebug$pldflags";
+my $static_ldflags = $ldflags;
+
+$static_ldflags =~ s/\s+-lperl\s+/ /g;
 
 my $libperl;
 
@@ -90,8 +119,12 @@ elsif ($dynperl) {
 	last if -e $libperl;
     }
 
-    die "Can't find $file in (@paths) -- please contact the author!"
-	unless -e $libperl;
+    # die "Can't find $file in (@paths) -- please contact the author!"
+    # 	unless -e $libperl;
+    undef $dynperl if !-e $libperl;
+}
+else {
+    $ldflags = $static_ldflags;
 }
 
 my $par = (($dynperl && $^O ne 'os2') ? $static_exe : $par_exe);
@@ -104,40 +137,8 @@ print "Writing Makefile for the par$exe program\n";
 
 open OUT, "> Makefile" or die "open 'Makefile': $!";
 
-my( $out, $ccdebug, $lddebug, $warn, $rm, $mv, $res, $long_literal );
-
-if( $cc =~ m/^cl\b/ ) {
-    $out = '-out:';
-    $ccdebug = $debug ? '-Zi -Zm1000 ' : '-Zm1000 ';
-    $lddebug = $debug ? '-debug ' : '-release ';
-    $warn = $debug ? '-W3' : '';
-    $res = 'win32.res';
-    $long_literal = 0;
-} elsif ($cc =~ m/^gcc\b/ or ($cc =~ m/^cc\b/ and $gccversion)) {
-    $out = '--output ';
-    $ccdebug = $debug ? '-g ' : '';
-    $lddebug = ($debug or $^O eq 'darwin') ? '' : '-s ';
-    $warn = $debug ? '-Wall -Wno-comments ' : '';
-    $res = ($^O =~ /^(?:MSWin|cygwin)/) ? 'win32.coff' : '';
-    $long_literal = 1;
-} else {
-    $out = '-o ';
-    $ccdebug = '';
-    $lddebug = '';
-    $warn = '';
-    $res = '';
-    $long_literal = 0; # better safe than sorry
-}
-
 $rm = $^O eq 'MSWin32' ? '$(PERL) -MExtUtils::Command -e rm_f' : 'rm -f';
 $mv = $^O eq 'MSWin32' ? '$(PERL) -MExtUtils::Command -e mv' : 'mv';
-
-my  $cflags = "$ccdebug$warn$pccflags";
-my $ldflags = "$lddebug$pldflags";
-my $static_ldflags = $ldflags;
-
-$static_ldflags =~ s/\s+-lperl\s+/ /g;
-$ldflags = $static_ldflags if !$dynperl;
 
 if (-e $par_exe and not -s $par_exe) {
     print OUT "all ::\n\t$^X -e1\n";
@@ -166,7 +167,7 @@ all: $all
 
 clean:
 	-\$(RM) my_*.c
-	-\$(RM) *$o
+	-\$(RM) main$o my_par_pl$o static$o
 	-\$(RM) *.opt *.pdb perlxsi.c
 	\$(MV) Makefile Makefile.old
 

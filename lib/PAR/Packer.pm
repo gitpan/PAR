@@ -1,6 +1,3 @@
-# $File: /depot/local/PAR/trunk/lib/PAR/Packer.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
-
 package PAR::Packer;
 $PAR::Packer::VERSION = '0.12';
 
@@ -17,7 +14,7 @@ PAR::Packer - App::Packer backend for making PAR files
 This module implements the B<App::Packer::Backend> interface, for generating
 stand-alone executables, perl scripts and PAR files.
 
-Currently, this module is used by the command line tool B<pp> internally, as 
+Currently, this module is used by the command line tool B<pp> internally, as
 well as by the contributed F<contrib/gui_pp/gpp> program.  Improvements on
 documenting the API will be most appreciated.
 
@@ -62,15 +59,18 @@ use constant OPTIONS => {
     'r|run'          => 'Run the resulting executable',
     'S|save'         => 'Preserve intermediate PAR files',
     's|sign'         => 'Sign PAR files',
+    'T|tempcache:s'  => 'Temp cache name',
     'v|verbose:i'    => 'Verbosity level',
     'vv|verbose2',   => 'Verbosity level 2',
     'vvv|verbose3',  => 'Verbosity level 3',
+    'z|compress:i'   => 'Compression level',
 };
 
 my $ValidOptions = {};
 my $LongToShort = { map { /^(\w+)\|(\w+)/ ? ($1, $2) : () } keys %{+OPTIONS} };
 my $ShortToLong = { reverse %$LongToShort };
 my $PerlExtensionRegex = qr/\.(?:al|ix|p(?:lx|l|h|m))\z/i;
+my (%dep_zips, %dep_zip_files);
 
 sub options { sort keys %{+OPTIONS} }
 
@@ -259,6 +259,9 @@ sub _parse_opts {
     $opt->{v} = 2 if ($opt->{vv});
     $opt->{v} = 3 if ($opt->{vvv});
     $opt->{B} = 1 unless ($opt->{p} || $opt->{P});
+    $opt->{z} = (defined($opt->{z})) ? $opt->{z} : Archive::Zip::COMPRESSION_LEVEL_DEFAULT;
+    $opt->{z} = Archive::Zip::COMPRESSION_LEVEL_DEFAULT if $opt->{z} < 0;
+    $opt->{z} = 9 if $opt->{z} > 9;
 
     $self->{output}      = $opt->{o}            || $self->_a_out();
     $opt->{o}            = $opt->{o}            || $self->_a_out();
@@ -529,22 +532,23 @@ par:
   version: $PAR::VERSION
 YAML
 
-    $self->_vprint(2, "... updating $_") for qw(MANIFEST META.yml);
-
     my $zip = $self->{zip};
 
-    $zip->removeMember( 'MANIFEST' );
-    $zip->addString(
-        $manifest => 'MANIFEST',
-        desiredCompressionMethod => Archive::Zip::COMPRESSION_DEFLATED(),
-        desiredCompressionLevel  => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
-    );
-    $zip->removeMember( 'META.yml' );
-    $zip->addString(
-        $meta_yaml => 'META.yml',
-        desiredCompressionMethod => Archive::Zip::COMPRESSION_DEFLATED(),
-        desiredCompressionLevel  => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
-    );
+    if (keys %dep_zips) {
+        $self->_vprint(2, "... updating main.pl");
+        my $dep_list = join ' ', keys %dep_zips;
+        my $main_pl  = $zip->contents('script/main.pl');
+        $main_pl = "use PAR qw( $dep_list );\n$main_pl";
+        $zip->contents( 'script/main.pl', $main_pl );
+        $dep_list = join ', ', keys %dep_zips;
+        $self->_vprint(0, "$self->{output} will require $dep_list at runtime");
+
+        $manifest =~ s/$_\n// for (keys %dep_zip_files);
+    }
+
+    $self->_vprint(2, "... updating $_") for qw(MANIFEST META.yml);
+    $zip->contents( 'MANIFEST', $manifest );
+    $zip->contents( 'META.yml', $meta_yaml );
 }
 
 sub get_par_file {
@@ -627,7 +631,15 @@ sub pack_manifest_hash {
     }
 
     foreach my $name ('PAR', @{ $opt->{X} || [] }) {
-        $self->_name2moddata($name, \@exclude, \@exclude);
+        if (-f $name and my $dep_zip = Archive::Zip->new($name)) {
+            for ($dep_zip->memberNames()) {
+                next if ( /MANIFEST/ or /META.yml/ or /^script\// );
+                $dep_zip_files{$_} ||= $name;
+            }
+        }
+        else {
+            $self->_name2moddata($name, \@exclude, \@exclude);
+        }
     }
 
     my %map;
@@ -638,6 +650,12 @@ sub pack_manifest_hash {
     my $inc_find = $self->_obj_function($fe, '_find_in_inc');
 
     my %skip = map { $_, 1 } map &$inc_find($_), @exclude;
+    if ($^O eq 'MSWin32') {
+        %skip = (%skip, map { s{\\}{/}g; lc($_), 1 } @SharedLibs);
+    }
+    else {
+        %skip = (%skip, map { $_, 1 } @SharedLibs);
+    }
     my @files = (map (&$inc_find($_), @modules), @$input);
 
     my $scan_dispatch =
@@ -658,6 +676,7 @@ sub pack_manifest_hash {
     );
 
     %skip = map { $_, 1 } map &$inc_find($_), @exclude;
+    %skip = (%skip, map { $_, 1 } @SharedLibs);
 
     my $add_deps = $self->_obj_function($fe, 'add_deps');
 
@@ -703,9 +722,11 @@ sub pack_manifest_hash {
       );
 
     foreach my $pfile (sort grep length $map{$_}, keys %map) {
+        (my $privlib = $Config{privlib}) =~ s{\\}{/}g;
+        (my $archlib = $Config{archlib}) =~ s{\\}{/}g;
         next if !$opt->{B} and (
-            ($map{$pfile} eq "$Config{privlib}/$pfile") or
-            ($map{$pfile} eq "$Config{archlib}/$pfile")
+            ($map{$pfile} eq "$privlib/$pfile") or
+            ($map{$pfile} eq "$archlib/$pfile")
         );
 
         $self->_vprint(2, "... adding $map{$pfile} as ${root}lib/$pfile");
@@ -940,6 +961,9 @@ sub dep_files {
 sub _add_file {
     my ($self, $zip, $in, $value, $manifest) = @_;
 
+    my $level = $self->{options}->{z};
+    my $method = $level ? Archive::Zip::COMPRESSION_DEFLATED
+                        : Archive::Zip::COMPRESSION_STORED;
     my $oldsize       = $self->{pack_attrib}{old_size};
     my $full_manifest = $self->{full_manifest};
 
@@ -955,6 +979,10 @@ sub _add_file {
                 my $file  = shift @$files;
                 my $alias = shift @$aliases;
 
+                if (exists $dep_zip_files{$alias}) {
+                        $dep_zips{$dep_zip_files{$alias}}++;
+                        next;
+                }
                 $self->_vprint(1, "... adding $file as $alias\n");
 
                 $full_manifest->{ $alias } = [ file => $file ];
@@ -962,25 +990,35 @@ sub _add_file {
 
                 $oldsize += -s $file;
                 $zip->addFile($file, $alias);
+                $zip->memberNamed($alias)->desiredCompressionMethod($method);
+                $zip->memberNamed($alias)->desiredCompressionLevel($level);
             }
         }
         elsif (-e $fn and -r $fn) {
+            if (exists $dep_zip_files{$in}) {
+                    $dep_zips{$dep_zip_files{$in}}++;
+                    return;
+            }
             $self->_vprint(1, "... adding $fn as $in\n");
 
             $oldsize += -s $fn;
             $zip->addFile($fn => $in);
+            $zip->memberNamed($in)->desiredCompressionMethod($method);
+            $zip->memberNamed($in)->desiredCompressionLevel($level);
         }
     }
     else {
+        if (exists $dep_zip_files{$in}) {
+                $dep_zips{$dep_zip_files{$in}}++;
+                return;
+        }
         my $str = $value->[1];
         $oldsize += length($str);
 
         $self->_vprint(1, "... adding <string> as $in");
-        $zip->addString(
-            $str => $in,
-            desiredCompressionMethod => Archive::Zip::COMPRESSION_DEFLATED(),
-            desiredCompressionLevel  => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
-        );
+        $zip->addString($str => $in);
+        $zip->memberNamed($in)->desiredCompressionMethod($method);
+        $zip->memberNamed($in)->desiredCompressionLevel($level);
     }
 
     $self->{pack_attrib}{old_size} = $oldsize;
@@ -1041,11 +1079,17 @@ sub _name2moddata {
         push @$mod, $name;
     }
     else {
-        $self->_warn(
-            "Using -M to add non-library files is deprecated; ",
-            "try -a instead",
-        );
-        push @$dat, $name;
+
+        if (!-e $name) {
+            $self->_warn( "-M or -X option file not found: $name\n" );
+        }
+        else {
+            $self->_warn(
+                "Using -M to add non-library files is deprecated; ",
+                "try -a instead\n",
+            ) if $mod != $dat;
+            push @$dat, $name;
+        }
     }
 }
 
@@ -1179,6 +1223,9 @@ sub _generate_output {
     if ($opt->{L}) {
         unshift @args, "-L".$opt->{L};
     }
+    if ($opt->{T}) {
+        unshift @args, "-T".$opt->{T};
+    }
     if ($opt->{P}) {
         unshift @args, $self->{parl};
         $self->{parl} = $^X;
@@ -1274,27 +1321,75 @@ sub _check_par {
     return (readline($handle) eq "PK\x03\x04");
 }
 
+# _chase_lib - find the runtime link of a shared library
+# Logic based on info found at the following sites:
+# http://lists.debian.org/lsb-spec/1999/05/msg00011.html
+# http://docs.sun.com/app/docs/doc/806-0641/6j9vuqujh?a=view#chapter5-97360
+sub _chase_lib {
+   my ($self, $file) = @_;
+
+   while ($Config::Config{d_symlink} and -l $file) {
+       if ($file =~ /^(.*?\.\Q$Config{dlext}\E\.\d+)\..*/) {
+           return $1 if -e $1;
+       }
+
+       return $file if $file =~ /\.\Q$Config{dlext}\E\.\d+$/;
+
+       my $dir = File::Basename::dirname($file);
+       $file = readlink($file);
+
+       unless (File::Spec->file_name_is_absolute($file)) {
+           $file = File::Spec->rel2abs($file, $dir);
+       }
+   }
+
+   if ($file =~ /^(.*?\.\Q$Config{dlext}\E\.\d+)\..*/) {
+       return $1 if -e $1;
+   }
+
+   return $file;
+}
+
 sub _find_shlib {
     my ($self, $file, $script_name) = @_;
 
-    return $file if -e $file;
+    if ($^O eq 'MSWin32') {
+        if ($file !~ /^[a-z]:/i) {
+            my $cwd = Cwd::cwd().'/';
+            $cwd =~ s{/.*}{} if $file =~ m{^[\\/]};
+            $file = $cwd.$file;
+        }
+    }
 
-    if (not exists $ENV{ $Config{ldlibpthname} }) {
+    return $self->_chase_lib($file) if -e $file;
+
+    my $libpthname;
+    if ($^O eq 'MSWin32') {
+        $libpthname = exists $ENV{PATH} ? $ENV{PATH} : undef;
+    }
+    else {
+        $libpthname = exists $ENV{ $Config{ldlibpthname} }
+                           ? $ENV{ $Config{ldlibpthname} } : undef;
+    }
+    if (not defined $libpthname) {
         print "Can't find $file. Environment variable "
-          . "$Config{ldlibpthname} does not exist.\n";
+          . ($^O eq 'MSWin32' ? 'PATH' : $Config{ldlibpthname})
+          . " does not exist.\n";
         return;
     }
 
+    $file = File::Basename::basename($file);
     for my $dir (File::Basename::dirname($0),
-        split(/\Q$Config{path_sep}\E/, $ENV{ $Config{ldlibpthname} }))
+        split(/\Q$Config{path_sep}\E/, $libpthname))
     {
         my $abs = File::Spec->catfile($dir, $file);
-        return $abs if -e $abs;
+        return $self->_chase_lib($abs) if -e $abs;
         $abs = File::Spec->catfile($dir, "$file.$Config{dlext}");
-        return $abs if -e $abs;
+        return $self->_chase_lib($abs) if -e $abs;
     }
 
     # be extra magical and prepend "lib" to the filename
+    return if $^O eq 'MSWin32';
     return $self->_find_shlib("lib$file", $script_name) unless $file =~ /^lib/;
 }
 

@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 
-our $VERSION = '2.1';
+our $VERSION = '2.2';
 
 use Tk;
 use Tk::ROText;
@@ -32,7 +32,7 @@ $mw->optionAdd( '*font' => 'Courier 10' );
 my $entry_font_color = 'blue';
 my $balloon_font     = 'Courier 8';
 my $balloon_color    = 'yellow';
-my $dots_font        = 'Courier 5 bold';
+my $dots_font        = 'Courier 5';
 my $pl_types         = [ [ 'pp source', [ '.par', '.pl', '.ptk', '.pm' ] ], [ 'All files', '*' ] ];
 my $gpp_types        = [ [ 'gpp options', ['.gpp'] ], [ 'All files', '*' ] ];
 my $default_gpp_ext  = '.gpp';
@@ -125,9 +125,9 @@ my $output_entry = $fe->HistEntry( -textvariable     => \$output_file,
                                    -command          => sub { }
                                  )->pack( -expand => 1, -fill => 'x' );
 $output_entry->Subwidget('slistbox')->configure( -bg => 'white' );
-my $fg = $ff->Frame()->pack( -side => 'left' );
+my $fg = $ff->Frame()->pack( -side => 'left', -fill => 'y' );
 $fg->Button(
-    -text    => "\225\225\225",               # round bullets
+    -text    => '...',
     -font    => $dots_font,
     -command => sub {
         my $file = $mw->getOpenFile( -filetypes => $pl_types );
@@ -138,9 +138,9 @@ $fg->Button(
             $source_entry->historyAdd();
         }
     }
-)->pack();
+)->pack(-expand => 'y', -fill => 'y');
 $fg->Button(
-    -text    => "\225\225\225",    # round bullets
+    -text    => '...',
     -font    => $dots_font,
     -command => sub {
         my $file = $mw->getSaveFile();
@@ -151,7 +151,7 @@ $fg->Button(
             $output_entry->historyAdd();
         }
     }
-)->pack();
+)->pack(-expand => 'y', -fill => 'y');
 
 my $fo =
   $f->LabFrame( -label => 'Options', -labelside => 'acrosstop' )
@@ -207,16 +207,20 @@ for ( 0 .. $#opts ) {
         );
     }
     if ( $type[$_] =~ /i/ ) {
-        $fp->NumEntry( -width => 5, -textvariable => \$value[$_] )->pack( -side => 'left' );
+        $fp->NumEntry( -textvariable     => \$value[$_],
+                       -width            => 5,
+                       -fg               => $entry_font_color,
+                       -selectbackground => $entry_font_color,
+                     )->pack( -side => 'left' );
     }
 }
 
-my ( $hw, $hwt );               # help toplevel/text
-my ( $lw, $lwt );               # view log toplevel/text
+my ( $hw, $hwt );    # help toplevel/text
+my ( $lw, $lwt );    # view log toplevel/text
 $mw->waitVisibility;
 
 open_opts( $ARGV[0] ) if $ARGV[0];
-my $gpp_history = $ENV{HOME}||$ENV{HOMEPATH}||$FindBin::Bin;
+my $gpp_history = $ENV{HOME} || $ENV{HOMEPATH} || $FindBin::Bin;
 $gpp_history .= '/.gpp.history';
 open_hist();
 
@@ -442,16 +446,13 @@ sub help {
 }
 
 sub run_pp {
-    my $command = $pp;
     my @pp_opts = ();
     for ( 0 .. $#opts ) {
         if ( $chkd[$_] ) {
             if ( ( $type[$_] eq '' ) or ( $type[$_] =~ /:/ and $value[$_] eq '' ) ) {
-                $command .= ' -' . $opts[$_];
                 push @pp_opts, '-' . $opts[$_];
             }
             elsif ( $type[$_] =~ /[ifs]$/ ) {
-                $command .= ' -' . $opts[$_] . ' ' . $value[$_];
                 push @pp_opts, '-' . $opts[$_];
                 push @pp_opts, $value[$_];
             }
@@ -465,26 +466,23 @@ sub run_pp {
                     push( @multi, defined($1) ? $1 : $3 );
                 }
                 for $value (@multi) {
-                    $command .= ' -' . $opts[$_] . ' ' . $value;
                     push @pp_opts, '-' . $opts[$_];
-                    push @pp_opts, $value[$_];
+                    push @pp_opts, $value;
                 }
             }
         }
     }
     if ($output_file) {
-        $command .= " -o $output_file";
         push @pp_opts, '-o';
         push @pp_opts, $output_file;
     }
     if ($source_file) {
-        $command .= " $source_file";
         push @pp_opts, $source_file;
     }
-    print "$command\n";
+    print "$pp @pp_opts\n";
     $mw->Busy();
 
     system $pp, @pp_opts;
     $mw->Unbusy();
     print "Done.\n\n";
-} ## end sub run
+} ## end sub run_pp

@@ -1,6 +1,6 @@
 gpp - a gui for pp
 ------------------
-Version 2.1
+Version 2.2
 
 Gpp provides (yet another) gui frontend to the PAR compiler - pp. The help
 display is taken from the pod in pp (or pp.bat on win32) at runtime, and

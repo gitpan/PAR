@@ -1,7 +1,4 @@
-/* $File: /depot/local/PAR/trunk/myldr/env.c $ $Author: autrijus $
- * $Revision: #3 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
- * vim: noexpandtab shiftwidth=4
- *
+/*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

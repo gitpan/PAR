@@ -6,7 +6,7 @@ use IO::File;
 use File::Basename;
 use Getopt::Std;
 
-my $VERSION = '1.0';
+my $VERSION = '1.1';
 my %opt;
 getopt( 'lu', \%opt );
 my @files = @ARGV;
@@ -46,7 +46,7 @@ close $lh;
 sub remove {
     my ( $par, $dep_par ) = @_;
 
-    my ( $loader, $buf );
+    my ( $loader, $buf, $cache_name );
 
     my $fh = IO::File->new( $par, 'r' ) or die "Can't open $par: $!\n";
     binmode($fh);
@@ -66,8 +66,15 @@ sub remove {
         seek $fh, -12, 2;
         read $fh, $buf, 4;
         seek $fh, -12 - unpack( "N", $buf ), 2;
-
         $loader = tell $fh;
+
+        seek $fh, -18, 2;
+        read $fh, $buf, 6;
+        if ($buf eq "\0CACHE") {
+            seek $fh, -58, 2;
+            read $fh, $cache_name, 41;
+        }
+
         seek $fh, 0, 0;
         read $fh, $buf, $loader;
         print $th $buf;
@@ -99,7 +106,7 @@ sub remove {
     }
 
     my $par_zip = Archive::Zip->new();
-    $par_zip->readFromFileHandle($fh) == AZ_OK or die "Can't read zip in $par\n";
+    $par_zip->readFromFileHandle($fh, $par) == AZ_OK or die "Can't read zip in $par\n";
     my $manifest = $par_zip->contents('MANIFEST');
     die "Can't find MANIFEST in $par\n" if !$manifest;
     my $main_pl  = $par_zip->contents('script/main.pl');
@@ -135,6 +142,9 @@ sub remove {
     $par_zip->writeToFileHandle($th);
 
     if ($loader) {
+        if ($cache_name) {
+            $th->print($cache_name, "CACHE");
+        }
         $th->print( pack( 'N', $th->tell - $loader ) );
         $th->print("\nPAR.pm\n");
     }

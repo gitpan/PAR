@@ -1,6 +1,4 @@
 #!/usr/bin/perl
-# $File: /depot/local/PAR/trunk/Makefile.PL $ $Author: autrijus $
-# $Revision: #42 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 use 5.006;
 use inc::Module::Install;
@@ -14,7 +12,7 @@ requires    ('perl'             => 5.006);
 requires    ('File::Temp'       => 0.05);
 requires    ('Compress::Zlib'	=> ($^O eq 'MSWin32') ? 1.16 : 1.30);
 requires    ('Archive::Zip'	=> 1.00);
-requires    ('Module::ScanDeps'	=> 0.47);
+requires    ('Module::ScanDeps'	=> 0.45);
 requires    ('PAR::Dist'	=> 0.06);
 features    (
     'Windows --icon and --info support'	=> [

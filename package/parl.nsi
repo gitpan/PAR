@@ -1,6 +1,3 @@
-# $File: /depot/local/PAR/trunk/package/parl.nsi $ $Author: autrijus $
-# $Revision: #9 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-
 SetCompressor bzip2
 
 !define MUI_VERSION "0.62"

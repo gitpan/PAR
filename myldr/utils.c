@@ -1,7 +1,4 @@
-/* $File: /depot/local/PAR/trunk/myldr/utils.c $ $Author: autrijus $
- * $Revision: #3 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
- * vim: expandtab shiftwidth=4
- *
+/*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any

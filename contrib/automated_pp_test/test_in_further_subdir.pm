@@ -1,6 +1,4 @@
 #!/usr/bin/perl -w
-# $File: /depot/local/PAR/trunk/contrib/automated_pp_test/test_in_further_subdir.pm $ $Author: autrijus $
-# $Revision: #3 $ $Change: 11731 $ $DateTime: 2004/05/01 12:21:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any
@@ -24,7 +22,7 @@
 #
 ## 
 ########################################################################
-our $VERSION = 0.01;
+our $VERSION = 0.07;
 
 ########################################################################
 

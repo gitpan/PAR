@@ -1,8 +1,3 @@
-/* $File: /depot/local/PAR/trunk/myldr/internals.c $ $Author: autrijus $
-   $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-   vim: expandtab shiftwidth=4
-*/
-
 static void par_redo_stack (pTHX_ void *data) {
     PUSHEVAL((&cxstack[0]) , "", Nullgv);
 }
@@ -54,7 +49,7 @@ XS(XS_Internals_PAR_BOOT) {
         if ( ( stmpdir = par_getenv("PAR_TEMP") ) ) {
             sv_setpv(GvSV(tmpgv), fakeargv[0]);
         }
-        else
+        else {
 #ifdef HAS_PROCSELFEXE
             S_procself_val(aTHX_ GvSV(tmpgv), fakeargv[0]);
 #else
@@ -64,8 +59,10 @@ XS(XS_Internals_PAR_BOOT) {
             sv_setpv(GvSV(tmpgv), fakeargv[0]);
 #endif
 #endif
-#if (PERL_REVISION == 5 && PERL_VERSION == 8 && PERL_SUBVERSION >= 1) || \
-    (PERL_REVISION == 5 && PERL_VERSION >= 9)
+        }
+#if (PERL_REVISION == 5 && PERL_VERSION == 8 \
+        && ( PERL_SUBVERSION >= 1 && PERL_SUBVERSION <= 5)) || \
+    (PERL_REVISION == 5 && PERL_VERSION >= 9 && PERL_SUBVERSION <= 1)
         /* 5.8.1 and later perl versions no longer copies fakeargv, sigh */
         {
             char *p;

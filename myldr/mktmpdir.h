@@ -1,8 +1,3 @@
-/* $File: /depot/local/PAR/trunk/myldr/mktmpdir.h $ $Author: autrijus $
-   $Revision: #3 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
-   vim: expandtab shiftwidth=4
-*/
-
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
