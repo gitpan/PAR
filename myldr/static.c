@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #26 $ $Change: 9612 $ $DateTime: 2004/01/05 06:11:27 $
+   $Revision: #27 $ $Change: 10219 $ $DateTime: 2004/02/27 01:18:33 $
    vim: expandtab shiftwidth=4
 */
 
@@ -113,7 +113,6 @@ int main ( int argc, char **argv, char **env )
         putenv(buf);
     }
 
-    putenv("PAR_INITIALIZED=1");
 #ifdef WIN32
     putenv("PAR_SPAWNED=1");
     i = spawnvp(P_WAIT, my_file, argv);

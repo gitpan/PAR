@@ -911,7 +911,8 @@ sub pack_manifest_hash
 		}
 	}
 
-	my $script_filter = PAR::Filter->new( @{ $opt->{f} } ) if ($opt->{f});
+	my $script_filter;
+	$script_filter = PAR::Filter->new( @{ $opt->{f} } ) if ($opt->{f});
 
 	my $in;
 	foreach my $in (@$input) 

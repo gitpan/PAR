@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #29 $ $Change: 9659 $ $DateTime: 2004/01/10 19:08:20 $
+   $Revision: #31 $ $Change: 10199 $ $DateTime: 2004/02/24 18:14:30 $
    vim: expandtab shiftwidth=4
 */
 
@@ -38,7 +38,9 @@ char *par_mktmpdir ( char **argv ) {
     unsigned char buf[1000];
     unsigned char sha_data[20];
 
-    if ( (val = (char *)getenv("PAR_TEMP")) ) return strdup(val);
+    if ( (val = (char *)getenv("PAR_TEMP")) && strlen(val) ) {
+        return strdup(val);
+    }
 
 #ifdef WIN32
     {
@@ -73,8 +75,6 @@ char *par_mktmpdir ( char **argv ) {
             tmpdir = strdup(val);
         }
     }
-
-    if ( tmpdir == NULL ) return NULL;
 
     /* "$TEMP/par-$USER" */
     stmpdir = malloc(
@@ -225,9 +225,13 @@ void par_rmtmpdir ( char *stmpdir ) {
 #endif
 
 void par_cleanup (char *stmpdir) {
-    if ( par_env_clean() ) {
-        par_rmtmpdir(stmpdir);
-        par_rmtmpdir(par_dirname(stmpdir));
+    char *dirname = par_dirname(stmpdir);
+    char *basename = par_basename(dirname);
+    if ( par_env_clean() && stmpdir != NULL && strlen(stmpdir)) {
+        if ( strstr(basename, "par-") == basename ) {
+            par_rmtmpdir(stmpdir);
+            par_rmtmpdir(dirname);
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #19 $ $Change: 9627 $ $DateTime: 2004/01/07 10:58:09 $ vim: expandtab shiftwidth=4
+# $Revision: #21 $ $Change: 10222 $ $DateTime: 2004/02/27 15:13:01 $ vim: expandtab shiftwidth=4
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.08';
@@ -24,6 +24,7 @@ No user-serviceable parts inside.
 my ($bootstrap, $dl_findfile);  # Caches for code references
 my ($dlext);                    # Cache for $Config{dlext}
 my ($cache_key);                # The current file to find
+my $is_insensitive_fs = (-s $0 and (-s lc($0)) == (-s uc($0)));
 
 # Adds pre-hooks to Dynaloader's key methods
 sub _init_dynaloader {
@@ -42,6 +43,11 @@ sub _init_dynaloader {
 # Return the cached location of .dll inside PAR first, if possible.
 sub _dl_findfile {
     return $FullCache{$cache_key} if exists $FullCache{$cache_key};
+    if ($is_insensitive_fs) {
+        # We have a case-insensitive filesystem...
+        my ($key) = grep { lc($_) eq lc($cache_key) } keys %FullCache;
+        return $FullCache{$key} if defined $key;
+    }
     return $dl_findfile->(@_);
 }
 
@@ -74,7 +80,8 @@ sub _bootstrap {
         return $bootstrap->(@args);
     }
 
-    my $member = PAR::find_par(undef, $file, 1) if defined &PAR::find_par;
+    my $member;
+    $member = PAR::find_par(undef, $file, 1) if defined &PAR::find_par;
     return $bootstrap->(@args) unless $member;
 
     $FullCache{$file} = _dl_extract($member, $file);

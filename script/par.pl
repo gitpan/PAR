@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #98 $ $Change: 9867 $ $DateTime: 2004/02/02 23:24:48 $ vim: expandtab shiftwidth=4
+# $Revision: #99 $ $Change: 10175 $ $DateTime: 2004/02/21 21:23:08 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -163,9 +163,16 @@ BEGIN {
 
     eval {
 
-if ($ENV{PAR_ARGV_0}) {
+_par_init_env();
+
+if (exists $ENV{PAR_ARGV_0} and $ENV{PAR_ARGV_0} ) {
     @ARGV = map $ENV{"PAR_ARGV_$_"}, (1 .. $ENV{PAR_ARGC} - 1);
     $0 = $ENV{PAR_ARGV_0};
+}
+else {
+    for (keys %ENV) {
+        delete $ENV{$_} if /^PAR_ARGV_/;
+    }
 }
 
 my $quiet = !$ENV{PAR_DEBUG};
@@ -177,7 +184,6 @@ my %Config = (
     _delim      => ($^O =~ /^MSWin|OS2/ ? '\\' : '/'),
 );
 
-_par_init_env();
 _set_progname();
 _set_par_temp();
 
@@ -685,7 +691,18 @@ sub _set_progname {
 }
 
 sub _par_init_env {
-    return if $ENV{PAR_INITIALIZED}++;
+    if ( $ENV{PAR_INITIALIZED}++ == 1 ) {
+        return;
+    } else {
+        $ENV{PAR_INITIALIZED} = 2;
+    }
+
+    for (qw( SPAWNED TEMP CLEAN DEBUG CACHE PROGNAME ARGC ARGV_0 ) ) {
+        delete $ENV{'PAR_'.$_};
+    }
+    for (qw/ TEMP CLEAN DEBUG /) {
+        $ENV{'PAR_'.$_} = $ENV{'PAR_GLOBAL_'.$_} if exists $ENV{'PAR_GLOBAL_'.$_};
+    }
 
     my $par_clean = "__ENV_PAR_CLEAN__               ";
 

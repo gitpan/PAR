@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #63 $ $Change: 10062 $ $DateTime: 2004/02/15 22:36:52 $ vim: expandtab shiftwidth=4
+# $Revision: #64 $ $Change: 10222 $ $DateTime: 2004/02/27 15:13:01 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.79_97';
+$PAR::VERSION = '0.79_98';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.79_97 of PAR, released February 16, 2004.
+This document describes version 0.79_98 of PAR, released February 27, 2004.
 
 =head1 SYNOPSIS
 
@@ -163,6 +163,7 @@ use vars qw($LastAccessedPAR $LastTempFile);
 
 my $ver  = $Config{version};
 my $arch = $Config{archname};
+my $is_insensitive_fs = (-s $0 and (-s lc($0)) == (-s uc($0)));
 my ($par_temp, $progname);
 
 sub import {
@@ -198,16 +199,19 @@ sub import {
         _extract_inc($0) unless $ENV{PAR_CLEAN};
 
         my $zip = $LibCache{$0};
-        my $member = $zip->memberNamed("script/main.pl")
-                  || $zip->memberNamed("main.pl");
+        my $member = _first_member( $zip,
+            "script/main.pl",
+            "main.pl",
+        );
 
         # finally take $ARGV[0] as the hint for file to run
         if (defined $ARGV[0] and !$member) {
-            $member  = $zip->memberNamed("script/$ARGV[0]")
-                    || $zip->memberNamed("script/$ARGV[0].pl")
-                    || $zip->memberNamed("$ARGV[0]")
-                    || $zip->memberNamed("$ARGV[0].pl")
-                or die qq(Can't open perl script "$ARGV[0]": No such file or directory);
+            $member = _first_member( $zip,
+                "script/$ARGV[0]",
+                "script/$ARGV[0].pl",
+                $ARGV[0],
+                "$ARGV[0].pl",
+            ) or die qq(Can't open perl script "$ARGV[0]": No such file or directory);
             shift @ARGV;
         }
         elsif (!$member) {
@@ -216,6 +220,17 @@ sub import {
 
         _run_member($member);
     }
+}
+
+sub _first_member {
+    my $zip = shift;
+    my %names = map { ( $_->fileName => $_ ) } $zip->members;
+    my %lc_names = map { ( lc($_->fileName) => $_ ) } $zip->members;
+    foreach my $name (@_) {
+        return $names{$name} if $names{$name};
+        return $lc_names{lc($name)} if $is_insensitive_fs and $lc_names{lc($name)};
+    }
+    return;
 }
 
 sub _run_member {
@@ -293,7 +308,7 @@ sub read_file {
     my $file = pop;
 
     foreach my $zip (@LibCache) {
-        my $member = $zip->memberNamed($file) or next;
+        my $member = _first_member($zip, $file) or next;
         return scalar $member->contents;
     }
 
@@ -365,7 +380,7 @@ sub unpar {
         push @LibCache, $zip;
         $LibCache{$_[0]} = $zip;
 
-        foreach my $member ( $zip->members(
+        foreach my $member ( $zip->membersMatching(
             "^par/(?:$Config{version}/)?(?:$Config{archname}/)?"
         ) ) {
             next if $member->isDirectory;
@@ -379,12 +394,15 @@ sub unpar {
 
     return @rv unless defined $file;
 
-    my $member = $zip->memberNamed("lib/$file")
-              || $zip->memberNamed("arch/$file")
-              || $zip->memberNamed("$arch/$file")
-              || $zip->memberNamed("$ver/$file")
-              || $zip->memberNamed("$ver/$arch/$file")
-              || $zip->memberNamed($file) or return;
+    my %names = map { ( $_ => 1 ) } memberNames
+    my $member = _first_member($zip,
+        "lib/$file",
+        "arch/$file",
+        "$arch/$file",
+        "$ver/$file",
+        "$ver/$arch/$file",
+        $file,
+    ) or return;
 
     return $member if $member_only;
 

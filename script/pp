@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #111 $ $Change: 10063 $ $DateTime: 2004/02/15 23:00:43 $ vim: expandtab shiftwidth=4
+# $Revision: #115 $ $Change: 10222 $ $DateTime: 2004/02/27 15:13:01 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -21,7 +21,7 @@ use ExtUtils::MakeMaker; # just for maybe_command()
 use File::Basename;
 use File::Spec;
 use File::Temp qw(tempfile);
-use Getopt::Long; 
+use Getopt::Long;
 use Module::ScanDeps 0.10;
 use PAR::Filter;
 
@@ -54,7 +54,7 @@ sub main {
 
 #######################################################################
 
-sub compile_par { 
+sub compile_par {
     my ($cfh, $lose);
     my $root = '';
     $root = "$Config{archname}/" if opt('m');
@@ -71,12 +71,12 @@ sub compile_par {
             $par_file .= ".par";
         }
         $par_file = $Output if opt(p) && $Output =~ /\.par\z/i;
-        $Output = $par_file;
+        $Output = $par_file if opt(p);
         check_write($par_file);
     } else {
         # Don't need to keep it, be safe with a tempfile.
         $lose = 1;
-        ($cfh, $par_file) = tempfile("ppXXXXX", SUFFIX => ".par"); 
+        ($cfh, $par_file) = tempfile("ppXXXXX", SUFFIX => ".par");
         close $cfh; # See comment just below
     }
     vprint 1, "Writing PAR on $par_file";
@@ -164,6 +164,17 @@ sub compile_par {
             my $content_ref = $mod_filter->apply($map{$pfile}, $pfile);
             $size += length( $$content_ref );
             $zip->addString( $content_ref => $root."lib/$pfile", %zip_args );
+        }
+        elsif (
+            basename($map{$pfile}) =~ /^Tk\.dll$/i and opt(i)
+            and eval { require Win32::Exe; 1 }
+            and $ENV{PP_TK_ICONFIX}
+        ) {
+            # XXX - broken on my WinXP but worked for Alan. hmm.
+            my $tkdll = Win32::Exe->new($map{$pfile});
+            my $ico = Win32::Exe::IconFile->new(opt(i));
+            $tkdll->set_icons(scalar $ico->icons);
+            $zip->addString($tkdll->dump => $root."lib/$pfile");
         }
         else {
             $zip->addFile($map{$pfile} => $root."lib/$pfile");
@@ -279,10 +290,10 @@ YAML
     }
 
     par_to_exe() unless opt(p);
-    
+
     if ($lose) {
         vprint 2, "Unlinking $par_file";
-        unlink $par_file or _die("Can't unlink $par_file: $!"); 
+        unlink $par_file or _die("Can't unlink $par_file: $!");
     }
 }
 
@@ -368,7 +379,7 @@ sub move_parl {
     local $/;
     open _FH, $PARL or die $!;
     binmode(_FH);
-    ($cfh, $PARL) = tempfile("parlXXXX", SUFFIX => ".exe", UNLINK => 1); 
+    ($cfh, $PARL) = tempfile("parlXXXX", SUFFIX => ".exe", UNLINK => 1);
     binmode($cfh);
     print $cfh <_FH>;
     close $cfh;
@@ -430,7 +441,7 @@ sub strip_console {
     close $exe;
 }
 
-sub generate_code { 
+sub generate_code {
     vprint 0, "Packing @Input";
     if (check_par($Input[0])) {
         # invoked as "pp foo.par" - never unlink it
@@ -518,7 +529,7 @@ sub parse_argv {
 
     if (opt(e)) {
         warn "$0: using -e 'code' as input file, ignoring @ARGV\n" if @ARGV and !opt(r);
-        my ($fh, $fake_input) = tempfile("ppXXXXX", SUFFIX => ".pl", UNLINK => 1); 
+        my ($fh, $fake_input) = tempfile("ppXXXXX", SUFFIX => ".pl", UNLINK => 1);
         print $fh $Options->{e};
         close $fh;
         @Input = $fake_input;
@@ -543,7 +554,7 @@ sub a_out {
 sub opt(*) {
     my $opt = shift;
     return exists($Options->{$opt}) && ($Options->{$opt} || 0);
-} 
+}
 
 sub sanity_check {
     # Check the input and output files make sense, are read/writable.
@@ -560,7 +571,7 @@ sub sanity_check {
     }
 }
 
-sub check_read { 
+sub check_read {
     foreach my $file (@_) {
         unless (-r $file) {
             _die("$0: Input file $file is a directory, not a file\n") if -d _;
@@ -573,7 +584,7 @@ sub check_read {
         unless (-f _) {
             # XXX: die?  don't try this on /dev/tty
             warn "$0: WARNING: input $file is not a plain file\n";
-        } 
+        }
     }
 }
 
@@ -584,8 +595,8 @@ sub check_write {
         }
         if (-e _) {
             _die("$0: Cannot write on $file: $!\n") unless -w _;
-        } 
-        unless (-w cwd()) { 
+        }
+        unless (-w cwd()) {
             _die("$0: Cannot write in this directory: $!\n");
         }
     }
@@ -602,15 +613,15 @@ sub check_perl {
             system($file_checker, $file);
         }
         _die("Please try a perlier file!\n");
-    } 
+    }
 
     open(my $handle, "<", $file) or _die("XXX: Can't open $file: $!");
     local $_ = <$handle>;
     if (/^#!/ && !/perl/) {
         _die("$0: $file is a ", /^#!\s*(\S+)/, " script, not perl\n");
-    } 
+    }
 
-} 
+}
 
 sub check_par {
     my $file = shift or return;
@@ -813,7 +824,7 @@ replaced by F<a.exe> instead.
 
     % pp -r hello               # Pack 'hello' into 'a.out', runs 'a.out'
     % pp -r hello a b c         # Pack 'hello' into 'a.out', runs 'a.out'
-                                # with arguments 'a b c' 
+                                # with arguments 'a b c'
 
     % pp hello --log=c          # Pack 'hello' into 'a.out', logs
                                 # messages into 'c'
@@ -934,7 +945,8 @@ is specified.
 
 Add additional information for the packed file, both in C<META.yml>
 and in the executable header (if applicable).  The name/value pair is
-separated by C<=>.  You may specify C<-N> multiple times.
+joined by C<=>.  You may specify C<-N> multiple times, or use C<;> to
+link several pairs.
 
 For Win32 executables, these special C<KEY> names are recognized:
 

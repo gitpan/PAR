@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/internals.c $ $Author: autrijus $
-   $Revision: #19 $ $Change: 9608 $ $DateTime: 2004/01/04 20:17:28 $
+   $Revision: #20 $ $Change: 10175 $ $DateTime: 2004/02/21 21:23:08 $
    vim: expandtab shiftwidth=4
 */
 
@@ -18,8 +18,13 @@ XS(XS_Internals_PAR_BOOT) {
     SV** svp;
     int i;
     int ok = 0;
+    char *buf;
 
     TAINT;
+
+    if (!(buf = getenv("PAR_INITIALIZED")) || buf[0] != '1' || buf[1] != '\0') {
+        par_init_env();
+    }
 
     if ((tmpgv = gv_fetchpv("ARGV", TRUE, SVt_PVAV))) {/* @ARGV */
         tmpav = GvAV(tmpgv);
@@ -87,7 +92,7 @@ XS(XS_Internals_PAR_BOOT) {
     if ( stmpdir == NULL ) {
         stmpdir = par_mktmpdir( fakeargv );
 #ifndef WIN32
-        putenv("PAR_INITIALIZED=1");
+        /* putenv("PAR_INITIALIZED=1"); */
         i = execvp(SvPV_nolen(GvSV(tmpgv)), fakeargv);
         croak("%s: execution of %s failed - aborting with %i.\n", fakeargv[0], SvPV_nolen(GvSV(tmpgv)), i);
         return;

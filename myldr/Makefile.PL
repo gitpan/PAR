@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #57 $ $Change: 9867 $ $DateTime: 2004/02/02 23:24:48 $
+# $Revision: #58 $ $Change: 10217 $ $DateTime: 2004/02/26 23:32:51 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -104,6 +104,9 @@ $mv = $^O eq 'MSWin32' ? '$(PERL) -MExtUtils::Command -e mv' : 'mv';
 
 my  $cflags = "$ccdebug$warn$pccflags";
 my $ldflags = "$lddebug$pldflags";
+my $static_ldflags = $ldflags;
+
+$static_ldflags =~ s/\s+-lperl\s+/ /g;
 
 if (-e $par_exe and not -s $par_exe) {
     print OUT "all ::\n\t$^X -e1\n";
@@ -120,6 +123,7 @@ CC=$cc
 CFLAGS=$cflags
 LDFLAGS=$Config{ldflags}
 PERL_LDFLAGS=$ldflags
+STATIC_LDFLAGS=$static_ldflags
 NOOP=\$(PERL) -e1
 
 OBJECTS=main$o my_par_pl$o $res
@@ -175,7 +179,7 @@ $parldyn_exe: $par_exe
 	$par_exe -I../myldr/.. -I../blib/lib $lib_path -q -B -O\$@
 
 $static_exe: my_perl.c my_par.c static$o
-	\$(LD) static$o \$(PERL_LDFLAGS) $res $out$static_exe_link
+	\$(LD) static$o \$(STATIC_LDFLAGS) $res $out$static_exe_link
 	\$(PERL) parlsig.pl $static_exe $par_exe $dynperl $chunk_size
 
 my_perl.c:

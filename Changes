@@ -1,4 +1,96 @@
 ____________________________________________________________________________
+[ 10222] By: autrijus                              on 2004/02/27  15:13:01
+        Log: * This be 0.97_78.
+             * attempt to solve case-insensitive DLL problems
+             reported by various folks.
+             * also fix "-S" behaviour, as reported by Malcolm.
+	   ! AUTHORS lib/PAR.pm lib/PAR/Heavy.pm script/pp
+____________________________________________________________________________
+[ 10219] By: autrijus                              on 2004/02/27  01:18:33
+        Log: * remove an spurious putend("PAR_INITIALIZED=1").
+             * PAR_GLOBAL_CLEAN now works again; it was getting
+             flushed by incorrect PAR_TEMP detection code.
+             * closed a buffer overflow in Alan's patch by using
+             strncpy instead of strcpy.
+	   ! myldr/static.c myldr/utils.c
+____________________________________________________________________________
+[ 10218] By: autrijus                              on 2004/02/26  23:44:36
+        Log: * patch from Roderich Schupp to catch spurious =cut
+             during PodStripping.
+	   ! lib/PAR/Filter/PodStrip.pm
+____________________________________________________________________________
+[ 10217] By: autrijus                              on 2004/02/26  23:32:51
+        Log: * Jody Belka reported that we're still linking
+             against libperl on *nix.  Oops.
+	   ! AUTHORS myldr/Makefile.PL
+____________________________________________________________________________
+[ 10216] By: autrijus                              on 2004/02/26  23:27:23
+        Log: * update M::I to 0.23
+	   ! inc/Module/Install.pm
+	   ! inc/Module/Install/AutoInstall.pm
+	   ! inc/Module/Install/Base.pm
+	   ! inc/Module/Install/Can.pm
+	   ! inc/Module/Install/Fetch.pm
+	   ! inc/Module/Install/Include.pm
+	   ! inc/Module/Install/Makefile.pm
+	   ! inc/Module/Install/Metadata.pm
+	   ! inc/Module/Install/PAR.pm
+	   ! inc/Module/Install/PRIVATE/PAR.pm
+	   ! inc/Module/Install/Win32.pm
+	   ! inc/Module/Install/WriteAll.pm
+____________________________________________________________________________
+[ 10210] By: autrijus                              on 2004/02/26  09:10:54
+        Log: * ditto.
+	   ! lib/App/Packer/Backend/PAR.pm
+____________________________________________________________________________
+[ 10209] By: autrijus                              on 2004/02/26  09:10:09
+        Log: * fixed a potential buggy "my ... if ..." construct.
+	   ! lib/PAR/Heavy.pm
+____________________________________________________________________________
+[ 10199] By: autrijus                              on 2004/02/24  18:14:30
+        Log: * should've been checkin basename of parentdir, not the
+	       fullname.
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[ 10198] By: autrijus                              on 2004/02/24  18:05:09
+        Log: * Iain Cass discovered a pretty bad case of
+             par.pl, failing on non-static perl in the compile
+             phase (such as "parl -v"), will inadvertently
+             delete everything in the current directory.  Oops.
+	   ! myldr/main.c myldr/mktmpdir.c
+____________________________________________________________________________
+[ 10175] By: autrijus                              on 2004/02/21  21:23:08
+        Log: * Alan Stewart's patch to separate global and local envs.
+             * Global PAR environment variables are now PAR_GLOBAL_xxx,
+	       i.e.:
+             pp -o foo.exe foo.pl
+             set PAR_GLOBAL_CLEAN=1
+             foo.exe
+             will cause foo.exe to use PAR_CLEAN=1 internally.
+             * This solved the problem that prevents one pp-generated
+             executable from exec() or system()'ing another.
+	   ! myldr/internals.c myldr/main.c myldr/utils.c
+	   ! script/par.pl
+____________________________________________________________________________
+[ 10079] By: autrijus                              on 2004/02/17  01:36:59
+        Log: * The previous patch by Alan broke on my WinXP.
+             For now, limit it to only happen when $ENV{PP_TK_ICONFIX}
+	     is true.
+	   ! script/pp
+____________________________________________________________________________
+[ 10078] By: autrijus                              on 2004/02/17  00:21:12
+        Log: * patch from Alan Stewart for replacing the Tk icons as
+	       well.
+	   ! script/pp
+____________________________________________________________________________
+[ 10077] By: autrijus                              on 2004/02/17  00:16:14
+        Log: * slight improvement in pod wording
+	   ! script/pp
+____________________________________________________________________________
+[ 10064] By: autrijus                              on 2004/02/15  23:05:53
+        Log: * changes.
+	   ! Changes
+____________________________________________________________________________
 [ 10063] By: autrijus                              on 2004/02/15  23:00:43
         Log: * This be PAR, version 0.79_97.
              * Update various documentations.

@@ -117,14 +117,44 @@ char *par_dirname (const char *path) {
 
 void par_init_env () {
     char par_clean[] = "__ENV_PAR_CLEAN__               \0";
+    char *par_var = (char *)malloc(256);
+    char *buf;
 
-    if ( (getenv("PAR_TEMP") != NULL) && (getenv("PAR_INITIALIZED") == NULL) ) {
+    putenv("PAR_SPAWNED=");
+    putenv("PAR_TEMP=");
+    putenv("PAR_CLEAN=");
+    putenv("PAR_DEBUG=");
+    putenv("PAR_CACHE=");
+    putenv("PAR_PROGNAME=");
+    putenv("PAR_ARGC=");
+    putenv("PAR_ARGV_0=");
+
+    par_var[255] = '\0';
+
+    if ( (buf = getenv("PAR_GLOBAL_TEMP")) != NULL ) {
+        strcpy(par_var, "PAR_TEMP=");
+        strncpy(par_var+9, buf, 254 - 9);
+        putenv(par_var);
+    }
+    if ( (buf = getenv("PAR_GLOBAL_CLEAN")) != NULL ) {
+        strcpy(par_var, "PAR_CLEAN=");
+        strncpy(par_var+10, buf, 254 - 10);
+        putenv(par_var);
+    }
+    if ( (buf = getenv("PAR_GLOBAL_DEBUG")) != NULL ) {
+        strcpy(par_var, "PAR_DEBUG=");
+        strncpy(par_var+10, buf, 254 - 10);
+        putenv(par_var);
+    }
+
+    if ( getenv("PAR_GLOBAL_TEMP") != NULL ) {
         putenv("PAR_CLEAN=");
     }
-    else if ( getenv("PAR_CLEAN") == NULL ) {
+    else if ( getenv("PAR_GLOBAL_CLEAN") == NULL ) {
         putenv(par_clean + 12 + strlen("CLEAN"));
     }
 
+    putenv("PAR_INITIALIZED=1");
     return;
 }
 

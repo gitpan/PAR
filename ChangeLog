@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #33 $ $Change: 10063 $ $DateTime: 2004/02/15 23:00:43 $
+# $Revision: #34 $ $Change: 10223 $ $DateTime: 2004/02/27 15:27:46 $
 
 [Changes for 0.80 - tentative]
 
@@ -9,7 +9,7 @@
       using the Win32::Exe module.  You may now use EXE and DLL as
       icon files.
 
-    - If PAR_CLEAN (-C, --clean) is not set, we now preemptively
+    - If PAR_GLOBAL_CLEAN (-C, --clean) is not set, we now preemptively
       extracts files under the cache directory.  That made POSIX.pm
       and other modules that depends on %INC pointing to real files
       work correctly.
@@ -21,6 +21,14 @@
       an optional integer, so "pp -v input.pl" is no longer an error.
 
     - New flags "-vv" and "-vvv", as shorthands for "-v 2" and "-v 3".
+
+    - The user-settable PAR_CLEAN and PAR_TEMP environment variables has
+      been renamed to PAR_GLOBAL_CLEAN and PAR_GLOBAL_TEMP; the original
+      variables is still preserved within the program.  This is so that a
+      pp-generated program can exec() or system() another one without
+      crippling its environment variables.
+
+    - File lookups are now case-insensitive on case-insensitive filesystems.
 
 * Bug fixes
     
@@ -35,6 +43,15 @@
       only its dependencies.
 
     - Suppress a bogus warning when $ENV{$Config{ldlibpthname}} is empty.
+
+    - "parl -v" without Module::Signature installed could delete all
+      files within the current directory.  Oops.
+
+    - On *nix systems, pp-generated executables erroneously linked to
+      libperl even if "pp -d" (--dependent) is not set.
+
+    - Spurious =cut directives in source files is now handled gracefully
+      by PAR::Filter::PodStrip.
 
 [Changes for 0.79 - January 8, 2004]
 

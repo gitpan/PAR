@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Filter/PodStrip.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $
+# $Revision: #5 $ $Change: 10218 $ $DateTime: 2004/02/26 23:44:36 $
 
 package PAR::Filter::PodStrip;
 
@@ -31,14 +31,14 @@ sub apply {
     $data = $1 if $$ref =~ s/((?:^__DATA__$).*)//ms;
 
     my $line = 1;
-    if ($$ref =~ /^=(?:head\d|pod|begin|item|over|for|back|end)\b/) {
+    if ($$ref =~ /^=(?:head\d|pod|begin|item|over|for|back|end|cut)\b/) {
         $$ref = "\n$$ref";
         $line--;
     }
     $$ref =~ s{(
 	(.*?\n)
-	=(?:head\d|pod|begin|item|over|for|back|end)\b
-	.*?\n
+	(?:=(?:head\d|pod|begin|item|over|for|back|end)\b
+	.*?\n)?
 	(?:=cut[\t ]*[\r\n]*?|\Z)
 	(\r?\n)?
     )}{
