@@ -1,4 +1,25 @@
 ____________________________________________________________________________
+[  2022] By: autrijus                              on 2002/11/06  12:05:07
+        Log: * Version 0.41.
+	   ! PAR.pm
+____________________________________________________________________________
+[  2021] By: autrijus                              on 2002/11/06  12:04:04
+        Log: * pp -M was broken. fixed.
+	   ! script/pp
+____________________________________________________________________________
+[  2020] By: autrijus                              on 2002/11/06  10:54:32
+        Log: * now IO::File only gets overridden when $PAR::__reading
+             is true -- that makes normal use of IO::File possible.
+	   ! PAR.pm script/par.pl
+____________________________________________________________________________
+[  2019] By: autrijus                              on 2002/11/06  10:53:56
+        Log: * add jeff goff to authors for the name 'pp'.
+	   ! AUTHORS
+____________________________________________________________________________
+[  2017] By: autrijus                              on 2002/11/05  22:03:25
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  2016] By: autrijus                              on 2002/11/05  22:02:09
         Log: * This be version 0.40.
              * The 'pp' program, a clone of perlcc, now supercedes

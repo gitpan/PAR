@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #34 $ $Change: 2016 $ $DateTime: 2002/11/05 22:02:09 $
+# $Revision: #36 $ $Change: 2022 $ $DateTime: 2002/11/06 12:05:07 $
 
 package PAR;
-$PAR::VERSION = '0.40';
+$PAR::VERSION = '0.41';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.40 of PAR, released November 6, 2002.
+This document describes version 0.41 of PAR, released November 6, 2002.
 
 =head1 SYNOPSIS
 
@@ -120,6 +120,7 @@ sub import {
     PAR::Heavy::_init_dynaloader();
 
     if (unpar($0)) {
+	$PAR::__reading = 1;
 	push @PAR_INC, $0;
 
 	my $file;
@@ -144,6 +145,8 @@ sub import {
 	$member->extractToFileHandle($fh);
 	seek ($fh, 0, 0);
 	unshift @INC, sub { $fh };
+
+	$PAR::__reading = 0;
 	{ do 'main'; die $@ if $@; exit }
     }
 
@@ -182,6 +185,8 @@ sub unpar {
     my ($par, $file, $member_only) = @_;
     my $zip = $LibCache{$par};
 
+    local $PAR::__reading = 1;
+
     unless ($zip) {
 	unless ($par =~ /\.par$/i and -e $par) {
 	    $par .= ".par";
@@ -192,7 +197,7 @@ sub unpar {
 	require Archive::Zip;
 
 	$zip = Archive::Zip->new;
-	# XXX: add support for packaged PAR via readFromFileHandle()
+	# XXX: add support for pp-packaged PAR via readFromFileHandle()
 	next unless $zip->read($par) == Archive::Zip::AZ_OK();
 
 	push @LibCache, $zip;
@@ -213,6 +218,7 @@ sub unpar {
     my $fh = IO::File->new_tmpfile;
     $member->extractToFileHandle($fh);
     seek ($fh, 0, 0);
+
     return $fh;
 }
 

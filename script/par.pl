@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #19 $ $Change: 2012 $ $DateTime: 2002/11/05 21:40:13 $
+# $Revision: #20 $ $Change: 2020 $ $DateTime: 2002/11/06 10:54:32 $
 
 package __par_pl;
 
@@ -337,11 +337,13 @@ if ($out) {
     my $tell_ref  = $fh->can('tell');
 
     *{'IO::File::seek'} = sub {
+	return $seek_ref->(@_) unless $PAR::__reading;
 	my ($fh, $pos, $whence) = @_;
 	$pos += $start_pos if $whence == 0;
 	$seek_ref->($fh, $pos, $whence);
     };
     *{'IO::File::tell'} = sub {
+	return $tell_ref->(@_) unless $PAR::__reading;
 	return $tell_ref->(@_) - $start_pos;
     };
     # }}}
@@ -351,6 +353,7 @@ if ($out) {
     PAR::Heavy::_init_dynaloader();
     require Archive::Zip;
 
+    local $PAR::__reading = 1;
     my $zip = Archive::Zip->new;
     $zip->readFromFileHandle($fh) == Archive::Zip::AZ_OK() or last;
 

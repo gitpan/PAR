@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #4 $ $Change: 2015 $ $DateTime: 2002/11/05 21:56:38 $
+# $Revision: #5 $ $Change: 2021 $ $DateTime: 2002/11/06 12:04:04 $
 
 use strict;
 use warnings;
@@ -65,11 +65,20 @@ sub compile_par {
     }
     vprint 1, "Writing PAR on $par_file";
 
-    my @modules = map { s/::/\//g; "$_.pm" } split(/\s+/, opt(M));
+    my @modules = map {
+	s/::/\//g;
+	Module::ScanDeps::_find_in_inc("$_.pm")
+    } split(/\s+/, opt(M));
 
-    my %map = %{Module::ScanDeps::scan_deps(@modules, $Input)};
+    my %map;
+    Module::ScanDeps::add_deps( rv => \%map, modules => \@modules );
+    Module::ScanDeps::scan_deps(
+	rv	=> \%map,
+	files	=> [ @modules, $Input ],
+	recurse	=> 1,
+    );
+
     $map{$_} = $map{$_}{file} for keys %map;
-    # XXX: adding @modules back to $map{$_} if not found yet
 
     my $size = 0;
     my $zip = Archive::Zip->new;
