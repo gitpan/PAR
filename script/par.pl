@@ -1,11 +1,11 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #39 $ $Change: 4500 $ $DateTime: 2003/03/01 14:48:38 $
+# $Revision: #43 $ $Change: 4674 $ $DateTime: 2003/03/09 13:35:34 $
 
 package __par_pl;
 
 # --- This script cannot use any modules at compile time ---
-# use strict;
+#use strict;
 
 =head1 NAME
 
@@ -133,6 +133,7 @@ followed by a 8-bytes magic string: "C<\012PAR.pm\012>".
 
 # fix $0 if invoked from PATH
 unless (-f $0) {
+    my %Config;
     $Config{path_sep} = ($^O =~ /^MSWin/ ? ';' : ':');
     $Config{_exe} = ($^O =~ /^MSWin|OS2/ ? '.exe' : '');
     $Config{_delim} = ($^O =~ /^MSWin|OS2/ ? '\\' : '/');
@@ -142,6 +143,7 @@ unless (-f $0) {
     }
     else {
         foreach my $dir (split /$Config{path_sep}/, $ENV{PATH}) {
+	    $dir =~ s/\Q$Config{_delim}\E$//;
 	    (($0 = "$dir$Config{_delim}$0$Config{_exe}"), last)
 		if -f "$dir$Config{_delim}$0$Config{_exe}";
 	    (($0 = "$dir$Config{_delim}$0"), last)
@@ -191,7 +193,9 @@ my ($start_pos, $data_pos);
 		close $out;
 	    }
 	    $PAR::Heavy::DLCache{$filename}++;
-	    $PAR::Heavy::DLCache{$basename} = $filename;
+	    $PAR::Heavy::DLCache{$basename}   =
+	    $PAR::Heavy::FullCache{$fullname} = $filename;
+	    $PAR::Heavy::FullCache{$filename} = $fullname;
 	}
 	else {
 	    $require_list{$fullname} = \"$buf";
@@ -244,6 +248,8 @@ my ($start_pos, $data_pos);
     # initialize shared object processing
     require XSLoader;
     require PAR::Heavy;
+    require Carp::Heavy;
+    require Exporter::Heavy;
     PAR::Heavy::_init_dynaloader();
 
     # now let's try getting helper modules from within
@@ -315,15 +321,21 @@ if ($out) {
     open OUT, '>', $out or die $!;
     binmode(OUT);
 
-    $/ = (defined $start_pos) ? \$start_pos : undef;
+    $/ = (defined $data_pos) ? \$data_pos : undef;
     seek _FH, 0, 0;
-    print OUT scalar <_FH>;
+    my $loader = scalar <_FH>;
+    $loader =~ s/
+	^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
+	^=cut\s*$
+	\n*
+    //smgx if !$ENV{PAR_VERBATIM} and $loader =~ /^(?:#!|\@rem)/;
+    print OUT $loader;
     $/ = undef;
     # }}}
 
     # Write bundled modules {{{
     my $data_len = 0;
-    if (!defined $start_pos and $bundle) {
+    if ($bundle) {
 	require PAR::Heavy;
 	PAR::Heavy::_init_dynaloader();
 	require_modules();
@@ -343,32 +355,45 @@ if ($out) {
 	$files{$_}++ for values %INC;
 
 	foreach (sort keys %files) {
-	    my ($path, $file);
+	    my ($name, $file);
+
 	    foreach my $dir (@inc) {
-		if (/^(\Q$dir\E\/)(.*[^Cc])\Z/) {
-		    ($path, $file) = ($1, $2);
+		if ($name = $PAR::Heavy::FullCache{$_}) {
+		    $file = $_;
+		    last;
+		}
+		elsif (/^(\Q$dir\E\/(.*[^Cc]))\Z/) {
+		    ($file, $name) = ($1, $2);
 		    last;
 		}
 		elsif (m!^/loader/[^/]+/(.*[^Cc])\Z! and -f "$dir/$1") {
-		    ($path, $file) = ("$dir/", $1);
+		    ($file, $name) = ("$dir/$1", $1);
 		    last;
 		}
 	    }
 
-	    next unless defined $file;
-	    print "$path$file\n" unless $quiet;
-	    open FILE, "$path$file" or die "$file$path: $!";
+	    next unless defined $name;
+	    print "$file\n" unless $quiet;
+
+	    open FILE, "$file" or die "Can't open $file: $!";
 	    binmode(FILE);
 	    my $content = <FILE>;
+	    $content =~ s/
+		^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
+		^=cut\s*$
+		\n*
+	    //smgx if !$ENV{PAR_VERBATIM} and lc($name) =~ /\.(?:pm|ix|al)$/i;
 	    close FILE;
 
 	    print OUT "FILE";
-	    print OUT pack('N', length($file) + 9);
-	    print OUT sprintf("%08x/%s", Archive::Zip::computeCRC32($content), $file);
-	    print OUT pack('N', (stat("$path$file"))[7]);
+	    print OUT pack('N', length($name) + 9);
+	    print OUT sprintf(
+		"%08x/%s", Archive::Zip::computeCRC32($content), $name
+	    );
+	    print OUT pack('N', length($content));
 	    print OUT $content;
 
-	    $data_len += 12 + length($file) + 9 + (stat("$path$file"))[7];
+	    $data_len += 12 + length($name) + 9 + length($content);
 	}
     }
     # }}}
@@ -455,7 +480,6 @@ sub require_modules {
     require File::Temp;
     require File::Spec;
     require XSLoader;
-    require Carp::Heavy;
     require Config;
     require IO::File;
     require Compress::Zlib;

@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #61 $ $Change: 4503 $ $DateTime: 2003/03/01 15:17:57 $
+# $Revision: #63 $ $Change: 4674 $ $DateTime: 2003/03/09 13:35:34 $
 
 package PAR;
-$PAR::VERSION = '0.64';
+$PAR::VERSION = '0.65';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.64 of PAR, released March 1, 2003.
+This document describes version 0.65 of PAR, released March 9, 2003.
 
 =head1 SYNOPSIS
 
@@ -70,7 +70,7 @@ Use in a program:
 This module lets you easily bundle a typical F<blib/> tree into a zip
 file, called a Perl Archive, or C<PAR>.
 
-It supports loading XS modules by overriding B<DynaLoader> boostrapping
+It supports loading XS modules by overriding B<DynaLoader> bootstrapping
 methods; it writes shared object file to a temporary file at the time it
 is needed.
 
@@ -82,7 +82,7 @@ under F<arch/> and F<lib/>, e.g.:
     % cd blib
     % zip -r mymodule.par arch/ lib/
 
-Afterwards, you can just use F<mymodule.par> anywhere in your C<@INC>,
+Afterward, you can just use F<mymodule.par> anywhere in your C<@INC>,
 use B<PAR>, and it will Just Work.
 
 For maximal convenience, you can set the C<PERL5OPT> environment
@@ -105,12 +105,25 @@ Please see L</SYNOPSIS> for most typical use cases.
 
 Since version 0.60, all files and data are extracted into a temporary
 directory, with the same name as its CRC32 checksum, to speed up the
-loading time of the next round.  To inhibit this behaviour, set the
+loading time of the next round.  To inhibit this behavior, set the
 C<PAR_CLEARTEMP> environment to a true value.
 
-If you object to this feature, or think that only shared object files
-should be left for the next round, just mail E<lt>F<par@perl.org>E<gt>
-and let the list figure it out. :-)
+In the next few releases, it is expected that the F<META.yml> packed
+inside the PAR file will control the default behavior of temporary file
+creation, among other things; F<pp> will also provide options to set those
+PAR-specific attributes.
+ 
+Currently, F<pp>-generated PAR files will attach four such PAR-specific
+attributes in F<META.yml>:
+
+    par:
+      cleartemp: 0	# default value of PAR_CLEARTEMP
+      signature: ''	# key ID of the SIGNATURE file
+      verbatim: 0	# were packed prerequisite's PODs preserved?
+      version: x.xx	# PAR.pm version that generated this PAR
+
+Additional attributes, like C<cipher> and C<decrypt_key>, are being
+discussed on the mailing list.  Join us if you have an idea or two!
 
 =cut
 

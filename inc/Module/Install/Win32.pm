@@ -1,7 +1,9 @@
 # $File: //depot/cpan/Module-Install/lib/Module/Install/Win32.pm $ $Author: autrijus $
-# $Revision: #3 $ $Change: 1185 $ $DateTime: 2003/03/01 03:47:14 $
+# $Revision: #7 $ $Change: 1237 $ $DateTime: 2003/03/04 22:44:36 $ vim: expandtab shiftwidth=4
 
 package Module::Install::Win32;
+use base 'Module::Install::Base';
+
 $VERSION = '0.01';
 
 use strict;
@@ -14,9 +16,9 @@ sub check_nmake {
 
     require Config;
     return unless (
-	$Config::Config{make}			and
-	$Config::Config{make} =~ /^nmake\b/i	and
-        $^O eq 'MSWin32'			and
+        $Config::Config{make}                   and
+        $Config::Config{make} =~ /^nmake\b/i    and
+        $^O eq 'MSWin32'                        and
         !$self->can_run('nmake')
     );
 
@@ -24,16 +26,16 @@ sub check_nmake {
 
     require File::Basename;
     my $rv = $self->get_file(
-	url	    => 'ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe',
-	local_dir   => File::Basename::dirname($^X),
-	size	    => 51928,
-	run	    => 'nmake15.exe /o > nul',
-	check_for   => 'nmake.exe',
-	remove	    => 1,
+        url         => 'ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe',
+        local_dir   => File::Basename::dirname($^X),
+        size        => 51928,
+        run         => 'nmake15.exe /o > nul',
+        check_for   => 'nmake.exe',
+        remove      => 1,
     );
 
     if (!$rv) {
-	die << '.';
+        die << '.';
 
 ------------------------------------------------------------------------
 
@@ -55,3 +57,6 @@ You may then resume the installation process described in README.
 }
 
 1;
+
+__END__
+

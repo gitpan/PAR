@@ -1,7 +1,9 @@
 # $File: //depot/cpan/Module-Install/lib/Module/Install/Makefile.pm $ $Author: autrijus $
-# $Revision: #4 $ $Change: 1187 $ $DateTime: 2003/03/01 04:31:52 $
+# $Revision: #33 $ $Change: 1333 $ $DateTime: 2003/03/09 04:34:29 $ vim: expandtab shiftwidth=4
 
 package Module::Install::Makefile;
+use base 'Module::Install::Base';
+
 $VERSION = '0.01';
 
 use strict 'vars';
@@ -9,36 +11,103 @@ use vars '$VERSION';
 
 use ExtUtils::MakeMaker ();
 
-sub prompt { goto &ExtUtils::MakeMaker::prompt }
+sub Makefile { $_[0] }
 
-sub WriteMakefile {
-    my ($self, %args) = @_;
-    my $ARGS = {};
-    $self->{args} = $ARGS;
+sub prompt { 
+    shift;
+    goto &ExtUtils::MakeMaker::prompt;
+}
 
-    foreach my $var (qw(NAME VERSION)) {
-	$ARGS->{$var} = $args{$var}	if defined $args{$var};
-	$ARGS->{$var} = ${"main::$var"}	if defined ${"main::$var"};
-	my $method = "determine_$var";
-	$ARGS->{$var} = $self->$method($ARGS)
-	    unless defined $ARGS->{$var} or defined $ARGS->{"${var}_FROM"};
-    }
+sub makemaker_args {
+    my $self = shift;
+    my $args = ($self->{makemaker_args} ||= {});
+    %$args = ( %$args, @_ ) if @_;
+    $args;
+}
 
-    $self->determine_CLEAN_FILES($ARGS)
-	if defined $main::CLEAN_FILES or defined @main::CLEAN_FILES;
+sub clean_files {
+    my $self = shift;
+    $self->makemaker_args( clean => { FILES => "@_ " } );
+}
+
+sub write {
+    my $self = shift;
+    die "makefile()->write() takes no arguments\n" if @_;
+
+    my $args = $self->makemaker_args;
+
+    $args->{NAME} = $self->name || $self->determine_NAME($args);
+    $args->{VERSION} = $self->version;
 
     if ($] >= 5.005) {
-	$ARGS->{ABSTRACT}   = $main::ABSTRACT	if defined $main::ABSTRACT;
-	$ARGS->{AUTHOR}	    = $main::AUTHOR	if defined $main::AUTHOR;
+	$args->{ABSTRACT} = $self->abstract;
+	$args->{AUTHOR} = $self->author;
     }
-    $ARGS->{PREREQ_PM}	= \%main::PREREQ_PM	if defined %main::PREREQ_PM;
-    $ARGS->{PL_FILES}	= \%main::PL_FILES	if defined %main::PL_FILES;
-    $ARGS->{EXE_FILES}	= \@main::EXE_FILES	if defined @main::EXE_FILES;
 
-    ExtUtils::MakeMaker::WriteMakefile(%$ARGS, %args);
+    my $requires = $self->requires;
+    if (defined($requires)) {
+        $args->{PREREQ_PM} = { map @$_, @$requires };
+    }
 
-    $self->call('update_manifest');
-    fix_up_makefile();
+    $self->admin->update_manifest;
+
+    my %args = map {($_ => $args->{$_})} grep {defined($args->{$_})} keys %$args;
+    ExtUtils::MakeMaker::WriteMakefile(%args);
+
+    $self->fix_up_makefile();
+}
+
+sub fix_up_makefile {
+    my $self = shift;
+
+    local *MAKEFILE;
+
+    if ($self->preamble) {
+        open MAKEFILE, '< Makefile' or die $!;
+        my $makefile = do { local $/; <MAKEFILE> };
+        close MAKEFILE;
+        open MAKEFILE, '> Makefile' or die $!;
+        print MAKEFILE $self->preamble . $makefile;
+        close MAKEFILE;
+    }
+
+    open MAKEFILE, '>> Makefile'
+        or die "WriteMakefile can't append to Makefile:\n$!";
+    print MAKEFILE "# Added by " . __PACKAGE__ . " $VERSION\n", $self->postamble;
+    close MAKEFILE;
+}
+
+sub preamble {
+    my ($self, $text) = @_;
+    $self->{preamble} = $text . $self->{preamble} if defined $text;
+    $self->{preamble};
+}
+
+sub postamble {
+    my ($self, $text) = @_;
+    my $class = join('::', @{$self->_top}{qw(name dispatch)});
+
+    $self->{postamble} ||= << "END";
+realclean purge ::
+\t\$(RM_F) \$(DISTVNAME).tar\$(SUFFIX)
+
+reset :: purge
+\t\$(RM_RF) inc
+\t\$(PERL) -M$class -e \"reset_manifest()\"
+\t\$(PERL) -M$class -e \"remove_meta()\"
+
+upload :: test dist
+\tcpan-upload -verbose \$(DISTVNAME).tar\$(SUFFIX)
+
+grok ::
+\tperldoc Module::Install
+
+distsign ::
+\tcpansign -s
+
+END
+    $self->{postamble} .= $text if defined $text;
+    $self->{postamble};
 }
 
 sub find_files {
@@ -61,34 +130,7 @@ sub find_files {
     return ();
 }
 
-sub fix_up_makefile {
-    my $self = shift;
-
-    local *MAKEFILE;
-    open MAKEFILE, '>> Makefile'
-	or die "WriteMakefile can't append to Makefile:\n$!";
-
-    print MAKEFILE "# Added by " . __PACKAGE__ . " $VERSION\n", <<"MAKEFILE";
-
-realclean purge ::
-	\$(RM_F) \$(DISTVNAME).tar\$(SUFFIX)
-
-reset :: purge
-	\$(PERL) -Iinc -MModule::Install -eModule::Install::purge_extensions
-
-upload :: test dist
-	cpan-upload -verbose \$(DISTVNAME).tar\$(SUFFIX)
-
-grok ::
-	perldoc Module::Install
-
-distsign::
-	cpansign -s
-
-# The End is here ==>
-MAKEFILE
-
-    close MAKEFILE;
-}
-
 1;
+
+__END__
+

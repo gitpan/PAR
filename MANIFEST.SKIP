@@ -6,7 +6,7 @@
 ^myldr/perlxsi.c$
 ^myldr/par(?:\.+)?$
 ^package/parl-.*$
-^script/par(?!.pl)
+^script/parl(?:\.(?!pod).+)?$
 ^MANIFEST.bak$
 ^Makefile$
 ^Makefile.old$

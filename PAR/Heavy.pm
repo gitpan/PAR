@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #10 $ $Change: 4503 $ $DateTime: 2003/03/01 15:17:57 $
+# $Revision: #11 $ $Change: 4656 $ $DateTime: 2003/03/08 19:16:37 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.05';
@@ -33,8 +33,9 @@ sub _init_dynaloader {
     $dl_findfile = \&DynaLoader::dl_findfile;
 
     local $^W;
-    *{'DynaLoader::bootstrap'}   = \&_bootstrap;
-    *{'DynaLoader::dl_findfile'} = \&_dl_findfile;
+    *{'DynaLoader::dl_expandspec'}  = sub { return };
+    *{'DynaLoader::bootstrap'}	    = \&_bootstrap;
+    *{'DynaLoader::dl_findfile'}    = \&_dl_findfile;
 }
 
 # Return the cached location of .dll inside PAR first, if possible.
@@ -98,6 +99,13 @@ sub _bootstrap {
 	    }
 
 	    $DLCache{$modfname} = $filename;
+	    local $DynaLoader::do_expand = 1;
+	    return $bootstrap->(@args);
+	}
+	elsif ($FullCache{$file}) {
+	    $DLCache{$modfname} = $FullCache{$file};
+	    local $DynaLoader::do_expand = 1;
+	    return $bootstrap->(@args);
 	}
     }
 

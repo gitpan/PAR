@@ -1,162 +1,126 @@
 # $File: //depot/cpan/Module-Install/lib/Module/Install.pm $ $Author: autrijus $
-# $Revision: #9 $ $Change: 1186 $ $DateTime: 2003/03/01 04:29:41 $
+# $Revision: #39 $ $Change: 1314 $ $DateTime: 2003/03/08 02:41:17 $ vim: expandtab shiftwidth=4
 
 package Module::Install;
+$VERSION = '0.20';
 
-# Initializing %Def {{{
 use strict 'vars';
-use vars qw($AUTOLOAD $M $VERSION);
+use File::Find;
 
-$VERSION = 0.20;
-
-my %Def = (
-    version	=> $VERSION,
-    package	=> __PACKAGE__,
-    prefix	=> "inc",
-    dispatcher	=> "Admin",
-);
-$Def{dir}   = $Def{package};
-$Def{dir}   =~ s!::!/!g;
-$Def{file}  = "$Def{prefix}/$Def{dir}.pm";
-# }}}
+@inc::Module::Install::ISA = 'Module::Install';
 
 sub import {
-    my ($pkg, $file, $dir, $inc, $dispatcher)
-	= @Def{qw(package file dir prefix dispatcher)};
+    my $class = $_[0];
+    my $self = $class->new(@_[1..$#_]);
 
-    if (!-f $file) {
-	require "$dir/$dispatcher.pm";
-	"$pkg\::$dispatcher"->new(_top => \%Def)->init;
+    unless (-f $self->{file}) {
+        require "$self->{path}/$self->{dispatch}.pm";
+        ($self->{admin} ||=
+            "$self->{name}::$self->{dispatch}"->new(_top => $self)
+        )->init;
+        @_ = ($class, _self => $self);
+        goto &{"$self->{name}::import"};
     }
 
-    # Reload ourselves {{{
-    if (!$INC{"$dir.pm"}) {
-	require Symbol;
-	Symbol::delete_package($pkg);
+    *{caller(0) . "::AUTOLOAD"} = $self->autoload;
+}
 
-	unshift @INC, $inc;
-	delete $INC{$file};
-	warn "directly before jumping: $pkg\n";
-	require $file;
-	goto &{"$pkg\::import"};
-    }
-    # }}}
-
-    # Set up AUTOLOAD handler {{{
-    *{caller(0) . "\::AUTOLOAD"} = sub {
-	$AUTOLOAD =~ /([^:]+)$/ or die "Cannot load $AUTOLOAD";
-	my $method = $1;
-	$M = $pkg->new;
-	$M->$method(@_);
-    }
-    # }}}
+sub autoload {
+    my $self = shift;
+    my $caller = caller;
+    sub {
+        ${"$caller\::AUTOLOAD"} =~ /([^:]+)$/ or die "Cannot autoload $caller";
+        unshift @_, ($self, $1);
+        goto &{$self->can('call')} unless uc($1) eq $1;
+    };
 }
 
 sub new {
     my ($class, %args) = @_;
-    exists $args{$_} or $args{$_} = $Def{$_} for keys %Def;
+
+    return $args{_self} if $args{_self};
+
+    $args{dispatch} ||= 'Admin';
+    $args{prefix}   ||= 'inc';
+
+    $class =~ s/^\Q$args{prefix}\E:://;
+    $args{name}     ||= $class;
+    $args{version}  ||= $class->VERSION;
+    unless ($args{path}) {
+        $args{path}   = $args{name};
+        $args{path}  =~ s!::!/!g;
+    }
+    $args{file}     ||= "$args{prefix}/$args{path}.pm";
+
     bless(\%args, $class);
 }
 
-sub AUTOLOAD {
-    # the main dispatcher
-    my $self = shift;
-    my $method = $1 if $AUTOLOAD =~ /([^:]+)$/;
-    return if $method eq 'DESTROY';
-    $self->call($method, \@_, 0);
-}
-
 sub call {
-    my ($self, $method, $args, $load_only) = @_;
-    $load_only = 1 unless defined $load_only;
-    my $obj = $self->load($method, $load_only) or return;
-    $obj->$method(@$args);
+    my $self   = shift;
+    my $method = shift;
+    my $obj = $self->load($method) or return;
+
+    unshift @_, $obj;
+    goto &{$obj->can($method)};
 }
 
 sub load {
-    my ($self, $method, $load_only) = @_;
-    $M->{_copy}{$method} = !$load_only;
+    my ($self, $method) = @_;
 
-    my $self = $self->{_top} || $self;
-    $self->load_extensions unless $self->{extensions};
+    $self->load_extensions(
+        "$self->{prefix}/$self->{path}", $self
+    ) unless $self->{extensions};
+
     foreach my $obj (@{$self->{extensions}}) {
-	return $obj if $obj->can($method);
+        return $obj if $obj->can($method);
     }
 
-    # nothing found. panic.
-    unless (eval { require "$self->{dir}/$self->{dispatcher}.pm"; 1 }) {
-	return if $load_only;	# silently fail is this is author-only
-	die "Cannot load $self->{dispatcher} for $self->{package}!\n:$@";
-    }
-    $self->{admin} ||= "$self->{package}\::$self->{dispatcher}"->new(
-	_top => $self
-    );
-    my $obj = $self->{admin}->load($method);
+    my $admin = $self->{admin} or die << "END";
+The '$method' method does not exist in the '$self->{prefix}' path!
+Please remove the '$self->{prefix}' directory and run $0 again to load it.
+END
+
+    my $obj = $admin->load($method, 1);
     push @{$self->{extensions}}, $obj;
-    return $obj;
+
+    $obj;
 }
 
 sub load_extensions {
-    my $self     = shift;
-    my $basepath = (@_ ? shift : "$self->{prefix}/$self->{dir}");
+    my ($self, $path, $top_obj) = @_;
 
-    foreach my $rv ($self->find_extensions($basepath)) {
-	my ($pathname, $extpkg) = @{$rv};
-	$self->{pathnames}{$extpkg} = $pathname;
+    unshift @INC, $self->{prefix}
+        unless grep { $_ eq $self->{prefix} } @INC;
 
-	eval { require $pathname ; 1 } or next;
-	foreach my $sub (qw(AUTOLOAD call load)) {
-	    *{"$extpkg\::$sub"}	= \&{$sub}
-		unless defined &{"$extpkg\::$sub"};
-	}
-	my $extobj = $extpkg->can('new') ? $extpkg->new(_top => $self)
-					 : bless({}, $extpkg);
-	$extobj->{_top} = $self;
-	push @{$self->{extensions}}, $extobj;
+    local @INC = ($path, @INC);
+    foreach my $rv ($self->find_extensions($path)) {
+        my ($file, $pkg) = @{$rv};
+        next if $self->{pathnames}{$pkg};
+
+        eval { require $file; 1 } or (warn($@), next);
+        $self->{pathnames}{$pkg} = $INC{$file};
+        push @{$self->{extensions}}, $pkg->new( _top => $top_obj );
     }
 }
 
-# remove all modules and start anew - XXX this belongs elsewhere
-sub purge_extensions {
-    my $self = shift || $Def{package}->new;
-    my ($file, $dir, $inc) = @{$self}{qw(file dir prefix)};
-
-    foreach my $pathname ($self->find_files("$inc/$dir"), $file) {
-	unlink $pathname or die "Cannot remove $pathname\n$!";
-    }
-
-    my @parts = ($inc, split('/', $dir));
-    foreach my $i (reverse(0 .. $#parts)) {
-	my $path = join('/', @parts[0..$i]);
-	rmdir $path or last;
-    }
-}
-
-# find files recursively - XXX rewrite using File::Find
 sub find_extensions {
-    my ($self, $basepath, $file, $path) = @_;
-    $file = $basepath	    unless defined $file;
-    $path = ''		    unless defined $path;
-    $file = "$path/$file"   if length($path);
+    my ($self, $path) = @_;
+    my @found;
 
-    if (-f $file) {
-	next unless $file =~ m!^\Q$basepath\E/(.+)\.pm\Z!is;
-	next if $1 eq $self->{dispatcher};
-	my $extpkg = "$self->{package}\::$1";
-	$extpkg =~ s!/!::!g;
-        return [$file, $extpkg];
-    }
-    elsif (-d $file) {
-        my @files = ();
-        local *DIR;
-        opendir(DIR, $file) or die "Can't opendir $file:\n$!";
-        while (my $new_file = readdir(DIR)) {
-            next if $new_file =~ /^(\.|\.\.)$/;
-            push @files, $self->find_extensions($basepath, $new_file, $file);
-        }
-        return @files;
-    }
-    return ();
+    find(sub {
+        my $file = $File::Find::name;
+        return unless $file =~ m!^\Q$path\E/(.+)\.pm\Z!is;
+        return if $1 eq $self->{dispatch};
+
+        $file = "$self->{path}/$1.pm";
+        my $pkg = "$self->{name}::$1"; $pkg =~ s!/!::!g;
+        push @found, [$file, $pkg];
+    }, $path) if -d $path;
+
+    @found;
 }
 
 1;
+
+__END__
+

@@ -1,4 +1,75 @@
 ____________________________________________________________________________
+[  4674] By: autrijus                              on 2003/03/09  13:35:34
+        Log: * This be PAR 0.65, the "binary install, pod-stripping,
+	       5.6-reclaimed" edition.
+             * $ENV{PAR_VERBATIM} now control pod-stripping.
+             * add several par: keys into META.yml now.
+             * revamped docs a bit.
+	   ! PAR.pm script/par.pl script/pp
+____________________________________________________________________________
+[  4673] By: autrijus                              on 2003/03/09  12:59:32
+        Log: * -I.. will create misleading INC; uses ../myldr/..
+	       instead.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  4668] By: autrijus                              on 2003/03/09  10:46:40
+        Log: * better pod-stripping.
+             * win32 xsloading redone.
+	   ! myldr/file2c.pl script/par.pl script/pp
+____________________________________________________________________________
+[  4657] By: autrijus                              on 2003/03/08  19:17:25
+        Log: * bump the version number.
+             * welcome Simon Cozens to the AUTHORS list.
+	   ! AUTHORS PAR.pm
+____________________________________________________________________________
+[  4656] By: autrijus                              on 2003/03/08  19:16:37
+        Log: * fixes the bug preventing self-contained programs
+             to load when the target machine has a different
+             version of Perl shared libraries.
+	   ! PAR/Heavy.pm script/par.pl
+____________________________________________________________________________
+[  4655] By: autrijus                              on 2003/03/08  19:09:16
+        Log: * added bundled EU::AI, thanks to Simon Cozens.
+	   ! MANIFEST Makefile.PL
+____________________________________________________________________________
+[  4651] By: autrijus                              on 2003/03/08  16:49:51
+        Log: * don't attempt to compile if we're using the binary
+	       installation.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  4650] By: autrijus                              on 2003/03/08  16:07:09
+        Log: * update README to talk about PAR installation.
+	   ! README
+____________________________________________________________________________
+[  4649] By: autrijus                              on 2003/03/08  15:51:27
+        Log: * whoops, wasn't shipping parl.pod. my bad.
+	   ! MANIFEST MANIFEST.SKIP
+____________________________________________________________________________
+[  4648] By: autrijus                              on 2003/03/08  15:38:01
+        Log: * oops.
+	   ! script/pp
+____________________________________________________________________________
+[  4647] By: autrijus                              on 2003/03/08  15:37:51
+        Log: * switch to full-blown Module::Install.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  4644] By: autrijus                              on 2003/03/08  14:26:08
+        Log: * binary loading support for 'pp'.
+	   ! script/pp
+____________________________________________________________________________
+[  4589] By: autrijus                              on 2003/03/05  07:07:36
+        Log: * POD stripping implemented.
+	   ! script/par.pl script/pp
+____________________________________________________________________________
+[  4549] By: autrijus                              on 2003/03/03  15:41:21
+        Log: * PTHREAD_ATFORK isn't available on Perl 5.6.
+             (reported by Sisyphus)
+	   ! AUTHORS myldr/main.c
+____________________________________________________________________________
+[  4505] By: autrijus                              on 2003/03/01  15:51:49
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  4504] By: autrijus                              on 2003/03/01  15:50:24
         Log: * This be PAR 0.64, the "Win32 binmode bug fixed" edition.
              * adjust manifest for Module::Install.

@@ -1,12 +1,20 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #22 $ $Change: 4500 $ $DateTime: 2003/03/01 14:48:38 $
+# $Revision: #27 $ $Change: 4674 $ $DateTime: 2003/03/09 13:35:34 $
 
 use 5.006;
 use strict;
 use warnings;
 
 use Config;
+our $PARL;
+
+# bootstrap ourselves on a binary-only install.
+unless (eval { require PAR; 1 }) {
+    $PARL ||= _can_run("parl$Config{_exe}") or die("can't find par loader");
+    exec($PARL, $0, @ARGV);
+}
+
 use File::Temp qw(tempfile);
 use Cwd;
 our $VERSION = 0.03;
@@ -85,19 +93,46 @@ sub compile_par {
 	skip	=> { map { ($_ => 1) } @{opt(X) || []} }
     );
 
-    $map{$_} = $map{$_}{file} for keys %map;
+    my %text;
+    $text{$_} = ($map{$_}{type} =~ /^(?:module|autoload)$/) for keys %map;
+    $map{$_}  = $map{$_}{file} for keys %map;
 
     my @manifest = ('MANIFEST', 'META.yml');
     my $size = 0;
     my $zip = Archive::Zip->new;
+    my %zip_args = (
+	desiredCompressionMethod
+	    => Archive::Zip::COMPRESSION_DEFLATED(),
+	desiredCompressionLevel
+	    => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
+    );
+
+    my $verbatim = ($ENV{PAR_VERBATIM} || 0);
     foreach (sort grep length $map{$_}, keys %map) {
 	next if !opt(B) and ($map{$_} eq "$Config::Config{privlib}/$_"
 			  or $map{$_} eq "$Config::Config{archlib}/$_");
 
 	vprint 2, "... adding $map{$_}";
 	next unless $zip;
-	$size += -s $map{$_};
-	$zip->addFile($map{$_} => "lib/$_");
+
+	if ($text{$_}) {
+	    local $/;
+	    open my $file, '<', $map{$_} or die $!;
+	    binmode($file);
+	    my $content = <$file>;
+	    $content =~ s/
+		^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
+		^=cut\s*$
+		\n*
+	    //smgx unless $verbatim;
+	    $size += length($content);
+	    $zip->addString( \$content => "lib/$_", %zip_args );
+	}
+	else {
+	    $zip->addFile($map{$_} => "lib/$_");
+	    $size += -s $map{$_};
+	}
+
 	push @manifest, "lib/$_";
     }
 
@@ -112,18 +147,16 @@ sub compile_par {
 
     }
 
-    if (@Input == 1) {
-	$zip->addString(_main_pl_single("script/$Input[0]") => "script/main.pl");
-    }
-    else {
-	$zip->addString(_main_pl_multi() => "script/main.pl");
-    }
+    $zip->addString(
+	((@Input == 1)
+	    ? _main_pl_single("script/$Input[0]")
+	    : _main_pl_multi()) => "script/main.pl", %zip_args
+    );
 
     push @manifest, "script/main.pl";
 
     my $manifest    = join("\n", @manifest);
     my $meta_yaml   = << "YAML";
---- #YAML:1.0
 build_requires: {}
 conflicts: {}
 dist_name: $Output
@@ -131,13 +164,18 @@ distribution_type: par
 dynamic_config: 0
 generated_by: 'Perl Packager version $VERSION'
 license: unknown
+par:
+  cleartemp: 0
+  signature: ''
+  verbatim: $verbatim
+  version: $PAR::VERSION
 YAML
 
     $size += length($_) for ($manifest, $meta_yaml);
     vprint 2, "... making $_" for qw(MANIFEST META.yml);
 
-    $zip->addString($manifest	=> 'MANIFEST');
-    $zip->addString($meta_yaml	=> 'META.yml');
+    $zip->addString($manifest	=> 'MANIFEST', %zip_args);
+    $zip->addString($meta_yaml	=> 'META.yml', %zip_args);
     $zip->writeToFileNamed($par_file);
 
     my $newsize = -s $par_file;
@@ -155,9 +193,10 @@ YAML
 }
 
 sub par_to_exe { 
-    my $PAR = _can_run("parl$Config{_exe}") or _die("can't find par loader");
-    vprint 0, "Running $PAR -q -B -O$Output $par_file";
-    system($PAR, "-q", "-B", "-O$Output", $par_file);
+    $PARL ||= _can_run("parl$Config{_exe}") or _die("can't find par loader");
+    my @quiet = (opt(v) ? () : ('-q'));
+    vprint 0, "Running $PARL @quiet -B -O$Output $par_file";
+    system($PARL, @quiet, "-B", "-O$Output", $par_file);
 }
 
 sub generate_code { 

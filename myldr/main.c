@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #9 $ $Change: 4500 $ $DateTime: 2003/03/01 14:48:38 $ */
+   $Revision: #10 $ $Change: 4549 $ $DateTime: 2003/03/03 15:41:21 $ */
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -61,7 +61,7 @@ int main( int argc, char **argv, char **env )
 
 /*    setenv("LD_LIBRARY_PATH", "/tmp", 1); */
 
-#if defined(USE_ITHREADS)
+#if (defined(USE_5005THREADS) || defined(USE_ITHREADS)) && defined(HAS_PTHREAD_ATFORK)
     /* XXX Ideally, this should really be happening in perl_alloc() or
      * perl_construct() to keep libperl.a transparently fork()-safe.
      * It is currently done here only because Apache/mod_perl have

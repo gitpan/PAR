@@ -1,12 +1,13 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #1 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $
+# $Revision: #2 $ $Change: 4668 $ $DateTime: 2003/03/09 10:46:40 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
+use File::Basename;
 use strict;
 my $give_help = 0;
 my $pl_file = shift;
@@ -36,14 +37,24 @@ undef $/;
 my $pl_text = <IN>;
 close IN;
 
+my $filename = basename($pl_file);
+
+if (-T $pl_file) {
+    $pl_text =~ s/
+	^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
+	^=cut\s*$
+	\n*
+    //smgx;
+    $pl_text = "#line 1 \"$filename\"\n$pl_text";
+}
+
 #  make a c-array
-my @chars = split '', "#line 1 \"par.pl\"\n$pl_text";
 sub map_fun { local $_ = $_[0];
               m/[\\"']/ and return "\\$_";
               ord() >= 32 && ord() <= 127 && return $_;
               return sprintf '\0%o', ord };
 
-my @c_chars = map { map_fun($_) } @chars;
+my @c_chars = map { map_fun($_) } split '', $pl_text;
 my $c_arr = "static char $c_var\[] = { " .
   ( join ', ', map { "'$_'" } @c_chars ) .
   ", '\\0' };\n";

@@ -2,6 +2,7 @@ AUTHORS
 Changes
 MANIFEST			This list of files
 MANIFEST.SKIP
+META.yml
 Makefile.PL
 PAR.pm
 PAR/Heavy.pm
@@ -13,14 +14,21 @@ myldr/file2c.pl
 myldr/main.c
 package/parl.nsi
 script/par.pl
-script/pp
 script/parl.pod
+script/pp
 t/0-signature.t
 t/1-basic.t
 t/hello.par
-inc/Module/Install.pm				Support file - Not installed
-inc/Module/Install/Win32.pm			Support file - Not installed
-inc/Module/Install/Run.pm			Support file - Not installed
-inc/Module/Install/Makefile.pm			Support file - Not installed
-inc/Module/Install/Fetch.pm			Support file - Not installed
-inc/Module/Install/Makefile/Version.pm		Support file - Not installed
+inc/ExtUtils/AutoInstall.pm
+inc/Module/Install.pm
+inc/Module/Install/AutoInstall.pm
+inc/Module/Install/Base.pm
+inc/Module/Install/Fetch.pm
+inc/Module/Install/Include.pm
+inc/Module/Install/Makefile.pm
+inc/Module/Install/Metadata.pm
+inc/Module/Install/PAR.pm
+inc/Module/Install/Run.pm
+inc/Module/Install/Win32.pm
+inc/Module/Install/_Autrijus.pm
+inc/Module/Install/_Autrijus/PAR.pm

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #12 $ $Change: 4502 $ $DateTime: 2003/03/01 15:17:41 $
+# $Revision: #14 $ $Change: 4657 $ $DateTime: 2003/03/08 19:17:25 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -27,6 +27,8 @@ Nicholas Clark		(NWCLARK)
 Randal L. Schwartz	(MERLYN)
 Robert Allerstorfer
 Robert Creager		(RCREAGER)
+Simon Cozens		(SIMON)
+Sisyphus
 Tim Conrow
 Ton Hospel
 Uri Guttman		(URI)

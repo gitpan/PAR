@@ -14,35 +14,43 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 0ff64f49e892428a5ec3bf5966f22c7f3a6d7bac AUTHORS
-SHA1 8c6e78783439a6e94dc9553ce616c78eea757f94 Changes
-SHA1 25b07dac10204d95f398eded6770fdb22f89e42e MANIFEST
-SHA1 fcc791f1da1acb5604bfa74853d58c7cbf3b05e7 MANIFEST.SKIP
-SHA1 638abc3ec956713c301e0d82255287ad516495e6 Makefile.PL
-SHA1 82837d348637f34dcc8a0dacdebcf4285f4f8e84 PAR.pm
-SHA1 8d7d59908f7cbd8442573e8fa4dcd50945b318b5 PAR/Heavy.pm
-SHA1 b2858c6a9c34447f2f1c75a5da9e4141d92435dc README
+SHA1 bee4f50263ee940fa2d0a126e9db1c0ce80eb4b5 AUTHORS
+SHA1 eefea3927c5c9e3a6bfd33024448d03b72e00aa5 Changes
+SHA1 30644f50ee197b82f91e86a3ee750f55e482e8ba MANIFEST
+SHA1 9c8ab340a6b10db16bfd46b41d5aad333547e471 MANIFEST.SKIP
+SHA1 c618b2243967442bff9b5af8875781adff79c260 META.yml
+SHA1 b515f698d87332ef83e31efe248ccd2219d5115b Makefile.PL
+SHA1 189f7c686b043a468c545f367fab01f21b056a5b PAR.pm
+SHA1 e3e01400ed4b073c02ba394494bd4289e321107c PAR/Heavy.pm
+SHA1 d2eb33c7b95635e40a7ec1cedc5df24de02ad85b README
 SHA1 a92e5e4f035a15c2eb0901210897861e1b7d8e4c TODO
-SHA1 9b69217a7192bf462e22cf006ac37ffd22aba454 inc/Module/Install.pm
-SHA1 364882cfc7b71d2159522bd9e8a1d480aff7ce6d inc/Module/Install/Fetch.pm
-SHA1 fc9bfd47c4e23285cf576fa30b28fe17cb1345d9 inc/Module/Install/Makefile.pm
-SHA1 658c8e0841db70a8be7b3e417d9b1742ef9fb441 inc/Module/Install/Makefile/Version.pm
-SHA1 9194480f1e3cf04c9d149e16d9c390d343895c80 inc/Module/Install/Run.pm
-SHA1 4c11707eb62655061f6c3c649be34625e423a678 inc/Module/Install/Win32.pm
-SHA1 b5feeed9930427663910d8da643d6f45e775f6a9 myldr/Makefile.PL
-SHA1 5d2ed9736d81206c1f61d295f6953063ff4221af myldr/file2c.pl
-SHA1 155796e5913f678a6331936ff9f00bb6f29a6a81 myldr/main.c
+SHA1 53b7ddec42e9936cd000d8e65a01f374069034e4 inc/ExtUtils/AutoInstall.pm
+SHA1 f76b8b25a86ad7fd30b6cfa375857f6ae868fa7b inc/Module/Install.pm
+SHA1 488e9a7866469280884d69700419835cf00f567a inc/Module/Install/AutoInstall.pm
+SHA1 cea97807a177f1fa890b15076242dada8901e344 inc/Module/Install/Base.pm
+SHA1 5eb8fdd6b559befa4579e6138e8ebe3610d4c497 inc/Module/Install/Fetch.pm
+SHA1 22afd934650e265bea4dca965a8828f78b1a3da0 inc/Module/Install/Include.pm
+SHA1 656e5a6f5364f790015fcf189e860bf73a1842b2 inc/Module/Install/Makefile.pm
+SHA1 151e9035ca1641c828aec9747ef4cf4606c1f011 inc/Module/Install/Metadata.pm
+SHA1 6d7bacc70df7f184c0de75703ebe14c62c6a619e inc/Module/Install/PAR.pm
+SHA1 249b2349cc3e1959dcb99708dfb3e0159194cc8c inc/Module/Install/Run.pm
+SHA1 7d0face3524789d75eee40207f90918818146c2b inc/Module/Install/Win32.pm
+SHA1 d91164bd4319e0478918dd6b2923af9b5a399d2f inc/Module/Install/_Autrijus.pm
+SHA1 65bfdbb2c48bbb92df0ae865607a197949d98186 inc/Module/Install/_Autrijus/PAR.pm
+SHA1 1d366731dcbb6f9dd0aef87ef077a31cbe39ea2b myldr/Makefile.PL
+SHA1 999ba338629cc53628d2e6c31d9f8cbe5af0cebe myldr/file2c.pl
+SHA1 952e421f5658b941b8c9e2a73b7f28c53a208d91 myldr/main.c
 SHA1 ee852494fd2882e6012791d968857eb76282498a package/parl.nsi
-SHA1 19e7e1221cf95e64e3293122acd49a37de61b54c script/par.pl
+SHA1 77bcefedd1ef4a460264445e07307a3b09484fde script/par.pl
 SHA1 4db20f6ae6e68fa77b298db994812cf80c5b4a80 script/parl.pod
-SHA1 e09f15625a06f311c56ff0ca37a1ed283c1c87cb script/pp
+SHA1 329e12ff779d9a5fdaeb2c4e54bac3be6e39b360 script/pp
 SHA1 61bccfe67d66f2655a0c4ee54abf96670e9a0750 t/0-signature.t
 SHA1 b6f27c2bb07be9c5de1452c0890683a80ba0f39b t/1-basic.t
 SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.1 (FreeBSD)
 
-iD8DBQE+YNcitLPdNzw1AaARAmNzAKCYCK/lQkvx+HBJRmrkujUaffTmEgCgj/Ka
-BSbRAafPXIpTNhZvZjkeouQ=
-=kCDR
+iD8DBQE+a0rdtLPdNzw1AaARAtL6AJ9TVWoBCMhYTi5WDTJCh3mOn7+khgCguEqI
+1LoCHwiw1UjfpdnG7EhL7VU=
+=KkDR
 -----END PGP SIGNATURE-----
