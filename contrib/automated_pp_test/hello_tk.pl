@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
-# $File: //hello_tk.pl $ $Author: mnooning $
-# $Revision: #002 $ $Change: 20040303_01 $ $DateTime: 2004/03/03 15:18:
+# $File: /depot/local/PAR/trunk/contrib/automated_pp_test/hello_tk.pl $ $Author: autrijus $
+# $Revision: #3 $ $Change: 11731 $ $DateTime: 2004/03/03 15:18:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any

@@ -1,5 +1,5 @@
-/* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #52 $ $Change: 10608 $ $DateTime: 2004/05/17 18:35:31 $
+/* $File: /depot/local/PAR/trunk/myldr/main.c $ $Author: autrijus $
+   $Revision: #25 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
    vim: expandtab shiftwidth=4
 */
 

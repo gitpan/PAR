@@ -1,5 +1,5 @@
-/* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #20 $ $Change: 9546 $ $DateTime: 2004/01/02 06:36:46 $
+/* $File: /depot/local/PAR/trunk/myldr/mktmpdir.h $ $Author: autrijus $
+   $Revision: #3 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
    vim: expandtab shiftwidth=4
 */
 

@@ -1,5 +1,5 @@
-/* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
- * $Revision: #24 $ $Change: 9558 $ $DateTime: 2004/01/02 18:50:23 $
+/* $File: /depot/local/PAR/trunk/myldr/utils.c $ $Author: autrijus $
+ * $Revision: #3 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
  * vim: expandtab shiftwidth=4
  *
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>

@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #22 $ $Change: 10226 $ $DateTime: 2004/02/27 23:56:33 $ vim: expandtab shiftwidth=4
+# $File: /depot/local/PAR/trunk/lib/PAR/Heavy.pm $ $Author: autrijus $
+# $Revision: #8 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.08';

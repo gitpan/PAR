@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
-# $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #111 $ $Change: 10708 $ $DateTime: 2004/05/29 08:40:57 $ vim: expandtab shiftwidth=4
+# $File: /depot/local/PAR/trunk/script/par.pl $ $Author: autrijus $
+# $Revision: #71 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 

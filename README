@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #28 $ $Change: 10649 $ $DateTime: 2004/05/22 19:07:05 $
+# $File: /depot/local/PAR/trunk/README $ $Author: autrijus $
+# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 This is the README file for PAR, a toolkit to create and use perl scripts
 and modules stored inside compressed .par files.

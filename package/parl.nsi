@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/package/parl.nsi $ $Author: autrijus $
-# $Revision: #6 $ $Change: 3304 $ $DateTime: 2003/01/07 12:23:04 $
+# $File: /depot/local/PAR/trunk/package/parl.nsi $ $Author: autrijus $
+# $Revision: #9 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 SetCompressor bzip2
 

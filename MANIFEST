@@ -1,6 +1,7 @@
 AUTHORS
 ChangeLog
-Changes
+contrib/additional_docs/where_is_it.txt
+contrib/additional_docs/who_am_i.txt
 contrib/automated_pp_test/automated_pp_test.pl
 contrib/automated_pp_test/hello_tk.pl
 contrib/automated_pp_test/hi.ico
@@ -10,6 +11,8 @@ contrib/automated_pp_test/remove_file_and_try_executable_again.pm
 contrib/automated_pp_test/test_in_further_subdir.pm
 contrib/gui_pp/gpp
 contrib/gui_pp/gpp_readme.txt
+contrib/pare/pare
+contrib/pare/pare_readme.txt
 contrib/procedural_pp/pp_old
 inc/ExtUtils/AutoInstall.pm
 inc/Module/Install.pm

@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #25 $ $Change: 10715 $ $DateTime: 2004/05/29 15:31:21 $
+# $File: /depot/local/PAR/trunk/TODO $ $Author: autrijus $
+# $Revision: #17 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 - Implement inflate algorithm in perl as a non-XS fallback.
 

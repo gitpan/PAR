@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-# $File: //member/autrijus/PAR/t/0-signature.t $ $Author: autrijus $
-# $Revision: #9 $ $Change: 10385 $ $DateTime: 2004/03/15 10:52:22 $
+# $File: /depot/local/PAR/trunk/t/0-signature.t $ $Author: autrijus $
+# $Revision: #8 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 use strict;
 print "1..1\n";

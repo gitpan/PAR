@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/script/parl.pod $ $Author: autrijus $
-# $Revision: #11 $ $Change: 9518 $ $DateTime: 2003/12/31 14:09:50 $
+# $File: /depot/local/PAR/trunk/script/parl.pod $ $Author: autrijus $
+# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 =head1 NAME
 

@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #68 $ $Change: 10967 $ $DateTime: 2004/07/02 09:01:03 $
+# $File: /depot/local/PAR/trunk/AUTHORS $
+# $Revision: #35 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -11,6 +11,7 @@ Alan Stewart
 Alan Teague
 Alasdair Allan		(AALLAN)
 Alvin Belden
+Andrew Lee
 Andy Balaam
 Andy Lester		(PETDANCE)
 Antti Lankila
@@ -100,6 +101,7 @@ Robert Allerstorfer
 Robert Creager		(RCREAGER)
 Roderich Schupp		(RSCHUPP)
 Ryan Briones
+Sascha Wuestemann
 Simon Andrews
 Simon Cozens		(SIMON)
 Sisyphus

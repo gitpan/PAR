@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/lib/PAR/Packer.pm $ $Author: autrijus $
-# $Revision: #12 $ $Change: 10969 $ $DateTime: 2004/07/02 09:05:35 $ vim: expandtab shiftwidth=4
+# $File: /depot/local/PAR/trunk/lib/PAR/Packer.pm $ $Author: autrijus $
+# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
 
 package PAR::Packer;
 $PAR::Packer::VERSION = '0.12';

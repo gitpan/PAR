@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
-# $File: //remove_file_and_try_executable_again.pm $ $Author: mnooning $
-# $Revision: #007 $ $Change: 20040501_01 $ $DateTime: 2004/05/01 12:21:
+# $File: /depot/local/PAR/trunk/contrib/automated_pp_test/remove_file_and_try_executable_again.pm $ $Author: autrijus $
+# $Revision: #3 $ $Change: 11731 $ $DateTime: 2004/05/01 12:21:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any

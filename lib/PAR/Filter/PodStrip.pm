@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/lib/PAR/Filter/PodStrip.pm $ $Author: autrijus $
-# $Revision: #5 $ $Change: 10218 $ $DateTime: 2004/02/26 23:44:36 $
+# $File: /depot/local/PAR/trunk/lib/PAR/Filter/PodStrip.pm $ $Author: autrijus $
+# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 package PAR::Filter::PodStrip;
 

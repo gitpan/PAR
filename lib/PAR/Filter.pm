@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/lib/PAR/Filter.pm $ $Author: autrijus $
-# $Revision: #6 $ $Change: 9517 $ $DateTime: 2003/12/31 14:04:33 $
+# $File: /depot/local/PAR/trunk/lib/PAR/Filter.pm $ $Author: autrijus $
+# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 package PAR::Filter;
 $PAR::Filter::VERSION = '0.02';

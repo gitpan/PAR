@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/lib/PAR/Filter/PatchContent.pm $ $Author: autrijus $
-# $Revision: #8 $ $Change: 10561 $ $DateTime: 2004/04/30 19:07:34 $
+# $File: /depot/local/PAR/trunk/lib/PAR/Filter/PatchContent.pm $ $Author: autrijus $
+# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 package PAR::Filter::PatchContent;
 

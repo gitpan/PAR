@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
-# $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #62 $ $Change: 10555 $ $DateTime: 2004/04/30 16:19:56 $
+# $File: /depot/local/PAR/trunk/myldr/Makefile.PL $ $Author: autrijus $
+# $Revision: #30 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 #
 # Copyright 2002, 2003, 2004 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -11,6 +11,8 @@ use strict;
 use Config;
 use File::Spec;
 use ExtUtils::Embed;
+use DynaLoader;
+use File::Basename;
 
 xsinit(undef);
 
@@ -24,6 +26,9 @@ my $gccversion = $Config{gccversion};
 my $pccflags = ccopts();
 my $pldflags = ldopts();
 my $dynperl = $Config{useshrplib} && ($Config{useshrplib} ne 'false');
+
+$dynperl = 1 if $pldflags =~ /\B-lperl\b/; # Gentoo lies to us!
+
 my $cc = $Config{cc};
 my $ld = $Config{ld} || (($^O eq 'MSWin32') ? 'link.exe' : $Config{cc});
 $ld = $Config{cc} if ($^O =~ /^(?:dec_osf|aix)$/);
@@ -56,6 +61,21 @@ elsif ($dynperl) {
 	split(/\Q$Config{path_sep}\E/, $ENV{$Config{ldlibpthname}} || ''),
 	split(/ /, $Config{libpth}),
     );
+
+    if ($libperl = DynaLoader::dl_findfile("-lperl")) {
+        if (-l $libperl) {
+            my $realpath = readlink($libperl);
+            if (!File::Spec->file_name_is_absolute($realpath)) {
+                $realpath = File::Spec->rel2abs(
+                    File::Spec->catfile(
+                        dirname($libperl) => $realpath
+                    )
+                );
+            }
+            $libperl = $realpath;
+        }
+        @paths = () if $libperl and -e $libperl;
+    }
 
     foreach my $path (@paths) {
 	$libperl = File::Spec->catfile($path, $file);
@@ -117,6 +137,7 @@ my $ldflags = "$lddebug$pldflags";
 my $static_ldflags = $ldflags;
 
 $static_ldflags =~ s/\s+-lperl\s+/ /g;
+$ldflags = $static_ldflags if !$dynperl;
 
 if (-e $par_exe and not -s $par_exe) {
     print OUT "all ::\n\t$^X -e1\n";

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-# $File: //member/autrijus/PAR/contrib/procedural_pp/pp_old $ $Author: autrijus $
-# $Revision: #1 $ $Change: 10675 $ $DateTime: 2004/05/24 13:22:13 $ vim: expandtab shiftwidth=4
+# $File: /depot/local/PAR/trunk/contrib/procedural_pp/pp_old $ $Author: autrijus $
+# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
-# $File: //member/autrijus/PAR/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #19 $ $Change: 10967 $ $DateTime: 2004/07/02 09:01:03 $
+# $File: /depot/local/PAR/trunk/myldr/file2c.pl $ $Author: autrijus $
+# $Revision: #13 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
-# $File: //automated_pp_test.pl $ $Author: mnooning $
-# $Revision: #012 $ $Change: 20040610_01 $ $DateTime: 2004/06/10 15:13:
+# $File: /depot/local/PAR/trunk/contrib/automated_pp_test/automated_pp_test.pl $ $Author: autrijus $
+# $Revision: #3 $ $Change: 11731 $ $DateTime: 2004/06/10 15:13:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any

@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/lib/PAR/Tutorial.pod $
-# $Revision: #7 $ $Change: 10552 $ $DateTime: 2004/04/30 15:05:04 $ vim: expandtab shiftwidth=4
+# $File: /depot/local/PAR/trunk/lib/PAR/Tutorial.pod $
+# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $ vim: expandtab shiftwidth=4
 
 =head1 NAME
 

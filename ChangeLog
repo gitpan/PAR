@@ -1,5 +1,19 @@
-# $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #40 $ $Change: 10970 $ $DateTime: 2004/07/02 09:05:49 $
+# $File: /depot/local/PAR/trunk/ChangeLog $
+# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
+
+[Changes for 0.86 (tentative)]
+
+* New Features
+
+    - Add "pare" (a utility to pare down the size of PAR files) and
+      "additional_docs" (two articles that covers PAR usage and internals)
+      to contrib/.
+
+* Bug Fixes
+
+    - On Gentoo and Debian GNU/Linux, pp-generated standalone binaries
+      packed libperl.so under the wrong name, resulting in failed execution
+      with messages like "libperl5.8.so not found".
 
 [Changes for 0.85 - July 2, 2004]
 

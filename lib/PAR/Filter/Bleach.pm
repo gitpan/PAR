@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/lib/PAR/Filter/Bleach.pm $ $Author: autrijus $
-# $Revision: #6 $ $Change: 10562 $ $DateTime: 2004/04/30 19:40:32 $
+# $File: /depot/local/PAR/trunk/lib/PAR/Filter/Bleach.pm $ $Author: autrijus $
+# $Revision: #4 $ $Change: 11731 $ $DateTime: 2004-08-30T22:40:26.326020Z $
 
 package PAR::Filter::Bleach;
 
