@@ -1,4 +1,28 @@
 ____________________________________________________________________________
+[  9630] By: autrijus                              on 2004/01/08  10:59:30
+        Log: * This be PAR, version 0.79.
+	   ! ChangeLog lib/PAR.pm
+____________________________________________________________________________
+[  9629] By: autrijus                              on 2004/01/07  16:50:29
+        Log: * Damn double negatives.  par_env_clean()
+             is finally fixed to be correct, thanks
+             to Alan Stweart.
+	   ! myldr/mktmpdir.c myldr/utils.c
+____________________________________________________________________________
+[  9627] By: autrijus                              on 2004/01/07  10:58:09
+        Log: * Alan Stewart noticed that ->contents
+             in Archive::Zip returns an extra \x30;
+             it turns out to really want scalar
+             context.
+             * testing for re-using cache filesnames
+             are flawed; this should fix it.
+	   ! lib/PAR/Heavy.pm
+____________________________________________________________________________
+[  9626] By: autrijus                              on 2004/01/07  10:55:02
+        Log: * ouch! par_clean() has the meaning of
+             PAR_CLEAN defined exactly backwards!
+	   ! myldr/utils.c
+____________________________________________________________________________
 [  9624] By: autrijus                              on 2004/01/06  21:13:27
         Log: * last-minute bugfix: setting PAR_CLEAN=0
              now actually works.

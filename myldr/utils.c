@@ -133,7 +133,7 @@ int par_env_clean () {
 
     if (rv == -1) {
         char *buf = getenv("PAR_CLEAN");
-        rv = ( ((buf != NULL) && (*buf != '\0') && (*buf != '0')) ? 1 : 0);
+        rv = ( ((buf == NULL) || (*buf == '\0') || (*buf == '0')) ? 0 : 1);
     }
 
     return rv;

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #18 $ $Change: 9622 $ $DateTime: 2004/01/06 20:48:51 $ vim: expandtab shiftwidth=4
+# $Revision: #19 $ $Change: 9627 $ $DateTime: 2004/01/07 10:58:09 $ vim: expandtab shiftwidth=4
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.08';
@@ -125,13 +125,13 @@ sub _dl_extract {
         );
 
         open $fh, '>', $filename or die $!
-            unless -r $filename and -e $file
-                and -s $file == $member->uncompressedSize;
+            unless -r $filename and -e $filename
+                and -s $filename == $member->uncompressedSize;
     }
 
     if ($fh) {
         binmode($fh);
-        print $fh $member->contents;
+        print $fh scalar $member->contents;
         close $fh;
         chmod 0755, $filename;
     }

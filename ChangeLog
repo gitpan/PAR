@@ -1,5 +1,15 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #31 $ $Change: 9623 $ $DateTime: 2004/01/06 21:02:47 $
+# $Revision: #32 $ $Change: 9630 $ $DateTime: 2004/01/08 10:59:30 $
+
+[Changes for 0.79 - January 8, 2004]
+
+* Bug fixes
+
+    - Setting PAR_CLEAN had the reversed effect.  Oops.
+
+    - Dynamic libraries in cached directories was not detected
+      properly, resulting in "permission denied" errors during
+      certain race conditions.
 
 [Changes for 0.78 - January 7, 2004]
 
