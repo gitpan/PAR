@@ -1,0 +1,92 @@
+# $File: //member/autrijus/PAR/script/parl.pod $ $Author: autrijus $
+# $Revision: #2 $ $Change: 3303 $ $DateTime: 2003/01/07 12:02:36 $
+
+=head1 NAME
+
+parl - Binary PAR Loader
+
+=head1 SYNOPSIS
+
+(Please see L<pp> for convenient ways to make self-contained
+executables, scripts or PAR archives from perl programs.)
+
+To use F<Hello.pm> from F<./foo.par>:
+
+    % parl -A./foo.par -MHello 
+    % parl -A./foo -MHello	# the .par part is optional
+
+Same thing, but search F<foo.par> in the F<@INC>;
+
+    % parl -Ifoo.par -MHello 
+    % parl -Ifoo -MHello 	# ditto
+
+Run F<test.pl> or F<script/test.pl> from F<foo.par>:
+
+    % parl foo.par test.pl	# looks for 'main.pl' by default,
+				# otherwise run 'test.pl' 
+
+To make a self-containing executable containing a PAR file :
+
+    % parl -O./foo foo.par
+    % ./foo test.pl		# same as above
+
+To embed the necessary non-core modules and shared objects for PAR's
+execution (like C<Zlib>, C<IO>, C<Cwd>, etc), use the B<-b> flag:
+
+    % parl -b -O./foo foo.par
+    % ./foo test.pl		# runs anywhere with core modules installed
+
+If you also wish to embed I<core> modules along, use the B<-B> flag
+instead:
+
+    % parl -B -O./foo foo.par
+    % ./foo test.pl		# runs anywhere with the perl interpreter
+
+This is particularly useful when making stand-alone binary
+executables; see L<pp> for details.
+
+=head1 DESCRIPTION
+
+This stand-alone command offers roughly the same feature as C<perl
+-MPAR>, except that it takes the pre-loaded F<.par> files via
+C<-Afoo.par> instead of C<-MPAR=foo.par>.
+
+You can use it to run F<.par> files:
+
+    # runs script/run.pl in archive, uses its lib/* as libraries
+    % parl myapp.par run.pl	# runs run.pl or script/run.pl in myapp.par
+    % parl otherapp.pl		# also runs normal perl scripts
+
+However, if the F<.par> archive contains either F<main.pl> or
+F<script/main.pl>, it is used instead:
+
+    % parl myapp.par run.pl	# runs main.pl, with 'run.pl' as @ARGV
+
+Finally, as an alternative to C<Perl2exe> or C<PerlApp>, the C<-O>
+option makes a stand-alone binary from a PAR file:
+
+    % parl -B -Omyapp myapp.par
+    % ./myapp			# run it anywhere without perl binaries
+    % ./myapp -Omyap2 myapp.par	# makes a ./myap2, identical to ./myapp
+    % ./myapp -Omyap3 myap3.par	# makes another app with different PAR
+
+For an explanation of stand-alone executable format, please see L<par.pl>.
+
+=head1 SEE ALSO
+
+L<PAR>, L<par.pl>, L<pp>
+
+=head1 AUTHORS
+
+Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+See L<http://www.perl.com/perl/misc/Artistic.html>
+
+=cut

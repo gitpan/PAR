@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #33 $ $Change: 2727 $ $DateTime: 2002/12/17 03:33:08 $
+# $Revision: #35 $ $Change: 3302 $ $DateTime: 2003/01/07 12:01:26 $
 
 package __par_pl;
 
@@ -49,7 +49,7 @@ instead:
     % ./foo.pl test.pl		# runs anywhere with the perl interpreter
 
 This is particularly useful when making stand-alone binary
-executables; see L<makepar.pl> for details.
+executables; see L<pp> for details.
 
 =head1 DESCRIPTION
 
@@ -57,24 +57,29 @@ This stand-alone command offers roughly the same feature as C<perl
 -MPAR>, except that it takes the pre-loaded F<.par> files via
 C<-Afoo.par> instead of C<-MPAR=foo.par>.
 
+=head2 Binary PAR loader (L<parl>)
+
 If you have a C compiler, a binary version of B<par.pl> will also be
-automatically installed.  You can use it to run F<.par> files:
+automatically installed as B<parl>.  You can use it to run F<.par> files:
 
     # runs script/run.pl in archive, uses its lib/* as libraries
-    % par.exe myapp.par run.pl	# runs run.pl or script/run.pl in myapp.par
+    % parl myapp.par run.pl	# runs run.pl or script/run.pl in myapp.par
+    % parl otherapp.pl		# also runs normal perl scripts
 
 However, if the F<.par> archive contains either F<main.pl> or
 F<script/main.pl>, it is used instead:
 
-    % par.exe myapp.par run.pl	# runs main.pl, with 'run.pl' as @ARGV
+    % parl myapp.par run.pl	# runs main.pl, with 'run.pl' as @ARGV
 
 Finally, as an alternative to C<Perl2exe> or C<PerlApp>, the C<-O>
 option makes a stand-alone binary from a PAR file:
 
-    % par.exe -B -Omyapp myapp.par
+    % parl -B -Omyapp myapp.par
     % ./myapp			# run it anywhere without perl binaries
     % ./myapp -Omyap2 myapp.par	# makes a ./myap2, identical to ./myapp
     % ./myapp -Omyap3 myap3.par	# makes another app with different PAR
+
+=head2 Stand-alone executable format
 
 The format for the stand-alone executable is simply concatenating the
 following elements:
@@ -83,8 +88,8 @@ following elements:
 
 =item * The executable itself
 
-Either in plain-text (F<par.pl>) or native executable format (F<par>
-or F<par.exe>).
+Either in plain-text (F<par.pl>) or native executable format (F<parl>
+or F<parl.exe>).
 
 =item * Any number of embedded files
 
@@ -119,21 +124,6 @@ A pack('N') number of the total length of FILE and PAR sections,
 followed by a 8-bytes magic string: "C<\012PAR.pm\012>".
 
 =back
-
-=head1 NOTES
-
-If your system has a C compiler, the stand-alone binary version of
-par.pl will be compiled and installed automatically.  You can generate
-self-executable binaries by:
-
-    # put a main.pl inside myapp.par to run it automatically
-    % par -O./myapp myapp.par
-
-The C<-B> flag described earlier is particularly useful here,
-to build a truly self-containing executable:
-
-    # bundle all needed shared objects (or F<.dll>s)
-    % par -B -O./myapp myapp.par
 
 =cut
 
@@ -308,11 +298,13 @@ if ($out) {
     my $par = shift(@ARGV);
 
     # Open input and output files {{{
-    open PAR, '<', $par or die "$!: $par";
-    binmode(PAR);
-
     local $/ = \4;
-    die "$par is not a PAR file" unless <PAR> eq "PK\003\004";
+
+    if (defined $par) {
+	open PAR, '<', $par or die "$!: $par";
+	binmode(PAR);
+	die "$par is not a PAR file" unless <PAR> eq "PK\003\004";
+    }
 
     open OUT, '>', $out or die $!;
     binmode(OUT);
@@ -371,9 +363,15 @@ if ($out) {
     # }}}
 
     # Now write out the PAR and magic strings {{{
-    print OUT "PK\003\004";
-    print OUT <PAR>;
-    print OUT pack('N', $data_len + (stat($par))[7]);
+    if (defined($par)) {
+	print OUT "PK\003\004";
+	print OUT <PAR>;
+	print OUT pack('N', $data_len + (stat($par))[7]);
+    }
+    else {
+	print OUT pack('N', $data_len);
+    }
+
     print OUT "\nPAR.pm\n";
     close OUT;
     chmod 0755, $out;
@@ -523,7 +521,7 @@ exit;
 
 =head1 SEE ALSO
 
-L<PAR>, L<pp>
+L<PAR>, L<parl>, L<pp>
 
 =head1 AUTHORS
 

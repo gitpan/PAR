@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #14 $ $Change: 2735 $ $DateTime: 2002/12/17 11:23:57 $
+# $Revision: #20 $ $Change: 3302 $ $DateTime: 2003/01/07 12:01:26 $
 
 use 5.006;
 use strict;
@@ -65,9 +65,11 @@ sub compile_par {
 
     my @modules = map {
 	s/::/\//g; "$_.pm"
-    } split(/\s+/, opt(M));
+    } @{opt(M) || []};
 
     my %map;
+    push @INC, @{opt(I) || []};
+
     Module::ScanDeps::scan_deps(
 	rv	=> \%map,
 	files	=> [
@@ -75,10 +77,12 @@ sub compile_par {
 	    (@Input ? @Input : ()),
 	],
 	recurse	=> 1,
+	skip	=> { map { ($_ => 1) } @{opt(X) || []} }
     );
     Module::ScanDeps::add_deps(
 	rv	=> \%map,
 	modules	=> \@modules,
+	skip	=> { map { ($_ => 1) } @{opt(X) || []} }
     );
 
     $map{$_} = $map{$_}{file} for keys %map;
@@ -151,7 +155,7 @@ YAML
 }
 
 sub par_to_exe { 
-    my $PAR = _can_run("par$Config{_exe}") or _die("can't find par executable");
+    my $PAR = _can_run("parl$Config{_exe}") or _die("can't find par loader");
     vprint 0, "Running $PAR -q -B -O$Output $par_file";
     system($PAR, "-q", "-B", "-O$Output", $par_file);
 }
@@ -189,9 +193,10 @@ sub parse_argv {
 
     $Options = {};
     Getopt::Long::GetOptions( $Options,
-        'M:s',          # module directory
-        'I:s',          # include directories (FOR PERL, NOT FOR C)
-        'o:s',          # Output executable
+        'M:s@',         # include modules
+        'X:s@',         # exclude modules
+        'I:s@',         # include directories (FOR PERL, NOT FOR C)
+        'o:s',          # Output file
         'v:i',          # Verbosity level
         'e:s',          # One-liner
         'p',            # Generate PAR only
@@ -218,7 +223,7 @@ sub parse_argv {
 	@Input = $fake_input;
     }
     else {
-        @Input = shift @ARGV;
+        @Input = shift @ARGV if @ARGV;
         _usage_and_die("$0: No input file specified\n") unless @Input or opt(M);
 	push @Input, @ARGV if @ARGV and !opt(r);
         check_read(@Input) if @Input;
@@ -315,7 +320,7 @@ sub _die {
 sub _usage_and_die {
     _die(<<EOU);
 $0: Usage:
-$0 [-o executable] [-r] [-O|-B|-p|-S] [-log log] [source[.pl] | -e oneliner]
+$0 [-o executable] [-r] [-B|-p|-S] [-log log] [source[.pl] | -e oneliner]
 EOU
 }
 
@@ -394,6 +399,7 @@ pp - Perl Packager
 
     % pp -I /foo hello		# Extra paths (notice the space after -I)
     % pp -M Foo::Bar hello	# Extra modules (notice the space after -M)
+    % pp -X Foo::Bar hello	# Exclude modules (notice the space after -X)
 
     % pp -r hello		# Packages 'hello' into 'a.out', runs 'a.out'.
     % pp -r hello a b c		# Packages 'hello' into 'a.out', runs 'a.out',
@@ -432,6 +438,11 @@ as the default executable name.
 =item -M I<module names>
 
 Adds the given modules to the dependency search patch and to the
+binary.
+
+=item -X I<module names>
+
+Excludes the given modules to the dependency search patch and to the
 binary.
 
 =item -I I<library directories>
@@ -511,7 +522,7 @@ different expected settings:
 
 =item Clean setup:
 
-    % pp -Opacked.exe source.pl		# makes packed.exe
+    % pp -o packed.exe source.pl	# makes packed.exe
     (now deploy 'packed.exe' to target machine)
     $ packed.exe			# run it
 
@@ -523,7 +534,7 @@ F<libperl.so> to function correctly.
 
 =head1 SEE ALSO
 
-L<PAR>, L<Module::ScanDeps>, L<par.pl>, L<perlcc>
+L<PAR>, L<Module::ScanDeps>, L<par.pl>, L<parl>, L<perlcc>
 
 =head1 ACKNOWLEDGMENTS
 

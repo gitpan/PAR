@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #20 $ $Change: 2574 $ $DateTime: 2002/12/03 00:27:26 $
+# $Revision: #26 $ $Change: 3307 $ $DateTime: 2003/01/07 13:15:04 $
 
 use 5.006;
 use Config;
@@ -20,10 +20,19 @@ WriteMakefile(
     VERSION_FROM	=> 'PAR.pm', 
     DISTNAME		=> 'PAR',
     BINARY_LOCATION	=> 'x86/PAR.tar.gz',
+    MAN1PODS		=> {
+	'script/par.pl'	    => 'blib/man1/par.pl.1',
+	'script/pp'	    => 'blib/man1/pp.1',
+      $have_cc ? (
+	'script/parl.pod'   => 'blib/man1/parl.1',
+      ) : (),
+    },
     EXE_FILES		=> [
 	'script/par.pl',
 	'script/pp',
-	$have_cc ? ("script/par$Config{_exe}") : (),
+      $have_cc ? (
+	"script/parl$Config{_exe}",
+      ) : (),
     ],
     NEEDS_LINKING	=> 1,
 
@@ -43,14 +52,24 @@ WriteMakefile(
 sub MY::postamble {
     return "" unless $have_cc;
 
-    my $script = File::Spec->catfile( 'script', "par$Config{_exe}" );
+    my $par_exe  = File::Spec->catfile( 'script', "par$Config{_exe}" );
+    my $parl_exe = File::Spec->catfile( 'script', "parl$Config{_exe}" );
+
+=for comment
+package :: all
+	zip -j package/parl-\${VERSION}-\${OSNAME}.zip script/parl$Config{_exe} 
+	cat `which unzipsfx` package/parl-\${VERSION}-\${OSNAME}.zip > package/parl-\${VERSION}-\${OSNAME}.bin
+	\$(CHMOD) a+x package/parl-\${VERSION}-\${OSNAME}.bin
+	\$(RM_RF) package/parl-\${VERSION}-\${OSNAME}.zip
+=cut
 
     return << "EOT";
 
 all :: subdirs
 
 clean ::
-	\$(RM_RF) $script
+	\$(RM_RF) $par_exe
+	\$(RM_RF) $parl_exe
 
 ppm :: all
 	tar cvf PAR.tar blib

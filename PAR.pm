@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #55 $ $Change: 2737 $ $DateTime: 2002/12/17 11:26:03 $
+# $Revision: #57 $ $Change: 3302 $ $DateTime: 2003/01/07 12:01:26 $
 
 package PAR;
-$PAR::VERSION = '0.61';
+$PAR::VERSION = '0.62';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.61 of PAR, released December 17, 2002.
+This document describes version 0.62 of PAR, released January 7, 2002.
 
 =head1 SYNOPSIS
 
@@ -71,8 +71,8 @@ This module lets you easily bundle a typical F<blib/> tree into a zip
 file, called a Perl Archive, or C<PAR>.
 
 It supports loading XS modules by overriding B<DynaLoader> boostrapping
-methods; it writes shared object file to a temporary file at the time
-it is needed.
+methods; it writes shared object file to a temporary file at the time it
+is needed.
 
 To generate a F<.par> file, all you have to do is compress the modules
 under F<arch/> and F<lib/>, e.g.:
@@ -88,14 +88,14 @@ use B<PAR>, and it will Just Work.
 For maximal convenience, you can set the C<PERL5OPT> environment
 variable to C<-MPAR> to enable C<PAR> processing globally (the overhead
 is small if not used), or to C<-MPAR=/path/to/mylib.par> to load a
-specific PAR file.  Alternatively, consider using the F<par.pl>
-utility bundled with this module.
+specific PAR file.  Alternatively, consider using the F<par.pl> utility
+bundled with this module.
 
 Note that self-containing scripts and executables created with F<par.pl>
 and F<pp> may also be used as F<.par> archives:
 
-    % pp -O packed.exe source.pl	# generate packed.exe
-    % perl -MPAR=packed.exe other.pl	# this can also work
+    % pp -o packed.exe source.pl	# generate packed.exe
+    % perl -MPAR=packed.exe other.pl	# this also works
     % perl -MPAR -Ipacked.exe other.pl	# ditto
 
 Please see L</SYNOPSIS> for most typical use cases.
@@ -103,12 +103,12 @@ Please see L</SYNOPSIS> for most typical use cases.
 =head1 NOTES
 
 Since version 0.60, all files and data are extracted into a temporary
-directory, with the same name as its CRC32 checksum, to speed up
-the loading time of the next round.  To inhibit this behaviour,
-set the C<PAR_CLEARTEMP> environment to a true value.
+directory, with the same name as its CRC32 checksum, to speed up the
+loading time of the next round.  To inhibit this behaviour, set the
+C<PAR_CLEARTEMP> environment to a true value.
 
-If you object to this feature, or think that only shared object
-files should be left for the next round, just mail me. :-)
+If you object to this feature, or think that only shared object files
+should be left for the next round, just mail me. :-)
 
 =cut
 
@@ -289,7 +289,7 @@ sub _tmpfile {
 My presentation, "Introduction to Perl Archive Toolkit":
 L<http://www.autrijus.org/par-intro/slide001.html>
 
-L<par.pl>, L<pp>
+L<par.pl>, L<parl>, L<pp>
 
 L<Archive::Zip>, L<perlfunc/require>
 

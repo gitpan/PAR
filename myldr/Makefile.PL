@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #6 $ $Change: 2725 $ $DateTime: 2002/12/17 03:11:34 $
+# $Revision: #11 $ $Change: 3309 $ $DateTime: 2003/01/07 13:30:13 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -9,6 +9,7 @@
 
 use strict;
 use Config;
+use File::Spec;
 use ExtUtils::Embed;
 
 xsinit(undef);
@@ -21,9 +22,13 @@ my $pccflags = ccopts;
 my $pldflags = ldopts;
 my $ld = $Config{ld};
 my $cc = $Config{cc};
-my $f2c = "./file2c.pl";
+my $f2c = File::Spec->catfile(".", "file2c.pl");
+my $par_pl = File::Spec->catfile('..', 'script', "par.pl");
+my $par_exe = File::Spec->catfile('.', "par$exe");
+my $parl_exe = File::Spec->catfile('..', 'script', "parl$exe");
+my $lib_path = join(' ', map "-I$_", @INC);
 
-system($^X, $f2c, qw(../script/par.pl my_par_pl.c load_me_2));
+system($^X, $f2c, $par_pl, 'my_par_pl.c', 'load_me_2');
 
 print "Writing Makefile for the par$exe program\n";
 
@@ -64,13 +69,14 @@ LD=$ld
 CC=$cc
 CFLAGS=$cflags
 LDFLAGS=$ldflags
+NOOP=\$(PERL) -e1
 
 OBJECTS=main$o
 
 .c$o:
 	\$(CC) -c \$(CFLAGS) \$<
 
-all: ../script/par$exe
+all: $parl_exe
 
 clean:
 	-\$(RM) my_par_pl.c
@@ -79,26 +85,31 @@ clean:
 	\$(MV) Makefile Makefile.old
 
 realclean: clean
-	-\$(RM) ../script/par$exe
+	-\$(RM) $par_exe
+	-\$(RM) $parl_exe
 	-\$(RM) Makefile Makefile.old
 
 distclean: clean
-	-\$(RM) ../script/par$exe
+	-\$(RM) $par_exe
+	-\$(RM) $parl_exe
 	-\$(RM) Makefile Makefile.old
 
-../script/par$exe: \$(OBJECTS) my_par_pl.c
+$par_exe: \$(OBJECTS) my_par_pl.c
 	\$(LD) \$(OBJECTS) \$(LDFLAGS) $out\$@
+
+$parl_exe: $par_exe
+	$par_exe -I../blib/lib $lib_path -B -O$parl_exe
 
 main$o: main.c
 
 disttest:
-	-\$(RM) Makefile.old
+	-\$(NOOP)
 
 test:
-	-\$(RM) Makefile.old
+	-\$(NOOP)
 
 .DEFAULT:
-	-\$(RM) Makefile.old
+	-\$(NOOP)
 
 .SUFFIXES: $o
 

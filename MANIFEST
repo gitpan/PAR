@@ -11,8 +11,10 @@ TODO
 myldr/Makefile.PL
 myldr/file2c.pl
 myldr/main.c
+package/parl.nsi
 script/par.pl
 script/pp
+script/parl.pod
 t/0-signature.t
 t/1-basic.t
 t/hello.par

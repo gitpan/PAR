@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #6 $ $Change: 2720 $ $DateTime: 2002/12/15 16:31:20 $
+# $Revision: #7 $ $Change: 3308 $ $DateTime: 2003/01/07 13:24:51 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.03';
@@ -30,8 +30,7 @@ sub _init_dynaloader {
     $bootstrap   = \&DynaLoader::bootstrap;
     $dl_findfile = \&DynaLoader::dl_findfile;
 
-    no strict 'refs';
-    no warnings 'redefine';
+    local $^W;
     *{'DynaLoader::bootstrap'}   = \&_bootstrap;
     *{'DynaLoader::dl_findfile'} = \&_dl_findfile;
 }

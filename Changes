@@ -1,4 +1,75 @@
 ____________________________________________________________________________
+[  3304] By: autrijus                              on 2003/01/07  12:23:04
+        Log: * This be 0.62, the 'parl' edition.
+	   ! package/parl.nsi
+____________________________________________________________________________
+[  3303] By: autrijus                              on 2003/01/07  12:02:36
+        Log: * add documentation for parl.
+             * reflect this in makefile.pl and manifest.
+	   ! MANIFEST Makefile.PL script/parl.pod
+____________________________________________________________________________
+[  3302] By: autrijus                              on 2003/01/07  12:01:26
+        Log: * mention parl in documentations.
+	   ! PAR.pm script/par.pl script/pp
+____________________________________________________________________________
+[  3287] By: autrijus                              on 2003/01/07  03:50:52
+        Log: * 2.51, not 0.51.
+	   ! script/pp
+____________________________________________________________________________
+[  3280] By: autrijus                              on 2003/01/06  22:35:28
+        Log: * pp -M and -I was just taking a single value; fixed.
+	   ! script/pp
+____________________________________________________________________________
+[  3251] By: autrijus                              on 2003/01/05  22:04:13
+        Log: * never mind.
+	   ! package/parl.nsi
+____________________________________________________________________________
+[  3250] By: autrijus                              on 2003/01/05  22:02:19
+        Log: * make package from script/, not perl/bin/.
+	   ! package/parl.nsi
+____________________________________________________________________________
+[  3249] By: autrijus                              on 2003/01/05  21:43:41
+        Log: * use windows color.
+	   ! package/parl.nsi
+____________________________________________________________________________
+[  3195] By: autrijus                              on 2003/01/05  06:02:20
+        Log: * the binary par.pl is now called 'parl'.
+	   + script/parl.pod
+	   ! Makefile.PL myldr/Makefile.PL script/pp
+____________________________________________________________________________
+[  3177] By: autrijus                              on 2003/01/04  19:28:43
+        Log: * update manifest.
+	   ! MANIFEST
+____________________________________________________________________________
+[  3176] By: autrijus                              on 2003/01/04  19:09:46
+        Log: * make binary packages.
+	   + package/parl.nsi
+	   - parl.nsi
+	   ! MANIFEST.SKIP Makefile.PL
+____________________________________________________________________________
+[  3170] By: autrijus                              on 2003/01/04  16:26:50
+        Log: * take care of win32 path escaping.
+	   ! Makefile.PL myldr/Makefile.PL
+____________________________________________________________________________
+[  3168] By: autrijus                              on 2003/01/04  16:09:08
+        Log: * Adding another executable: 'parl', the binary
+             par loader (basically just binary par.pl with PAR deps).
+	   ! Makefile.PL myldr/Makefile.PL script/par.pl
+____________________________________________________________________________
+[  2818] By: autrijus                              on 2002/12/21  07:06:32
+        Log: * documentation cleanup.
+             * fix a typo: pp takes '-o', not '-O'.
+	   ! PAR.pm script/pp
+____________________________________________________________________________
+[  2776] By: autrijus                              on 2002/12/19  04:50:01
+        Log: * correctly produce usage information when no args
+	       specified. 
+	   ! script/pp
+____________________________________________________________________________
+[  2740] By: autrijus                              on 2002/12/17  14:45:03
+        Log: * * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  2737] By: autrijus                              on 2002/12/17  11:26:03
         Log: * This be 0.61, the 'emergency fix' edition.
 	   ! PAR.pm
