@@ -1,0 +1,5 @@
+____________________________________________________________________________
+[  1512] By: autrijus                              on 2002/10/18  20:23:57
+        Log: * The Perl Archive Library, version 0.01.
+	   + MANIFEST Makefile.PL PAR.pm PAR/Filter.pm t/0-signature.t
+	   + t/1-basic.t t/hello.par
