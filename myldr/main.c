@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #24 $ $Change: 7236 $ $DateTime: 2003/07/29 07:00:35 $
+   $Revision: #25 $ $Change: 7242 $ $DateTime: 2003/07/29 14:29:24 $
    vim: expandtab shiftwidth=4
 */
 
@@ -11,7 +11,6 @@
 
 #include "EXTERN.h"
 #include "perl.h"
-#include "mktmpdir.c"
 #include "XSUB.h"
 #include "perlxsi.c"
 
@@ -25,6 +24,8 @@ static PerlInterpreter *my_perl;
 extern char * name_load_me_2;
 extern unsigned long size_load_me_2;
 extern char load_me_2[];
+
+#include "mktmpdir.c"
 
 #ifdef PAR_CLEARSTACK
 XS(XS_Internals_PAR_CLEARSTACK) {

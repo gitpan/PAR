@@ -1,5 +1,16 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #12 $ $Change: 7235 $ $DateTime: 2003/07/29 06:38:37 $
+# $Revision: #13 $ $Change: 7266 $ $DateTime: 2003/07/30 13:33:07 $
+
+[Changes for 0.71 - July 30, 2003]
+
+* Bug fixes
+
+    - A nasty data-loss bug has been uncovered immediately after the
+      previous release; it only affects Windows platforms, and may
+      cause all files to be erased under the current root (\) directory.
+
+    - Building on Red Hat linux was failing, with error message that
+      says "my_perl not declared".  This has since been fixed.
 
 [Changes for 0.70 - July 29, 2003]
 

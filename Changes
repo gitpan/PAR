@@ -1,4 +1,22 @@
 ____________________________________________________________________________
+[  7265] By: autrijus                              on 2003/07/30  13:32:01
+        Log: * This be 0.71, emergency release.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  7264] By: autrijus                              on 2003/07/30  13:27:48
+        Log: * DATA LOSS BUG under win32, par_rmtmpdir can possibly wipe
+	       all files in the root directory.
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[  7242] By: autrijus                              on 2003/07/29  14:29:24
+        Log: * Joseph Landman reports that Red Hat Perl thinks
+             readdir() wants my_perl.  Strange, but fixed.
+	   ! AUTHORS myldr/main.c
+____________________________________________________________________________
+[  7241] By: autrijus                              on 2003/07/29  14:28:49
+        Log: * changes.
+	   ! Changes
+____________________________________________________________________________
 [  7238] By: autrijus                              on 2003/07/29  07:22:42
         Log: * This be PAR, version 0.70.
 	   ! TODO

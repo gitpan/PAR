@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.27.
+signed via the Module::Signature module, version 0.28.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,12 +14,12 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 751c484dc61ecd109b5610d6424617d592037f3f AUTHORS
-SHA1 8442b1a8e6c6165ba8bf191aebde380241151522 ChangeLog
-SHA1 fcb352f8b59a88ce1b9001116249071e3ea7ce4c Changes
+SHA1 e0186258e85643d0027c5a6fa9f14f1bbd0aa0fb AUTHORS
+SHA1 b04d99a8f40bed9c82a0f779b5c4560909f4bbcd ChangeLog
+SHA1 b1a7928113f38b8cf468eb2029c619363b716f35 Changes
 SHA1 eb0e965ffc911e148868c23d3c9b78e4dce528de MANIFEST
 SHA1 7ad009415f9e6bf1dd9c6a20c9ca2e85574d2137 MANIFEST.SKIP
-SHA1 48405d99206414aea84bb378b98428ef02c79dcd META.yml
+SHA1 77887f9f2a7d1e9b66d228eb5e85cf1376757e25 META.yml
 SHA1 86bf2562a7ad7f74d1295cdb4d265dcc2e0bb18a Makefile.PL
 SHA1 d191bf88c060eddbb5835c72e830bb16e81ff8a1 README
 SHA1 e58fefbb47646aee25c459ceb5d34132968149cf TODO
@@ -40,13 +40,13 @@ SHA1 885504493cfd7f7f0135477b01aad7c82c68d9b3 inc/Module/Install/PRIVATE.pm
 SHA1 e23b438333237f86c7e2569070adfcbbde1dfac6 inc/Module/Install/PRIVATE/PAR.pm
 SHA1 9b06c41dc4bac2ee819854d44000481166d1500c inc/Module/Install/Win32.pm
 SHA1 c6b5df74295a1f3702ee69f128686be406f9d54f lib/App/Packer/PAR.pm
-SHA1 421b84b9c20ba34f3177a29add4f868b83f677a0 lib/PAR.pm
+SHA1 f58b6b786505038d5f583b585e0eed2a513b7ffa lib/PAR.pm
 SHA1 4343513d9162583c5277d64ab7b23fd272114a61 lib/PAR/Heavy.pm
 SHA1 2d2112753e00554a56dad11c0d825c304f5ca3c0 lib/PAR/Intro.pod
 SHA1 b78f30d6f7b02741d58b8f3bdbd3ac1be98bd86a myldr/Makefile.PL
 SHA1 f034127b5b8c05164ba64fe5decdd9bbbeb0f7a2 myldr/file2c.pl
-SHA1 a42a4d67aaeb94e18e431dc20a36b8ef6aeb6a35 myldr/main.c
-SHA1 2f201d10021b3691705cfc1fdee0a9f7422febc7 myldr/mktmpdir.c
+SHA1 2088ea3f2a0b3dc62074028bb0b322d4fce13fa1 myldr/main.c
+SHA1 c820da6ed56fc5f1de1b06a10329f7e52a2891d8 myldr/mktmpdir.c
 SHA1 54e776cc34d6dfb7096af89bccc42da9c12aea5b myldr/parlsig.pl
 SHA1 a6fa33f5df329969b5944ce87ccc3623364609c0 myldr/static.c
 SHA1 648caf79e47b84b1d66b8aad73e61c616d5f6506 myldr/win32.res
@@ -60,7 +60,7 @@ SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.2 (FreeBSD)
 
-iD8DBQE/JiIKtLPdNzw1AaARAulFAKCM5DbNwQqMeoIP/pYSu1rfIgkcwwCgjwTu
-Px3rfix7uN2tSHvMjN4/kuo=
-=E1/D
+iD8DBQE/J80BtLPdNzw1AaARAvHTAJ0ZRj2aFcbYgECcF/VfCvI8ZThL3QCdEzSp
+dTcamTqiYrwhuy9GS7VHC7c=
+=RCD6
 -----END PGP SIGNATURE-----

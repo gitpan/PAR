@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #10 $ $Change: 7171 $ $DateTime: 2003/07/28 04:16:06 $
+   $Revision: #12 $ $Change: 7267 $ $DateTime: 2003/07/30 13:43:29 $
    vim: expandtab shiftwidth=4
 */
 
@@ -14,7 +14,9 @@
 #endif
 
 char* par_mktmpdir ( char **argv ) {
-    struct stat statbuf;
+#ifndef PL_statbuf
+    struct stat PL_statbuf;
+#endif
     int i;
     const char *par_tmp_dir      = "PAR_TMP_DIR=";
     const char *par_priv_tmp_dir = "PAR_TEMP=";
@@ -48,9 +50,9 @@ char* par_mktmpdir ( char **argv ) {
         /* fprintf(stderr, "%s: testing env var %s.\n", argv[0], tmpval); */
         if ( (envtmp = (char *)getenv(tmpval)) )
         {
-            if ( PAR_lstat(envtmp, &statbuf) == 0 &&
-                 ( S_ISDIR(statbuf.st_mode) ||
-                   S_ISLNK(statbuf.st_mode) ) &&
+            if ( PAR_lstat(envtmp, &PL_statbuf) == 0 &&
+                 ( S_ISDIR(PL_statbuf.st_mode) ||
+                   S_ISLNK(PL_statbuf.st_mode) ) &&
                  access(envtmp, W_OK) == 0 ) {
                 tmpdir = envtmp;
             }
@@ -59,9 +61,9 @@ char* par_mktmpdir ( char **argv ) {
 
     for ( i = 0 ; tmpdir == NULL && strlen(tmpval = knowntmp[i]) > 0 ; i++ ) {
         /* fprintf(stderr, "%s: testing env var %s.\n", argv[0], tmpval); */
-        if ( PAR_lstat(tmpval, &statbuf) == 0 &&
-             ( S_ISDIR(statbuf.st_mode) ||
-               S_ISLNK(statbuf.st_mode) ) &&
+        if ( PAR_lstat(tmpval, &PL_statbuf) == 0 &&
+             ( S_ISDIR(PL_statbuf.st_mode) ||
+               S_ISLNK(PL_statbuf.st_mode) ) &&
              access(tmpval, W_OK) == 0 ) {
             tmpdir = tmpval;
         }
@@ -126,6 +128,8 @@ void par_rmtmpdir ( char *stmpdir ) {
     char *subsubdir = malloc(strlen(stmpdir) + 258);
     long hFile;
 
+    if (!stmpdir || !strlen(stmpdir)) return;
+
     sprintf(subsubdir, "%s\\*.*", stmpdir);
 
     if ( ( hFile = _findfirst( subsubdir, &cur_file ) )  == -1L ) {
@@ -139,7 +143,8 @@ void par_rmtmpdir ( char *stmpdir ) {
         sprintf(subsubdir, "%s", cur_file.name);
     }
 
-    unlink(subsubdir);
+    /*if (!(cur_file.attrib & _A_SUBDIR)) fprintf(stderr, "unlinking %s\n", subsubdir);*/
+    if (!(cur_file.attrib & _A_SUBDIR)) unlink(subsubdir);
     while ( _findnext( hFile, &cur_file ) == 0 ) {
         if (!strstr(cur_file.name, "\\")) {
             sprintf(subsubdir, "%s\\%s", stmpdir, cur_file.name);
@@ -147,6 +152,8 @@ void par_rmtmpdir ( char *stmpdir ) {
         else {
             sprintf(subsubdir, "%s", cur_file.name);
         }
+        /*if (!(cur_file.attrib & _A_SUBDIR)) fprintf(stderr, "unlinking %s\n", subsubdir);*/
+        if (!(cur_file.attrib & _A_SUBDIR)) unlink(subsubdir);
         unlink(subsubdir);
     }
 
@@ -159,6 +166,7 @@ void par_rmtmpdir ( char *stmpdir ) {
     Direntry_t *dp;
     char *subsubdir;
 
+    fprintf(stderr, "trying to get rid of %s\n", stmpdir);
     /* remove temporary PAR directory */
     partmp_dirp = opendir(stmpdir);
 
@@ -171,6 +179,7 @@ void par_rmtmpdir ( char *stmpdir ) {
             {
                 subsubdir = malloc(strlen(stmpdir) + strlen(dp->d_name) + 2);
                 sprintf(subsubdir, "%s/%s", stmpdir, dp->d_name);
+                fprintf(stderr, "unlinking %s\n", subsubdir);
                 unlink(subsubdir);
                 free(subsubdir);
                 subsubdir = NULL;
