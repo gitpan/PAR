@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #40 $ $Change: 7306 $ $DateTime: 2003/08/02 12:53:31 $
+# $Revision: #45 $ $Change: 7337 $ $DateTime: 2003/08/04 14:33:22 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -14,7 +14,7 @@ use ExtUtils::Embed;
 
 xsinit(undef);
 
-my $debug = 0;
+my $debug = 1;
 my $chunk_size = 30000;
 my $perl = $^X;
 my $exe = $Config{_exe};
@@ -34,11 +34,28 @@ my $parl_exe = File::Spec->catfile('..', 'script', "parl$exe");
 my $parldyn_exe = File::Spec->catfile('..', 'script', "parldyn$exe");
 my $lib_path = join(' ', map qq(-I"$_"), map { $^O eq 'MSWin32' ? Win32::GetShortPathName($_) : $_ } @INC);
 
-my $so = $Config{libperl};
-$so = "libperl.$Config{so}" if $so eq 'libper'; # workaround Red Hat bug
-my $libperl = File::Spec->catfile($Config{bin}, $so);
-$libperl =~ s/\.[^.]*$/.$Config{so}/;
-$libperl = File::Spec->catfile($Config{archlibexp}, 'CORE', $so) unless -e $libperl;
+my $libperl;
+
+if ($dynperl) {
+    my $file = $Config{libperl};
+    my $so = $Config{so} || 'so';
+    $file = "libperl.$so" if $file eq 'libper'; # workaround Red Hat bug
+    $file =~ s/\.(?!\d)[^.]*$/.$Config{so}/;
+
+    my @paths = (
+	$Config{bin},
+	File::Spec->catdir($Config{'archlibexp'}, 'CORE'),
+	split(/\Q$Config{path_sep}\E/, $ENV{$Config{ldlibpthname}} || ''),
+	split(/ /, $Config{libpth}),
+    );
+
+    foreach my $path (@paths) {
+	$libperl = File::Spec->catfile($path, $file);
+	last if -e $libperl;
+    }
+
+    die "Can't find $file in (@paths) -- please contact the author!" unless -e $libperl;
+}
 
 my $par = ($dynperl ? $static_exe : $par_exe);
 my $all = ($dynperl ? "$parl_exe $parldyn_exe" : $parl_exe);
@@ -54,7 +71,7 @@ my( $out, $ccdebug, $lddebug, $warn, $rm, $mv, $res, $long_literal );
 
 if( $cc =~ m/^cl\b/ ) {
     $out = '-out:';
-    $ccdebug = $debug ? '-Zi' : '';
+    $ccdebug = $debug ? '-Zi -Zm1000 ' : '-Zm1000 ';
     $lddebug = $debug ? '-debug ' : '-release ';
     $warn = $debug ? '-W3' : '';
     $res = 'win32.res';
@@ -75,7 +92,7 @@ if( $cc =~ m/^cl\b/ ) {
     $long_literal = 0; # better safe than sorry
 }
 
-$rm = $^O eq 'MSWin32' ? '$(PERL) -MExtUtils::Command -e rm_f' : 'rm';
+$rm = $^O eq 'MSWin32' ? '$(PERL) -MExtUtils::Command -e rm_f' : 'rm -f';
 $mv = $^O eq 'MSWin32' ? '$(PERL) -MExtUtils::Command -e mv' : 'mv';
 
 my  $cflags = "$ccdebug$warn$pccflags";

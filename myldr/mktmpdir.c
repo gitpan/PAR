@@ -1,11 +1,12 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #13 $ $Change: 7279 $ $DateTime: 2003/07/30 16:08:05 $
+   $Revision: #15 $ $Change: 7337 $ $DateTime: 2003/08/04 14:33:22 $
    vim: expandtab shiftwidth=4
 */
 
 #ifdef PAR_MKTMPDIR
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef HAS_LSTAT
 #define PAR_lstat lstat
@@ -128,13 +129,11 @@ void par_rmtmpdir ( char *stmpdir ) {
     char *subsubdir = malloc(strlen(stmpdir) + 258);
     long hFile;
 
-    if (!stmpdir || !strlen(stmpdir)) return;
+    if ((stmpdir == NULL) || !strlen(stmpdir)) return;
 
     sprintf(subsubdir, "%s\\*.*", stmpdir);
-
-    if ( ( hFile = _findfirst( subsubdir, &cur_file ) )  == -1L ) {
-        return;
-    }
+    hFile = _findfirst( subsubdir, &cur_file );
+    if ( (hFile == ENOENT) || (hFile == EINVAL) ) return;
 
     if (!strstr(cur_file.name, "\\")) {
         sprintf(subsubdir, "%s\\%s", stmpdir, cur_file.name);
@@ -144,7 +143,7 @@ void par_rmtmpdir ( char *stmpdir ) {
     }
 
     /*if (!(cur_file.attrib & _A_SUBDIR)) fprintf(stderr, "unlinking %s\n", subsubdir);*/
-    if (!(cur_file.attrib & _A_SUBDIR)) unlink(subsubdir);
+    if (!(cur_file.attrib & _A_SUBDIR)) _unlink(subsubdir);
     while ( _findnext( hFile, &cur_file ) == 0 ) {
         if (!strstr(cur_file.name, "\\")) {
             sprintf(subsubdir, "%s\\%s", stmpdir, cur_file.name);
@@ -153,11 +152,11 @@ void par_rmtmpdir ( char *stmpdir ) {
             sprintf(subsubdir, "%s", cur_file.name);
         }
         /*if (!(cur_file.attrib & _A_SUBDIR)) fprintf(stderr, "unlinking %s\n", subsubdir);*/
-        if (!(cur_file.attrib & _A_SUBDIR)) unlink(subsubdir);
-        unlink(subsubdir);
+        if (!(cur_file.attrib & _A_SUBDIR)) _unlink(subsubdir);
     }
 
-    rmdir(stmpdir);
+    _findclose(hFile);
+    _rmdir(stmpdir);
 }
 
 #else
@@ -169,23 +168,23 @@ void par_rmtmpdir ( char *stmpdir ) {
     /* remove temporary PAR directory */
     partmp_dirp = opendir(stmpdir);
 
-    if ( partmp_dirp != NULL )
-    {
-        /* fprintf(stderr, "%s: removing private temporary subdirectory %s.\n", argv[0], stmpdir); */
-        /* here we simply assume that PAR will NOT create any subdirectories ... */
-        while ( ( dp = readdir(partmp_dirp) ) != NULL ) {
-            if ( strcmp (dp->d_name, ".") != 0 && strcmp (dp->d_name, "..") != 0 )
-            {
-                subsubdir = malloc(strlen(stmpdir) + strlen(dp->d_name) + 2);
-                sprintf(subsubdir, "%s/%s", stmpdir, dp->d_name);
-                unlink(subsubdir);
-                free(subsubdir);
-                subsubdir = NULL;
-            }
+    if ( partmp_dirp == NULL ) return;
+
+    /* fprintf(stderr, "%s: removing private temporary subdirectory %s.\n", argv[0], stmpdir); */
+    /* here we simply assume that PAR will NOT create any subdirectories ... */
+    while ( ( dp = readdir(partmp_dirp) ) != NULL ) {
+        if ( strcmp (dp->d_name, ".") != 0 && strcmp (dp->d_name, "..") != 0 )
+        {
+            subsubdir = malloc(strlen(stmpdir) + strlen(dp->d_name) + 2);
+            sprintf(subsubdir, "%s/%s", stmpdir, dp->d_name);
+            unlink(subsubdir);
+            free(subsubdir);
+            subsubdir = NULL;
         }
-        closedir(partmp_dirp);
-        rmdir(stmpdir);
     }
+
+    closedir(partmp_dirp);
+    if (stmpdir) rmdir(stmpdir);
 }
 #endif
 

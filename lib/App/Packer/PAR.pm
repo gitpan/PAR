@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/App/Packer/PAR.pm $ $Author: autrijus $
-# $Revision: #2 $ $Change: 6169 $ $DateTime: 2003/05/29 18:53:54 $ vim: expandtab shiftwidth=4
+# $Revision: #3 $ $Change: 7349 $ $DateTime: 2003/08/05 17:22:57 $ vim: expandtab shiftwidth=4
 
 package App::Packer::Backend::PAR;
 
@@ -101,11 +101,11 @@ __END__
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>,
 Mattia Barbon E<lt>MBARBON@cpan.orgE<gt>
 
-PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
-send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
-and participate in the discussion.
+L<http://par.perl.org/> is the official PAR website.  You can write
+to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
+E<lt>par-subscribe@perl.orgE<gt> to participate in the discussion.
 
-Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 

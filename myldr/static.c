@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #8 $ $Change: 7301 $ $DateTime: 2003/08/02 10:29:58 $
+   $Revision: #9 $ $Change: 7353 $ $DateTime: 2003/08/06 07:50:26 $
    vim: expandtab shiftwidth=4
 */
 
@@ -67,6 +67,7 @@ int main ( int argc, char **argv, char **env )
 {
     int i;
     char *stmpdir;
+    char *buf;
 
     par_mktmpdir( argv );
     stmpdir = (char *)getenv("PAR_TEMP");
@@ -87,6 +88,15 @@ int main ( int argc, char **argv, char **env )
     if (!i) return 2;
     WRITE_load_me_1(i);
     close(i); chmod(my_file, 0755);
+
+    buf = (char *)malloc(127);
+    sprintf(buf, "PAR_ARGC=%i", argc);
+    putenv(buf);
+    for (i = 0; i < argc; i++) {
+        buf = (char *)malloc(strlen(argv[i]) + 14);
+        sprintf(buf, "PAR_ARGV_%i=%s", i, argv[i]);
+        putenv(buf);
+    }
 
 #ifdef WIN32
     i = spawnvp(P_WAIT, my_file, argv);

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #69 $ $Change: 7234 $ $DateTime: 2003/07/29 06:38:20 $ vim: expandtab shiftwidth=4
+# $Revision: #71 $ $Change: 7354 $ $DateTime: 2003/08/06 08:24:36 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -153,9 +153,19 @@ sub compile_par {
             my $content = <$file>;
             $content = pod_strip($content, $map{$pfile}) unless $verbatim;
 
-            if ($map{$pfile} =~ /\bTk\b.*\bWidget\.pm/i) {
+            if ($map{$pfile} =~ /\bTk\b.*\bWidget\.pm$/i) {
                 my $from = 'if (defined($name=$INC{"$pkg.pm"}))';
                 my $to   = 'if (defined($name=$INC{"$pkg.pm"}) and !ref($name) and $name !~ m!^/loader/!)';
+                $content =~ s/\Q$from\E/$to/;
+            }
+            if ($map{$pfile} =~ /\bTk.pm$/i) {
+                my $from = 'foreach $dir (@INC)';
+                my $to   = q{
+                    if (my $member = PAR::unpar($0, $file, 1)) {
+                        $file =~ s![/\\\\]!_!g;
+                        return PAR::Heavy::_dl_extract($member,$file,$file);
+                    }
+                } . $from;
                 $content =~ s/\Q$from\E/$to/;
             }
 
@@ -899,11 +909,11 @@ Jeff Goff for suggesting the name C<pp>.
 
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
-PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
-send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
-and participate in the discussion.
+L<http://par.perl.org/> is the official PAR website.  You can write
+to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
+E<lt>par-subscribe@perl.orgE<gt> to participate in the discussion.
 
-Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 

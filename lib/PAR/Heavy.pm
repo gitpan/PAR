@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #10 $ $Change: 7233 $ $DateTime: 2003/07/29 06:37:06 $
+# $Revision: #11 $ $Change: 7349 $ $DateTime: 2003/08/05 17:22:57 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.06';
@@ -154,11 +154,11 @@ L<PAR>
 
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
-PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
-send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
-and participate in the discussion.
+L<http://par.perl.org/> is the official PAR website.  You can write
+to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
+E<lt>par-subscribe@perl.orgE<gt> to participate in the discussion.
 
-Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 

@@ -1,5 +1,5 @@
 name: PAR
-version: 0.72
+version: 0.73
 abstract: Perl Archive Tookit
 distribution_type: module
 requires:

@@ -1,11 +1,12 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #34 $ $Change: 7305 $ $DateTime: 2003/08/02 10:46:54 $
+# $Revision: #36 $ $Change: 7348 $ $DateTime: 2003/08/05 17:22:36 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
 patches or suggestions, or their bug reports or comments have inspired
 the appropriate patches.  Corrections, additions, deletions welcome:
 
+Alan Stewart
 Alasdair Allan		(AALLAN)
 Andy Lester		(PETDANCE)
 Antti Lankila
@@ -17,6 +18,7 @@ Brigitte Jellinek
 Bruce Winter
 Chia-Liang Kao		(CLKAO)
 D. Menzel
+Doug Miles
 Germain Garand		(GGARAND)
 Glenn Mabbutt
 H. Wade Minter
@@ -42,6 +44,7 @@ Phil Sallee
 Randal L. Schwartz	(MERLYN)
 Reini Urban
 Richard Soderberg	(RSOD)
+Rob Casey		(ROBAU)
 Robert Allerstorfer
 Robert Creager		(RCREAGER)
 Roderich Schupp		(RSCHUPP)

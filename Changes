@@ -1,4 +1,72 @@
 ____________________________________________________________________________
+[  7356] By: autrijus                              on 2003/08/06  08:43:25
+        Log: * This be 0.73.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  7354] By: autrijus                              on 2003/08/06  08:24:36
+        Log: * properly handle Tk->findINC so xbm files can be loaded.
+	   ! script/pp
+____________________________________________________________________________
+[  7353] By: autrijus                              on 2003/08/06  07:50:26
+        Log: * fix failure on win32 when parl.exe is launched from GUI
+	       instead
+             of command line. instead of properly quoting things, we
+	     store the
+             argc/argv array into the environment table.
+	   ! myldr/static.c script/par.pl
+____________________________________________________________________________
+[  7349] By: autrijus                              on 2003/08/05  17:22:57
+        Log: * mention http://par.perl.org/.
+	   ! README lib/App/Packer/PAR.pm lib/PAR.pm
+	   ! lib/PAR/Heavy.pm lib/PAR/Intro.pod
+	   ! script/par.pl script/parl.pod script/pp
+____________________________________________________________________________
+[  7348] By: autrijus                              on 2003/08/05  17:22:36
+        Log: * add doug and alan.
+	   ! AUTHORS
+____________________________________________________________________________
+[  7344] By: autrijus                              on 2003/08/05  04:32:37
+        Log: * properly allow PAR_CLEARSTACK at internals.c level.
+	   ! myldr/internals.c myldr/main.c
+____________________________________________________________________________
+[  7337] By: autrijus                              on 2003/08/04  14:33:22
+        Log: * misc. build fixes. still segfaults on win32.
+	   ! myldr/Makefile.PL myldr/internals.c
+	   ! myldr/main.c myldr/mktmpdir.c
+____________________________________________________________________________
+[  7332] By: autrijus                              on 2003/08/04  10:46:58
+        Log: * Alan Stewart suggests using "rm -f" to avoid spuriois
+	       warnings
+             during "make clean".
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  7328] By: autrijus                              on 2003/08/04  05:50:23
+        Log: * patch from Alan Stewart: properly cleanse temporary
+             directory on win32.
+	   ! myldr/mktmpdir.c
+____________________________________________________________________________
+[  7315] By: autrijus                              on 2003/08/03  10:15:07
+        Log: * typo.
+	   ! ChangeLog
+____________________________________________________________________________
+[  7314] By: autrijus                              on 2003/08/03  09:20:20
+        Log: * also consult libpth.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  7313] By: autrijus                              on 2003/08/03  09:17:15
+        Log: * Rob Casey reported that it still doesn't build on debian.
+	   ! AUTHORS myldr/Makefile.PL
+____________________________________________________________________________
+[  7310] By: autrijus                              on 2003/08/03  02:08:13
+        Log: * Randal Schwartz reports that OpenBSD's libperl is in
+	       /usr/lib,
+             not archlibexp/CORE.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  7307] By: autrijus                              on 2003/08/02  14:07:44
+        Log: * changes.
+	   ! Changes
+____________________________________________________________________________
 [  7306] By: autrijus                              on 2003/08/02  12:53:31
         Log: * This be 0.72, really.
              * fix --gui by passing $chunk_size from Makefile.PL.

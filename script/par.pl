@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #72 $ $Change: 7299 $ $DateTime: 2003/08/02 10:18:26 $ vim: expandtab shiftwidth=4
+# $Revision: #74 $ $Change: 7353 $ $DateTime: 2003/08/06 07:50:26 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -156,6 +156,11 @@ BEGIN {
     Internals::PAR::BOOT() if defined &Internals::PAR::BOOT;
 
     eval {
+
+if ($ENV{PAR_ARGV_0}) {
+    @ARGV = map $ENV{"PAR_ARGV_$_"}, (1 .. $ENV{PAR_ARGC} - 1);
+    $0 = $ENV{PAR_ARGV_0};
+}
 
 $ENV{PAR_CLEARTEMP} = 1 unless exists $ENV{PAR_CLEARTEMP};
 my $quiet = !$ENV{PAR_DEBUG};
@@ -692,7 +697,7 @@ exit;
 $__ERROR = $@ if $@;
 }
 
-die $__ERROR if $__ERROR;
+die  $__ERROR if $__ERROR;
 
 
 =head1 SEE ALSO
@@ -703,11 +708,11 @@ L<PAR>, L<PAR::Dist>, L<parl>, L<pp>
 
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
-PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
-send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
-and participate in the discussion.
+L<http://par.perl.org/> is the official PAR website.  You can write
+to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
+E<lt>par-subscribe@perl.orgE<gt> to participate in the discussion.
 
-Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 

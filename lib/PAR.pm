@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #28 $ $Change: 7303 $ $DateTime: 2003/08/02 10:33:05 $ vim: expandtab shiftwidth=4
+# $Revision: #31 $ $Change: 7356 $ $DateTime: 2003/08/06 08:43:25 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.72';
+$PAR::VERSION = '0.73';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.72 of PAR, released August 2, 2003.
+This document describes version 0.73 of PAR, released August 6, 2003.
 
 =head1 SYNOPSIS
 
@@ -198,8 +198,8 @@ sub _run_member {
     if ($is_new) {
         my $file = $member->fileName;
         print $fh "package main; shift \@INC;\n";
-        if (defined &Internals::PAR_CLEARSTACK and $clear_stack) {
-            print $fh "Internals::PAR_CLEARSTACK();\n";
+        if (defined &Internals::PAR::CLEARSTACK and $clear_stack) {
+            print $fh "Internals::PAR::CLEARSTACK();\n";
         }
         print $fh "#line 1 \"$file\"\n";
         $member->extractToFileHandle($fh);
@@ -402,11 +402,11 @@ have sent helpful patches, ideas or comments.
 
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
-PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
-send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
-and participate in the discussion.
+L<http://par.perl.org/> is the official PAR website.  You can write
+to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
+E<lt>par-subscribe@perl.orgE<gt> to participate in the discussion.
 
-Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 

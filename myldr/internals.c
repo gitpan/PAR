@@ -1,7 +1,16 @@
 /* $File: //member/autrijus/PAR/myldr/internals.c $ $Author: autrijus $
-   $Revision: #3 $ $Change: 7298 $ $DateTime: 2003/08/02 10:05:51 $
+   $Revision: #6 $ $Change: 7344 $ $DateTime: 2003/08/05 04:32:37 $
    vim: expandtab shiftwidth=4
 */
+
+static void par_redo_stack (pTHX_ void *data) {
+    PUSHEVAL((&cxstack[0]) , "", Nullgv);
+}
+
+XS(XS_Internals_PAR_CLEARSTACK) {
+    dounwind(-1);
+    SAVEDESTRUCTOR_X(par_redo_stack, 0);
+}
 
 XS(XS_Internals_PAR_BOOT) {
     GV* tmpgv;
@@ -84,5 +93,8 @@ static void par_xs_init(pTHX)
 {
     xs_init(aTHX);
     newXSproto("Internals::PAR::BOOT", XS_Internals_PAR_BOOT, "", "");
+#ifdef PAR_CLEARSTACK
+    newXSproto("Internals::PAR::CLEARSTACK", XS_Internals_PAR_CLEARSTACK, "", "");
+#endif
 }
 

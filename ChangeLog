@@ -1,7 +1,30 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #14 $ $Change: 7305 $ $DateTime: 2003/08/02 10:46:54 $
+# $Revision: #16 $ $Change: 7358 $ $DateTime: 2003/08/06 08:59:07 $
 
-[Changes for 0.72 - Augest 2, 2003]
+[Changes for 0.73 - August 6, 2003]
+
+* New Features
+
+    - The PAR Homepage is now online at http://par.perl.org/.
+      Documentations have been changed to link to it.
+
+* Bug fixes
+
+    - Tk applications can now properly access xpm/xbm files
+      with Tk->findINC.
+
+    - On Win32, pp-generated executables could not start from
+      Explorer, if its path contains space characters.  Fixed.
+
+    - On Win32, pp-generated executables used to leave around an
+      empty directory in $ENV{TEMP}.  It is now properly rmdir'ed.
+
+    - Some systems (notably OpenBSD and Debian) does not put their
+      libperl.so in the default location, which breaks the build
+      process; now searches inside $ENV{$Config{ldlibpthname}} and
+      $Config{libpth} to find it.
+
+[Changes for 0.72 - August 2, 2003]
 
 * New Features
 

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/script/parl.pod $ $Author: autrijus $
-# $Revision: #8 $ $Change: 7148 $ $DateTime: 2003/07/27 07:21:03 $
+# $Revision: #9 $ $Change: 7349 $ $DateTime: 2003/08/05 17:22:57 $
 
 =head1 NAME
 
@@ -101,11 +101,11 @@ L<PAR>, L<PAR::Dist>, L<par.pl>, L<pp>
 
 Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
 
-PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
-send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
-and participate in the discussion.
+L<http://par.perl.org/> is the official PAR website.  You can write
+to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
+E<lt>par-subscribe@perl.orgE<gt> to participate in the discussion.
 
-Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #23 $ $Change: 7000 $ $DateTime: 2003/07/16 08:10:37 $
+# $Revision: #24 $ $Change: 7349 $ $DateTime: 2003/08/05 17:22:57 $
 
 This is the README file for PAR, a toolkit to use perl scripts and
 modules stored inside compressed .par files.
@@ -142,12 +142,11 @@ from the P4Web interface:
 
 * Contact
 
-PAR has a mailing list, <par@perl.org>, that you can write to;
-send an empty mail to <par-subscribe@perl.org> to join the list
-and participate in the discussion.  For web-accessible archives,
-see <http://nntp.x.perl.org/group/perl.par/>.
+<http://par.perl.org/> is the official PAR website.  You can write
+to the mailing list at <par@perl.org>, or send an empty mail to
+<par-subscribe@perl.org> to participate in the discussion.
 
-Please send bug reports to <bug-par@rt.cpan.org>.
+Please submit bug reports to <bug-par@rt.cpan.org>.
 
 * Copyright
 

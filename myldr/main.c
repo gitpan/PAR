@@ -1,13 +1,11 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #27 $ $Change: 7297 $ $DateTime: 2003/08/02 09:55:38 $
+   $Revision: #30 $ $Change: 7344 $ $DateTime: 2003/08/05 04:32:37 $
    vim: expandtab shiftwidth=4
 */
 
 #ifndef PAR_MKTMPDIR
 #define PAR_MKTMPDIR 1
 #endif
-
-/* #define PAR_CLEARSTACK 1 */
 
 #include "EXTERN.h"
 #include "perl.h"
