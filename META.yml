@@ -1,5 +1,5 @@
 name: PAR
-version: 0.83
+version: 0.85
 abstract: Perl Archive Tookit
 author: Autrijus Tang (autrijus@autrijus.org)
 license: perl
@@ -9,14 +9,13 @@ requires:
   File::Temp: 0.05
   Compress::Zlib: 1.3
   Archive::Zip: 1
-  Module::ScanDeps: 0.42
+  Module::ScanDeps: 0.45
   PAR::Dist: 0.06
 recommends:
   Digest: 0
-  Digest::SHA1: 0
   Module::Signature: 0.35
 no_index:
   directory:
     - contrib
     - inc
-generated_by: Module::Install version 0.33
+generated_by: Module::Install version 0.34

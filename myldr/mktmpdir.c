@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #40 $ $Change: 10645 $ $DateTime: 2004/05/22 16:40:40 $
+   $Revision: #41 $ $Change: 10967 $ $DateTime: 2004/07/02 09:01:03 $
    vim: expandtab shiftwidth=4
 */
 
@@ -99,9 +99,9 @@ char *par_mktmpdir ( char **argv ) {
     sprintf(stmpdir, "%s%s%s%s", tmpdir, dir_sep, subdirbuf_prefix, username);
     mkdir(stmpdir, 0755);
 
-    if ((val = par_getenv("TEMP"))) {
-        progname = par_findprog(argv[0], strdup(val));
-    }
+    /* Doesn't really work - XXX */
+    progname = par_findprog(argv[0], strdup(val));
+    if (progname == NULL) progname = argv[0];
 
     if ( !par_env_clean() && (f = open( progname, O_RDONLY | OPEN_O_BINARY ))) {
         /* "$TEMP/par-$USER/cache-$SHA1" */

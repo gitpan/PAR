@@ -1,11 +1,12 @@
-#line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.2/Module/Install/PRIVATE/PAR.pm"
+#line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.4/Module/Install/PRIVATE/PAR.pm"
 # $File: //member/autrijus/Module-Install-PRIVATE/lib/Module/Install/PRIVATE/PAR.pm $ $Author: autrijus $
-# $Revision: #13 $ $Change: 10065 $ $DateTime: 2004/02/15 23:11:28 $ vim: expandtab shiftwidth=4
+# $Revision: #14 $ $Change: 10724 $ $DateTime: 2004/06/02 09:57:09 $ vim: expandtab shiftwidth=4
 
 package Module::Install::PRIVATE::PAR;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
 
 use 5.006;
+use FindBin;
 use Config ();
 
 my %no_parl  = ();
@@ -39,12 +40,15 @@ sub Autrijus_PAR {
     my @bin = ("script/parl$exe", "myldr/par$exe");
     push @bin, ("script/parldyn$exe", "myldr/static$exe") if $dynperl;
 
+    $FindBin::Bin = '.' unless -e "$FindBin::Bin/Makefile.PL";
+    my $par_exe = "$FindBin::Bin/$bin[1]";
+
     if ($par) {
-        open _, "> $bin[1]" or die $!;
-        close _;
+        open my $fh, '>', $par_exe or die "Cannot write to $par_exe";
+        close $fh;
     }
-    elsif (-f $bin[1] and not -s $bin[1]) {
-        unlink $bin[1];
+    elsif (-f $par_exe and not -s $par_exe) {
+        unlink $par_exe;
     }
 
     $self->clean_files(@bin) if $par or $cc;
@@ -80,21 +84,21 @@ sub Autrijus_PAR {
 
 sub Autrijus_PAR_fix {
     my $self = shift;
-    require Config;
+
     my $exe = $Config::Config{_exe};
     return unless $exe eq '.exe';
 
-    open IN, '< Makefile' or return;
-    open OUT, '> Makefile.new' or return;
-    while (<IN>) {
+    open my $in, '<', "$FindBin::Bin/Makefile" or return;
+    open my $out, '>', "$FindBin::Bin/Makefile.new" or return;
+    while (<$in>) {
         next if /^\t\$\(FIXIN\) .*\Q$exe\E$/;
         next if /^\@\[$/ or /^\]$/;
-        print OUT $_;
+        print $out $_;
     }
-    close OUT;
-    close IN;
-    unlink 'Makefile';
-    rename 'Makefile.new' => 'Makefile';
+    close $out;
+    close $in;
+    unlink "$FindBin::Bin/Makefile";
+    rename "$FindBin::Bin/Makefile.new" => "$FindBin::Bin/Makefile";
 }
 
 1;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //automated_pp_test.pl $ $Author: mnooning $
-# $Revision: #008 $ $Change: 20040522_01 $ $DateTime: 2004/05/22 16:09:
+# $Revision: #012 $ $Change: 20040610_01 $ $DateTime: 2004/06/10 15:13:
 ########################################################################
 # Copyright 2004 by Malcolm Nooning
 # This program does not impose any
@@ -25,7 +25,7 @@
 #
 #
 ########################################################################
-our $VERSION = 0.05;
+our $VERSION = 0.11;
 ########################################################################
 # Prior to each test
 #   . Remove any possible files that could exist from a previous
@@ -59,7 +59,7 @@ our $VERSION = 0.05;
 #    don't match for hello. Chomp and do an "eq".
 #
 ########################################################################
-use Test::More tests => 35;
+use Test::More tests => 34;
 use Cwd qw(chdir cwd);
 
 use Config;
@@ -99,8 +99,9 @@ our  $SUBDIR4 = "subdir4";
 
 ########################################################################
 our $os = (uname())[0];
-our $_exe = $Config{_exe};
-if ($_exe eq '.exe') {
+our $no_win32_exe = 0;
+
+if ($os =~ m/^Win/i) {
    eval {
     require Win32::Exe;
     Win32::Exe->import();
@@ -108,7 +109,9 @@ if ($_exe eq '.exe') {
     require Win32::Exe::IconFile;
     Win32::Exe::IconFile->import;
 
-  } 
+  };
+
+ $no_win32_exe = $@; # EVAL_ERROR
 }
 ########################################################################
 
@@ -127,18 +130,18 @@ sub how_many_cache_dirs {
   if ( -e($par_scratch_dir) ) {
 
     if (!(opendir(DIR, "$par_scratch_dir"))) {
-      $$message_ref = "hmcd_msg20: Cannot opendir $par_scratch_dir:$!:\n";
+      $$message_ref = "hmcd_msg020: Cannot opendir $par_scratch_dir:$!:\n";
       return(EXIT_FAILURE);
     }
     #....................................
     while ($file = readdir(DIR)) {
       next if ( $file =~ m/^\.{1,2}$/ );
-      $count++ if ($file =~ m/cache/);
+      $count++ if ($file =~ m/cache|temp/);
       print ("Incremented cache count for $file\n") if $verbose;
     }
     #....................................
     if (!(closedir(DIR))) {
-      $$message_ref = "hmcd_msg30: Cannot closedir $par_scratch_dir:$!:\n";
+      $$message_ref = "hmcd_msg030: Cannot closedir $par_scratch_dir:$!:\n";
       return(EXIT_FAILURE);
     }
 
@@ -151,12 +154,14 @@ sub how_many_cache_dirs {
 
 #########################################################################
 sub deltree {
-   my ($dir, $level, $message_ref) = @_;
+   my ($dir, $level, $message_ref, $ignore_errors) = @_;
 
    my $file = "";
    my $error = EXIT_SUCCESS;
    my $dir_handle = 'DIR_';
    my $type = "";
+
+   $ignore_errors = 0 if (!defined($ignore_errors));
 
    #.............................................................
    # Since we are deleting entire directories here, we really
@@ -164,26 +169,26 @@ sub deltree {
    #.............................................................
    $type = ref(\$dir);
    if ($type !~ m/SCALAR/i) {
-     print ("deltree_msg10: PROGRAMMING ERROR\n");
+     print ("deltree_msg040: PROGRAMMING ERROR\n");
      print ("dir $dir is type $type\n");
      die("Please research and fix ... Exiting\n");
    }
    #.................
    $type = ref(\$level);
    if ($type !~ m/SCALAR/i) {
-     print ("deltree_msg12: PROGRAMMING ERROR\n");
+     print ("deltree_msg042: PROGRAMMING ERROR\n");
      print ("level $level is type $type\n");
      die("Please research and fix ... Exiting\n");
    }
    #.................
    $type = ref($message_ref);
    if ($type !~ m/SCALAR/i) {
-     print ("deltree_msg14: PROGRAMMING ERROR\n");
+     print ("deltree_msg044: PROGRAMMING ERROR\n");
      print ("message ref is type $type\n");
      die("Please research and fix ... Exiting\n");
    }
    if ($level !~ m/^\d+$/) {
-     print ("deltree_msg16: PROGRAMMING ERROR\n");
+     print ("deltree_msg046: PROGRAMMING ERROR\n");
      print ("level $level is not all digits\n");
      die("Please research and fix ... Exiting\n");
    }
@@ -205,7 +210,7 @@ sub deltree {
    $dir_handle = $dir_handle . $level;
 
    if (!(opendir ($dir_handle, "$dir"))) {
-     $$message_ref = "deltree_msg18: Could not read $dir:$!:\n";
+     $$message_ref = "deltree_msg048: Could not read $dir:$!:\n";
      print ("$$message_ref\n");
      return(EXIT_FAILURE);
    }
@@ -215,27 +220,34 @@ sub deltree {
       next if $file =~ /^\.+$/; # Skip . or ..
       if (-d ("$dir/$file")) {
         $error = deltree("$dir/$file", $level, $message_ref); # Recursion!
-        return ($error) if ($error == EXIT_FAILURE);
+        if (!$ignore_errors) {
+          return ($error) if ($error == EXIT_FAILURE);
+        }
       } else {
         if (!(unlink ("$dir/$file"))) {
-          $$message_ref =
-               "deltree_msg20:Could not delete $dir/$file :$!:\n"       .
-               "If it appears to be a permissions problem, it could "   .
-               "be that another PAR application is running.\n"          .
-               "This particular test attempts to remove all par cache " .
-               "directories.  That cannot happen if a cache is in use\n";
-          return(EXIT_FAILURE);
+          if (!$ignore_errors) {
+            $$message_ref =
+                 "deltree_msg050:Could not delete $dir/$file :$!:\n"       .
+                 "If it appears to be a permissions problem, it could "   .
+                 "be that another PAR application is running.\n"          .
+                 "This particular test attempts to remove all par cache " .
+                 "directories.  That cannot happen if a cache is in use\n";
+            return(EXIT_FAILURE);
+          }
         }
       }
    }
    if (!(closedir($dir_handle))) {
-     $$message_ref = "deltree_msg22:Could not close dir $dir/$file :$!:\n";
+     $$message_ref = "deltree_msg052:Could not close dir $dir/$file :$!:\n";
      return (EXIT_FAILURE);
    }
 
    if (!(rmdir ($dir))) {
-     $$message_ref = "deltree_msg24:Couldn\'t remove directory \'$dir\' :$!:\n";
-     return (EXIT_FAILURE);
+     if (!$ignore_errors) {
+       $$message_ref =
+             "deltree_msg054:Couldn\'t remove directory \'$dir\' :$!:\n";
+       return (EXIT_FAILURE);
+     }
    }
   use strict;
   return(EXIT_SUCCESS);
@@ -266,7 +278,7 @@ sub find_par_temp_base {
 
     foreach $path (
         (map $ENV{$_}, qw( TMPDIR TEMP TMP )),
-        qw( "C:\\TEMP /tmp . )
+        qw( C:\\TEMP /tmp . )
     ) {
         next unless $path and -d $path and -w $path;
         $username = defined(&Win32::LoginName)
@@ -276,7 +288,7 @@ sub find_par_temp_base {
         $stmpdir = File::Spec->catdir($path, "par-$username");
         last;
     }
-    print ("fptb_msg_10: stmpdir is $stmpdir\n") if $verbose;
+    print ("fptb_msg062: stmpdir is $stmpdir\n") if $verbose;
 
     return ($stmpdir);
 }
@@ -347,7 +359,7 @@ sub pp_hello_1 {
   #    print out the word "hello".
   #  . system pp hello
   #    a.exe will be created on windows
-  #  . Back tick 'a' and collect the results.
+  #  . pipe 'a' and collect the results.
   #
   #  Success if the result is "hello", failure otherwise.
   #--------------------------------------------------------------------
@@ -364,7 +376,7 @@ sub pp_hello_1 {
 
   #.................................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg070: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -372,14 +384,14 @@ sub pp_hello_1 {
 
   $error = create_file($test_file, "hello", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg072: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #.................................................................
   $cmd = 'pp ' . "\"$hello_pl_file\" ";
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg074: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   }
 
@@ -426,7 +438,7 @@ sub pp_minus_o_hello_hello_dot_pl {
   # (The .exe assumes windows)
   # . Create hello.pl with the code that will print out the word "hello".
   # . system pp -o hello hello.pl
-  # . Back tick the hello executable and collect the results.
+  # . pipe the hello executable and collect the results.
   #
   #  Success if the result is "hello", failure otherwise.
   #--------------------------------------------------------------------
@@ -441,20 +453,20 @@ sub pp_minus_o_hello_hello_dot_pl {
   $$message_ref = "";
   #.................................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string: cannot " .
+      $$message_ref = "\namsg076: sub $test_name_string: cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
 
   $error = create_file($test_file, "hello", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: $$message_ref";
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg078: sub $test_name_string: $$message_ref";
+    return (EXIT_FAILURE);
   }
   #.................................................................
   $cmd = "pp -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string: cannot system $cmd\n";
+    $$message_ref = "\namsg080: sub $test_name_string: cannot system $cmd\n";
     return (EXIT_FAILURE);
   }
 
@@ -510,9 +522,9 @@ sub pp_minus_o_foo_foo_dot_pl_bar_dot_pl {
   #  . Create foo.pl with the code that will print out the word "hello foo".
   #  . Create bar.pl with the code that will print out the word "hello bar".
   #  . system pp -o foo foo.pl bar.pl
-  #  . Back tick ./foo and collect the results.  It should be "hello foo".
+  #  . pipe ./foo and collect the results.  It should be "hello foo".
   #  . Copy foo to bar
-  #  . Back tick ./bar and collect the results.  It should be "hello bar".
+  #  . pipe ./bar and collect the results.  It should be "hello bar".
   #
   #Success if both "hello foo" and "hello bar" were appropriately collected.
   #--------------------------------------------------------------------
@@ -525,26 +537,26 @@ sub pp_minus_o_foo_foo_dot_pl_bar_dot_pl {
 
   $$message_ref = "";
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string: " .
+      $$message_ref = "\namsg082: sub $test_name_string: " .
                       "cannot chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
 
   $error = create_file($foo_pl_file, "hello foo", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg083: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   $error = create_file($bar_pl_file, "hello bar", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[015\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg084: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   $cmd = "pp -o $foo_executable " . "\"$foo_pl_file\" \"$bar_pl_file\" ";
   if (system("$cmd")) {
-    $$message_ref = "\n\[020\]sub $test_name_string: cannot system $cmd)\n";
+    $$message_ref = "\namsg085: sub $test_name_string: cannot system $cmd)\n";
     return (EXIT_FAILURE);
   }
 
@@ -573,7 +585,7 @@ sub pp_minus_o_foo_foo_dot_pl_bar_dot_pl {
   #.................................................................
 
   if(!(copy("$foo_executable", "$bar_executable"))) {
-      $$message_ref = "\n\[030\]sub $test_name_string: cannot " .
+      $$message_ref = "\namsg086: sub $test_name_string: cannot " .
                        "copy $foo_executable to $bar_executable\n";
       return (EXIT_FAILURE);
   }
@@ -626,7 +638,7 @@ sub pp_minus_p_hello {
   #
   # . Create file "hello" with the code that will print out the word "hello".
   # . system pp -p hello
-  # . Back tick './par a' and collect the results.  It should be "hello".
+  # . pipe './par a' and collect the results.  It should be "hello".
   #
   #  Success if  "hello" was collected.  Failure otherwise
   #--------------------------------------------------------------------
@@ -641,21 +653,21 @@ sub pp_minus_p_hello {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot chdir " .
+      $$message_ref = "\namsg088: sub $test_name_string cannot chdir " .
                       "$test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
 
   $error = create_file($test_file, "hello", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg089: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   $cmd = "pp -p \"$test_file\"";
   # This should produce $a_default_dot_par
   if (system("$cmd")) {
-    $$message_ref = "\n\[010\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg090: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   }
 
@@ -705,9 +717,9 @@ sub pp_minus_p_minus_o_hello_dot_par_hello {
   #
   # . Create file "hello" with the code that will print out the word "hello".
   # . system pp -p -o hello.par hello
-  # . Back tick './par hello.par' and collect the results.  It should
+  # . pipe './par hello.par' and collect the results.  It should
   #   be hello.
-  # . Back tick './par hello' and collect the results.  It should
+  # . pipe './par hello' and collect the results.  It should
   #   once again be "hello".
   #  Success if "hello" was collected both times.  Failure otherwise.
   #--------------------------------------------------------------------
@@ -722,19 +734,19 @@ sub pp_minus_p_minus_o_hello_dot_par_hello {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot chdir $test_dir\n:$!:\n";
+      $$message_ref = "\namsg095: sub $test_name_string cannot chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
 
   $error = create_file($test_file, "hello", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg096: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   $cmd = 'pp -p -o ' . " \"$hello_par_file_with_dot_par\" \"$test_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[010\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg097: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   }
 
@@ -810,13 +822,13 @@ sub pp_minus_o_hello_file_dot_par {
   # . Create file file.pl with the code that will print out the word "hello".
   # . system pp -p -o file.par file.pl
   #   This will create the par file file.par
-  # . Back tick './par file.par' and collect the results.  It should
+  # . pipe './par file.par' and collect the results.  It should
   #   be hello.
-  # . Back tick './par file' and collect the results.  It should
+  # . pipe './par file' and collect the results.  It should
   #   once again be "hello".
   # . system pp -o file file.par
   #   This will pack file.par into file.exe (Assuming windows)
-  # . Back tick 'file' and collect the results.  It should again be "hello"
+  # . pipe 'file' and collect the results.  It should again be "hello"
   #
   # Success if "hello" was collected all three times.  Failure otherwise.
   #
@@ -832,20 +844,20 @@ sub pp_minus_o_hello_file_dot_par {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot chdir $test_dir\n:$!:\n";
+      $$message_ref = "\namsg098: sub $test_name_string cannot chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
 
   $error = create_file($test_file, "hello", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg099: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   # Create a par file
   $cmd = 'pp -p -o ' . "\"$hello_par_file_with_dot_par\" \"$hello_pl_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[010\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg100: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -903,7 +915,7 @@ sub pp_minus_o_hello_file_dot_par {
 
   $cmd = 'pp -o ' . "\"$hello_executable\" \"$hello_pl_file\"  ";
   if (system("$cmd")) {
-    $$message_ref = "\n\[010\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg102: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -962,10 +974,10 @@ sub pp_minus_S_minus_o_hello_file {
   # . system pp -S -o hello hello.pl
   #   This will create the par file hello.par, and also pack hello.par
   #   into the executable "hello.exe". (Assuming windows)
-  # . Back tick './par hello.par' and collect the results.  It should
+  # . pipe './par hello.par' and collect the results.  It should
   #   be "hello".
-  # . Back tick './par hello' and collect the results.  It should be "hello".
-  # . Back tick the created executable and collect the results.  It
+  # . pipe './par hello' and collect the results.  It should be "hello".
+  # . pipe the created executable and collect the results.  It
   #   should again be "hello"
   #
   # Success if "hello" was collected all three times.  Failure otherwise.
@@ -981,20 +993,20 @@ sub pp_minus_S_minus_o_hello_file {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg105: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
 
   $error = create_file($hello_pl_file, "hello", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg106: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   $cmd = 'pp -S -o ' . "\"$hello_executable\" \"$hello_pl_file\"  ";
   if (system("$cmd")) {
-    $$message_ref = "\n\[010\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg107: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -1098,9 +1110,9 @@ sub pp_minus_p_minus_o_out_dot_par_file {
   #
   #  . Create file "file" with the code that will print out the word "hello".
   #  . system pp -p -o out.par file
-  #  . Back tick './par out.par' and collect the results.  It should
+  #  . pipe './par out.par' and collect the results.  It should
   #    be "hello".
-  #  . Back tick './par out' and collect the results.  It should be "hello".
+  #  . pipe './par out' and collect the results.  It should be "hello".
   #
   # Success if "hello" was collected both times.  Failure otherwise
   #--------------------------------------------------------------------
@@ -1114,20 +1126,20 @@ sub pp_minus_p_minus_o_out_dot_par_file {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot chdir " .
+      $$message_ref = "\namsg110: sub $test_name_string cannot chdir " .
                       "$test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
 
   $error = create_file($hello_pl_file, "hello", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg111: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   $cmd = 'pp -p -o out.par ' . "\"$hello_pl_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[010\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg112: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -1236,7 +1248,7 @@ sub pp_minus_B_with_small_minus_p_tests {
   #    This creates out.par and bundles the core modules.
   #  . system pp -p -o out_par.par hello.pl
   #    This creates out.par
-  #  . Back tick  './par out_par.par', './par out_par_B.par'
+  #  . pipe  './par out_par.par', './par out_par_B.par'
   #               './par out_par',     './par out_par_B'
   #
   # After all of the above, success if "hello" was collected each time.
@@ -1260,7 +1272,7 @@ sub pp_minus_B_with_small_minus_p_tests {
 
   #.................................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg115: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -1273,14 +1285,14 @@ sub pp_minus_B_with_small_minus_p_tests {
                        $top_of_created_file_text);
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg116: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #.................................................................
   $cmd = 'pp -p -o out_par.par ' . "\"$hello_pl_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[020\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg117: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -1336,7 +1348,7 @@ sub pp_minus_B_with_small_minus_p_tests {
   #.................................................................
   $cmd = 'pp -B -p -o out_par_B.par ' . "\"$hello_pl_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg118: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -1445,7 +1457,7 @@ sub pp_minus_B_with_large_minus_P_tests {
   #    This creates out_pl_B.pl and bundles the core modules.
   #  . system pp -P -o out_pl.pl hello.pl
   #    This creates out.pl
-  #  . Back tick  'perl out_pl.pl', 'perl out_pl_B.pl'
+  #  . pipe  'perl out_pl.pl', 'perl out_pl_B.pl'
   #
   # After all of the above, success if "hello" was collected each time.
   # Failure otherwise.
@@ -1467,7 +1479,7 @@ sub pp_minus_B_with_large_minus_P_tests {
 
   #.................................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg120: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -1480,14 +1492,14 @@ sub pp_minus_B_with_large_minus_P_tests {
                        $top_of_created_file_text);
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg121: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
   #.................................................................
 
   $cmd = 'pp -P -o out_pl.pl ' . "\"$hello_pl_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[020\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg122: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -1522,7 +1534,7 @@ sub pp_minus_B_with_large_minus_P_tests {
 
   $cmd = 'pp -B -P -o out_pl_B.pl ' . "\"$hello_pl_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg125: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -1577,7 +1589,7 @@ sub pp_minus_e_print_hello {
   # Outline
   # -------
   # . system pp -e "print \"hello\n\";"
-  # . back tick 'a' and collect the results
+  # . pipe 'a' and collect the results
   # Success if "hello" was collected.  Failure otherwise.
   #--------------------------------------------------------------------
 
@@ -1590,14 +1602,14 @@ sub pp_minus_e_print_hello {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg130: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
 
   $cmd = 'pp -e "print \"hello\n\";" ';
   if (system("$cmd")) {
-    $$message_ref = "\n\[010\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg131: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -1651,8 +1663,8 @@ sub pp_minus_p_minus_e_print_hello {
   # Outline
   # -------
   # system pp -p -e "print \"hello\n\";"
-  # back tick 'par a.par' and collect the results
-  # back tick 'par a' and collect the results
+  # pipe 'par a.par' and collect the results
+  # pipe 'par a' and collect the results
   #
   # Success if "hello" was collected each time.  Failure otherwise.
   #--------------------------------------------------------------------
@@ -1667,14 +1679,14 @@ sub pp_minus_p_minus_e_print_hello {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot" .
+      $$message_ref = "\namsg135: sub $test_name_string cannot" .
                       " chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
 
   $cmd = 'pp -p -e "print \"hello\n\"";';
   if (system(" $cmd ")) {
-    $$message_ref = "\n\[015\]sub $test_name_string Cannot system $cmd\n";
+    $$message_ref = "\namsg136: sub $test_name_string Cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -1752,7 +1764,7 @@ sub pp_minus_P_minus_e_print_hello {
   # Outline
   # -------
   # system pp -P -e "print \"hello\n\";"
-  # back tick 'perl a.pl' and collect the results
+  # pipe 'perl a.pl' and collect the results
   #
   # Success if "hello" was collected.  Failure otherwise.
   #--------------------------------------------------------------------
@@ -1768,7 +1780,7 @@ sub pp_minus_P_minus_e_print_hello {
 
   #.................................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg138: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -1776,7 +1788,7 @@ sub pp_minus_P_minus_e_print_hello {
   #.................................................................
   $cmd = 'pp -P -e "print \"hello\n\";" ';
   if (system(" $cmd ")) {
-    $$message_ref = "\n\[010\]sub $test_name_string Cannot system $cmd\n";
+    $$message_ref = "\namsg139: sub $test_name_string Cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -1834,7 +1846,7 @@ sub pp_minus_c_hello {
   # -------
   # Create a file that will print "hello".
   # system pp -c hello
-  # back tick 'a' and collect the results
+  # pipe 'a' and collect the results
   #
   # Success if "hello" was collected.  Failure otherwise.
   #--------------------------------------------------------------------
@@ -1848,7 +1860,7 @@ sub pp_minus_c_hello {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg150: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -1859,13 +1871,13 @@ sub pp_minus_c_hello {
                        $message_ref);
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg151: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   $cmd = 'pp -c ' . " \"$hello_pl_file\" ";
   if (system(" $cmd ")) {
-    $$message_ref = "\n\[015\]sub $test_name_string Cannot system $cmd\n";
+    $$message_ref = "\namsg152: sub $test_name_string Cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -1925,7 +1937,7 @@ sub pp_minus_x_hello {
   # -------
   # Create a file that will print "hello".
   # system pp -x hello
-  # back tick 'a' and collect the results
+  # pipe 'a' and collect the results
   #
   # Success if "hello" was collected.  Failure otherwise.
   #--------------------------------------------------------------------
@@ -1939,7 +1951,7 @@ sub pp_minus_x_hello {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg155: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -1950,13 +1962,13 @@ sub pp_minus_x_hello {
                        $message_ref);
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg156: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   $cmd = 'pp -x  ' . "\"$hello_pl_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string Cannot system $cmd\n";
+    $$message_ref = "\namsg157: sub $test_name_string Cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -2016,7 +2028,7 @@ sub pp_minus_n_minus_x_hello {
   # -------
   # Create a file that will print "hello".
   # system pp -n -x hello
-  # back tick 'a' and collect the results
+  # pipe 'a' and collect the results
   #
   # Success if "hello" was collected.  Failure otherwise.
   #--------------------------------------------------------------------
@@ -2027,7 +2039,7 @@ sub pp_minus_n_minus_x_hello {
   my $print_cannot_locate_message = $FALSE;
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg160: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -2038,13 +2050,13 @@ sub pp_minus_n_minus_x_hello {
                        $message_ref);
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg161: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   $cmd = 'pp -n -x  ' . "\"$hello_pl_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg162: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -2107,18 +2119,18 @@ sub pp_minus_I_foo_hello {
   #   invoke hidden_print
   # . system 'pp foo.pl'
   #   The file a.exe is created on windows.
-  # . Back tick 'a'
+  # . pipe 'a'
   #   The result should be something like: "Can't locate hidden_print"
   # . system pp -I "hidden_dir" foo.pl
   #   Once again, a.exe is created on windows
-  # . Back tick 'a' and collect the results.
+  # . pipe 'a' and collect the results.
   # . The result should be "hello"
   # . Copy the a.exe to a different subdirectory
   # . chdir to the new subdirectory
-  # . Back tick a.exe
+  # . pipe a.exe
   # . The result should be "hello"
   # . Remove the hidden_print file.
-  # . Back tick 'a' again and collect the results.
+  # . pipe 'a' again and collect the results.
   #   It should still pass.
   #
   # Success if as described above.  Failure otherwise.
@@ -2159,7 +2171,7 @@ sub hidden_print {
 
   #..........................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg165: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -2173,8 +2185,8 @@ sub hidden_print {
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg166: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -2186,13 +2198,13 @@ sub hidden_print {
                       );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[015\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg168: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
   #..........................................................
   $cmd = 'pp foo.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[010\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg169: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -2220,14 +2232,14 @@ sub hidden_print {
   ##### return ($error) if ($error == EXIT_FAILURE);
   ###################################################
   $$message_ref = ""; # Wipe out the nasty messages from the
-                      # last back tick command.
+                      # last pipe command.
 
   print ("\n"); # To add a line after the above expected error messages.
 
   #.................................................................
   $cmd = 'pp -I  ' . "\"$hidden_dir\" foo.pl";
   if (system("$cmd")) {
-    $$message_ref = "\n\[020\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg170: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -2340,7 +2352,7 @@ sub pp_minus_lib_foo_hello {
   #   hidden_print with the text "hello".
   # . system pp --lib $SUBDIR1 foo.pl
   #   An  a.exe is created on windows
-  # . Back tick 'a' and collect the results.
+  # . pipe 'a' and collect the results.
   # . The result should be "hello"
   #
   # Success if as described above.  Failure otherwise.
@@ -2381,7 +2393,7 @@ sub hidden_print {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg172: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -2395,8 +2407,8 @@ sub hidden_print {
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg174: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -2408,13 +2420,13 @@ sub hidden_print {
                       );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[015\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg176: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
   #..........................................................
   $cmd = 'pp foo.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[020\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg178: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -2443,13 +2455,13 @@ sub hidden_print {
   ##### return ($error) if ($error == EXIT_FAILURE);
   ########################################################
   $$message_ref = ""; # Wipe out the nasty messages from the
-                      # last back tick command.
+                      # last pipe command.
   print ("\n"); # To add a line after the above expected error messages.
 
   #.................................................................
   $cmd = 'pp --lib  ' . "$foo_dir foo.pl";
   if (system("$cmd")) {
-    $$message_ref = "\n\[035\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg180: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -2570,15 +2582,15 @@ sub pp_minus_I_foo_minus_I_bar_hello {
   #   hidden_print_caller with the text "hello".
   # . system 'pp foo.pl'
   #   The file a.exe is created on windows.
-  # . Back tick 'a'
+  # . pipe 'a'
   #   The result should be: Nothing.
   # . system pp -I foo -I bar foo.pl
   #   Once again, a.exe is created on windows
-  # . Back tick 'a' and collect the results.
+  # . pipe 'a' and collect the results.
   # . The result should be "hello"
   # . Copy a.exe to a different directory
   # . chdir to the directory.
-  # . Back tick 'a.exe' and collect the results.
+  # . pipe 'a.exe' and collect the results.
   # . The result should be "hello"
   #
   # Success if as described above.  Failure otherwise.
@@ -2643,7 +2655,7 @@ sub hidden_print {
 
   $$message_ref = "";
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg182: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -2657,8 +2669,8 @@ sub hidden_print {
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg184: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -2671,8 +2683,8 @@ sub hidden_print {
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[020\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg186: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -2684,18 +2696,18 @@ sub hidden_print {
                       );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[030\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg188: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
   $cmd = 'pp ' . "\"$foo_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[040\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg190: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
-      print ("\n\[045\]sub $test_name_string created $a_default_executable\n");
+      print ("\namsg192: sub $test_name_string created $a_default_executable\n");
     }
   }
   #.................................................................
@@ -2720,13 +2732,13 @@ sub hidden_print {
   ##### return ($error) if ($error == EXIT_FAILURE);
   ########################################################
   $$message_ref = ""; # Wipe out the nasty messages from the
-                      # last back tick command.
+                      # last pipe command.
   print ("\n"); # To add a line after the above expected error messages.
 
   #.................................................................
   $cmd = 'pp -I ' . "\"$foo_dir\" -I \"$bar_dir\" \"$foo_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[055\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg194: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -2848,7 +2860,7 @@ sub pp_minus_lib_foo_minus_lib_bar_hello {
   #   hidden_print_caller with the text "hello".
   # . system pp --lib foo --lib bar foo.pl
   #   Once again, a.exe is created on windows
-  # . Back tick 'a' and collect the results.
+  # . pipe 'a' and collect the results.
   # . The result should be "hello"
   #
   # Success if as described above.  Failure otherwise.
@@ -2907,7 +2919,7 @@ sub hidden_print {
 
   $$message_ref = "";
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg196: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -2921,8 +2933,8 @@ sub hidden_print {
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg198: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -2934,8 +2946,8 @@ sub hidden_print {
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[015\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg200: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -2947,13 +2959,13 @@ sub hidden_print {
                       );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[020\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg202: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
   #..........................................................
   $cmd = 'pp foo.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[020\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg204: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -2982,14 +2994,14 @@ sub hidden_print {
   ##### return ($error) if ($error == EXIT_FAILURE);
   ########################################################
   $$message_ref = ""; # Wipe out the nasty messages from the
-                      # last back tick command.
+                      # last pipe command.
   print ("\n"); # To add a line after the above expected error messages.
 
   #.................................................................
   $cmd = 'pp --lib ' . "\"$foo_dir\"" .
          ' --lib ' . "\"$bar_dir\"" . ' foo.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[030\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg206: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -3100,15 +3112,15 @@ sub pp_minus_M_foo_hidden_print_foo {
   #   hidden_print with the text "hello".
   # . system pp foo.pl
   #   An  a.exe is created on windows
-  # . Back tick the created executable and collect the results.
+  # . pipe the created executable and collect the results.
   #   There will be error
   #   messages on the screen, and the results will be: nothing.
   # . system pp -M $SUBDIR1::hidden_print foo.pl
   #   An  a.exe is created on windows
-  # . Back tick the created executable and collect the results.
+  # . pipe the created executable and collect the results.
   # . The result should be "hello"
   # . Remove the included module
-  # . Once again, back the created executable
+  # . Once again, pipe the created executable
   #   The result should still be hello.
   # Success if as described above.  Failure otherwise.
   #
@@ -3148,7 +3160,7 @@ sub hidden_print {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg208: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -3162,8 +3174,8 @@ sub hidden_print {
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg210: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -3175,13 +3187,13 @@ sub hidden_print {
                       );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[015\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg212: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
   #..........................................................
   $cmd = 'pp foo.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[020\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg214: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -3216,7 +3228,7 @@ sub hidden_print {
 
    $cmd = "pp -M  ${SUBDIR1}::hidden_print foo.pl";
   if (system("$cmd")) {
-    $$message_ref = "\n\[025\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg216: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -3334,11 +3346,11 @@ sub pp_minus_M_foo_minus_M_bar_hello {
   #   foo_1 and bar_1.
   # . system pp foo.pl
   #   An  a.exe is created on windows
-  # . Back tick 'a' and collect the results.  There will be error
+  # . pipe 'a' and collect the results.  There will be error
   #   messages on the screen, and the results will be: nothing.
   # . system pp -M $SUBDIR1::foo_1 -M $SUBDIR2::bar_1 foo.pl
   #   An  a.exe is created on windows
-  # . Back tick 'a' and collect the results.
+  # . pipe 'a' and collect the results.
   # . The result contain "hello_foo" and "hello_bar".
   #
   # Success if as described above.  Failure otherwise.
@@ -3395,7 +3407,7 @@ sub bar_1 {
   $$message_ref = "";
 
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot" .
+      $$message_ref = "\namsg230: sub $test_name_string cannot" .
                       " chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -3409,8 +3421,8 @@ sub bar_1 {
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg232: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -3422,8 +3434,8 @@ sub bar_1 {
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[015\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg234: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -3435,13 +3447,13 @@ sub bar_1 {
                       );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[020\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg236: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
   #..........................................................
   $cmd = 'pp foo.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[025\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg238: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -3476,7 +3488,7 @@ sub bar_1 {
   $cmd = "pp -M ${SUBDIR1}::foo_1 -M ${SUBDIR2}::bar_1 foo.pl";
 
   if (system("$cmd")) {
-    $$message_ref = "\n\[040\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg240: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -3555,422 +3567,8 @@ sub bar_1 {
 }
 
 
-#########################################################################
-sub pp_minus_M_abbrev_dot_pl_hello {
-  my (
-       $test_name_string,
-       $os,
-       $test_number,
-       $test_dir,
-       $hello_pl_file,
-       $a_default_executable,
-       $verbose,
-       $message_ref,
-     ) = @_;
-
-  #--------------------------------------------------------------------
-  # Goal: Test of 'pp -M abbrev.pl hello.pl'
-  # ----
-  # Extra files under @INC
-  # pp will search for abbrev.pl in @INC
-  #
-  # Outline
-  # -------
-  # . Create $SUBDIR1\abbrev.pl to print out "abbrev_dot_pl".
-  # . Create the perl file hello.pl in the current directory that
-  #   will "do "invoked.pl";
-  # Note: Back tick or exec does not work.  Only 'do'.
-  # . Build the executable like this:
-  #       pp -M $SUBDIR1\abbrev.pl hello.pl
-  #   The file a.exe will be produced
-  # . Back tick a.exe and collect the results.
-  #
-  # Success if the result are abbrev_dot_pl, failure otherwise
-  #
-  #--------------------------------------------------------------------
-
-  my $error = EXIT_FAILURE;
-  my $pipe_command_string = "";
-  my $cmd = "";
-  my $sub_test = 0;
-  my $subdir_abbrev_file = $SUBDIR1 . "/abbrev.pl";
-  my $print_cannot_locate_message = $FALSE;
-
-  $test_dir =~ s!\\!\/!g;
-  #..............................................
-  my $hello_top_of_file_text = '
-my $result = do '  .   "\"$subdir_abbrev_file\";" . '
-print $result;
-';
-
-#..............................................
-  my $abbrev_top_of_file_text = '
-print "abbrev_dot_pl";
-';
-
-#..............................................
-  my $further_subdir = "";
-
-  $$message_ref = "";
-
-
-  if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
-                      "chdir $test_dir\n:$!:\n";
-      return (EXIT_FAILURE);
-  }
-
-  #..........................................................
-  $error = create_file(  $test_dir . "/$hello_pl_file",
-                         "",
-                         $verbose,
-                         $message_ref,
-                         $hello_top_of_file_text,
-                       );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
-  }
-
-  #..........................................................
-  $error = create_file(  $subdir_abbrev_file,
-                         "",
-                         $verbose,
-                         $message_ref,
-                         $abbrev_top_of_file_text,
-                       );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[015\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
-  }
-
-  #..........................................................
-  $cmd = 'pp ' . "$hello_pl_file";
-  if (system("$cmd")) {
-    $$message_ref = "\n\[020\]sub $test_name_string cannot system $cmd\n";
-    return (EXIT_FAILURE);
-  } else {
-    if ($verbose) {
-      print ("sub $test_name_string ");
-      print ("Hopefully, \"$cmd\" created $test_dir/$a_default_executable\n");
-    }
-  }
-
-
-  #.................................................................
-  $error = pipe_a_command
-                         (
-                           $test_number,
-                           $sub_test++,
-                           $test_name_string,
-                           $test_dir,
-                           $pipe_command_string,
-                           $a_default_executable,
-                           "abbrev_dot_pl",
-                           $os,
-                           $verbose,
-                           $message_ref,
-                           $print_cannot_locate_message,
-                        );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref =
-      $$message_ref . "\nDid $cmd produce $a_default_executable?\n";
-    return($error);
-  }
-
-  #.................................................................
-  $cmd = "pp -M $test_dir/$SUBDIR1/abbrev.pl $hello_pl_file";
-  if (system("$cmd")) {
-    $$message_ref = "\n\[025\]sub $test_name_string cannot system $cmd\n";
-    return (EXIT_FAILURE);
-  } else {
-    if ($verbose) {
-      print ("sub $test_name_string ");
-      print ("Hopefully, \"$cmd\" created $test_dir/$a_default_executable\n");
-    }
-  }
-
-  #.................................................................
-  $error = pipe_a_command
-                         (
-                           $test_number,
-                           $sub_test++,
-                           $test_name_string,
-                           $test_dir,
-                           $pipe_command_string,
-                           $a_default_executable,
-                           "abbrev_dot_pl",
-                           $os,
-                           $verbose,
-                           $message_ref,
-                           $print_cannot_locate_message,
-                        );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref =
-      $$message_ref . "\nDid $cmd produce $a_default_executable?\n";
-    return($error);
-  }
-
-  #.................................................................
-  print ("About to test in a different subdir\n") if ($verbose);
-  $error = test_in_further_subdir (
-                                    $test_number,
-                                    $sub_test++,
-                                    $test_name_string,
-                                    $test_dir,
-                                    $SUBDIR1,
-                                    $pipe_command_string,
-                                    $a_default_executable,
-                                    "abbrev_dot_pl",
-                                    $os,
-                                    $verbose,
-                                    $message_ref,
-                                    $print_cannot_locate_message,
-                                  );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref =
-      $$message_ref . "\nDid $cmd produce $a_default_executable?\n";
-     return ($error);
-  }
-
-  #.................................................................
-  print ("About to remove a file and try executable again\n") if ($verbose);
-  $error = remove_file_and_try_executable_again
-                                  (
-                                    $subdir_abbrev_file,
-                                    $test_number,
-                                    $sub_test++,
-                                    $test_name_string,
-                                    $test_dir,
-                                    $pipe_command_string,
-                                    $a_default_executable,
-                                    "abbrev_dot_pl",
-                                    $os,
-                                    $verbose,
-                                    $message_ref,
-                                    $print_cannot_locate_message,
-                                  );
-
-  #.................................................................
-  return ($error);
-  #.................................................................
-
-}
 
 #########################################################################
-sub pp_minus_M_abbrev_dot_pl_minus_o_hello_hello {
-  my (
-       $test_name_string,
-       $os,
-       $test_number,
-       $test_dir,
-       $hello_pl_file,
-       $hello_executable,
-       $a_default_executable,
-       $verbose,
-       $message_ref,
-     ) = @_;
-
-  #--------------------------------------------------------------------
-  # Goal: Test of 'pp -M dir/abbrev.pl -o hello.exe hello.pl'
-  # ----
-  # Extra files under @INC
-  # pp will search for abbrev.pl in @INC, so if you have a
-  #        -M dir/abbrev.pl
-  # it will be included.
-  #
-  # Outline
-  # -------
-  # . Create dir/abbrev.pl to print out "abbrev_dot_pl".
-  # . Create the perl file hello.pl in the current directory that
-  #   will system "abgrev.pl".
-  # . Build the executable like this:
-  #       pp -M dir/abbrev.pl -o hello.exe hello.pl
-  #   The file hello.exe will be produced
-  # . Back tick hello.exe and collect the results.
-  #
-  # Success if the result are abbrev_dot_pl, failure otherwise
-  #
-  #--------------------------------------------------------------------
-
-  my $error = EXIT_FAILURE;
-  my $pipe_command_string = "";
-  my $cmd = "";
-  my $sub_test = 0;
-  my $subdir_abbrev_file = $SUBDIR1 . "/abbrev.pl";
-  my $print_cannot_locate_message = $FALSE;
-
-  $test_dir =~ s!\\!\/!g;
-  #..............................................
-  my $hello_top_of_file_text = '
-my $result = do ' . "\"$subdir_abbrev_file\";" . '
-print $result;
-';
-
-#..............................................
-  my $abbrev_top_of_file_text = '
-print "abbrev_dot_pl";
-';
-
-#..............................................
-  my $further_subdir = "";
-
-  $$message_ref = "";
-
-
-  #..........................................................
-  if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
-                      "chdir $test_dir\n:$!:\n";
-      return (EXIT_FAILURE);
-  }
-
-  #..........................................................
-  $error = create_file(  $test_dir . "/$hello_pl_file",
-                         "",
-                         $verbose,
-                         $message_ref,
-                         $hello_top_of_file_text,
-                       );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[030\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
-  }
-
-  #..........................................................
-  $error = create_file(  $subdir_abbrev_file,
-                         "",
-                         $verbose,
-                         $message_ref,
-                         $abbrev_top_of_file_text,
-                       );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[035\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
-  }
-
-  #..........................................................
-  $cmd = 'pp ' . "$hello_pl_file";
-  if (system("$cmd")) {
-    $$message_ref = "\n\[040\]sub $test_name_string cannot system $cmd\n";
-    return (EXIT_FAILURE);
-  } else {
-    if ($verbose) {
-      print ("sub $test_name_string ");
-      print ("Hopefully, \"$cmd\" created $test_dir/$a_default_executable\n");
-    }
-  }
-
-  #.................................................................
-  $error = pipe_a_command
-                         (
-                           $test_number,
-                           $sub_test++,
-                           $test_name_string,
-                           $test_dir,
-                           $pipe_command_string,
-                           $a_default_executable,
-                           "abbrev_dot_pl",
-                           $os,
-                           $verbose,
-                           $message_ref,
-                           $print_cannot_locate_message,
-                        );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref =
-      $$message_ref . "\nDid $cmd produce $a_default_executable?\n";
-    return ($error);
-  }
-
-  #.................................................................
-
-  $cmd = "pp -M $test_dir/$SUBDIR1/abbrev.pl -o $hello_executable $hello_pl_file";
-  if (system("$cmd")) {
-    $$message_ref = "\n\[050\]sub $test_name_string cannot system $cmd\n";
-    return (EXIT_FAILURE);
-  } else {
-    if ($verbose) {
-      print ("sub $test_name_string ");
-      print ("Hopefully, \"$cmd\" created $test_dir/$hello_executable\n");
-    }
-  }
-
-  #.................................................................
-  $error = pipe_a_command
-                         (
-                           $test_number,
-                           $sub_test++,
-                           $test_name_string,
-                           $test_dir,
-                           $pipe_command_string,
-                           $hello_executable,
-                           "abbrev_dot_pl",
-                           $os,
-                           $verbose,
-                           $message_ref,
-                           $print_cannot_locate_message,
-                        );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref =
-      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
-    return ($error);
-  }
-
-  #.................................................................
-  print ("About to test in a different subdir\n") if ($verbose);
-  $error = test_in_further_subdir (
-                                    $test_number,
-                                    $sub_test++,
-                                    $test_name_string,
-                                    $test_dir,
-                                    $SUBDIR1,
-                                    $pipe_command_string,
-                                    $hello_executable,
-                                    "abbrev_dot_pl",
-                                    $os,
-                                    $verbose,
-                                    $message_ref,
-                                    $print_cannot_locate_message,
-                                  );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref =
-      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
-    return ($error);
-  }
-
-  #.................................................................
-  print ("About to remove a file and try executable again\n") if ($verbose);
-  $error = remove_file_and_try_executable_again
-                                  (
-                                    $subdir_abbrev_file,
-                                    $test_number,
-                                    $sub_test++,
-                                    $test_name_string,
-                                    $test_dir,
-                                    $pipe_command_string,
-                                    $hello_executable,
-                                    "abbrev_dot_pl",
-                                    $os,
-                                    $verbose,
-                                    $message_ref,
-                                    $print_cannot_locate_message,
-                                  );
-
-  #.................................................................
-  return ($error);
-  #.................................................................
-
-}
 
 #########################################################################
 sub pp_minus_X_module_foo {
@@ -3997,7 +3595,7 @@ sub pp_minus_X_module_foo {
   # . Have the line "print basename($^X)" in the perl file
   #   to invoke basename.
   # . system "pp -X File::Basename test_X_foo_bar".
-  # . Back tick the created 'a' and collect the results.
+  # . pipe the created 'a' and collect the results.
   # .
   # Success if the first result is "perl.exe" on Windows, and success
   # if it fails to give "perl.exe" the second time.
@@ -4030,7 +3628,7 @@ print $basename;
 
 #..............................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg270: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -4044,14 +3642,14 @@ print $basename;
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg282: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
   $cmd = 'pp ' . "\"$test_dir/$foo_pl_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg284: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -4086,7 +3684,7 @@ print $basename;
 
   $cmd = 'pp -X File::Basename ' . "\"$test_dir/$foo_pl_file\"";
   if (system("$cmd")) {
-    $$message_ref = "\n\[020\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg286: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -4141,7 +3739,7 @@ sub pp_minus_r_hello {
   # Outline
   # -------
   # . Create the perl file hello.pl with code that will print "hello".
-  # . Back tick "pp -r hello.pl" and collect the results.
+  # . pipe "pp -r hello.pl" and collect the results.
   # 
   # Success if "hello", failure otherwise.
   #
@@ -4163,7 +3761,7 @@ print "hello";
 
   #..............................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg300: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -4177,8 +3775,8 @@ print "hello";
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg302: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -4233,7 +3831,7 @@ sub pp_minus_r_hello_a_b_c {
   # Outline
   # -------
   # . Create the perl file hello.pl with code that will print "hello".
-  # . Back tick "pp -r hello.pl" and collect the results.
+  # . pipe "pp -r hello.pl" and collect the results.
   # 
   # Success if "hello", failure otherwise.
   #
@@ -4255,7 +3853,7 @@ print "hello $ARGV[0] $ARGV[1] $ARGV[2]";
 
 #..............................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg304: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -4269,8 +3867,8 @@ print "hello $ARGV[0] $ARGV[1] $ARGV[2]";
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg306: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -4326,7 +3924,7 @@ sub pp_hello_to_log_file {
   # Outline
   # -------
   # . Create the perl file hello.pl with code that will print "hello".
-  # . Back tick "pp hello.pl --log=c" and collect the results.
+  # . pipe "pp hello.pl --log=c" and collect the results.
   # 
   # THIS IS A DO-NOTHING TEST ... SO FAR ...
   # At least it will show that --log=c does no harm
@@ -4356,7 +3954,7 @@ print "hello";
 
 #..............................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg308: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -4370,14 +3968,14 @@ print "hello";
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg310: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
   $cmd = 'pp hello.pl -v --log=' . "$log_file";
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg312: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -4432,7 +4030,7 @@ print "hello";
   $log_file = 'd.txt';
   $cmd = 'pp -L ' . $log_file .  ' -v hello.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg314: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -4508,7 +4106,7 @@ sub pp_name_four_ways {
   # . system "pp -o output1.exe hello.pl"
   # . system "--output output2.exe hello.pl"
   # . system "--output=output3.exe hello.pl"
-  # . Back tick each of the three executables, one at a time,
+  # . pipe each of the three executables, one at a time,
   #   and collect the results.  Each should be "hello".
   # . Get the size of the executables.
   # . Compare the sizes.  They should all be the same size.
@@ -4533,7 +4131,7 @@ print "hello";
 
 #..............................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg320: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -4547,14 +4145,14 @@ print "hello";
                        );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg322: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
   $cmd = 'pp hello.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg324: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -4580,14 +4178,14 @@ print "hello";
                         );
 
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\n\[010\]sub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg326: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
   $cmd = 'pp -o output1.exe hello.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg328: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -4615,12 +4213,12 @@ print "hello";
   if ($error == EXIT_FAILURE) {
     $$message_ref =
       $$message_ref . "\nDid $cmd produce $a_default_executable?\n";
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    return (EXIT_FAILURE);
   }
   #..........................................................
   $cmd = 'pp --output output2.exe hello.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg340: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -4648,13 +4246,13 @@ print "hello";
   if ($error == EXIT_FAILURE) {
     $$message_ref =
       $$message_ref . "\nDid $cmd produce output2.exe?\n";
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
   $cmd = 'pp --output=output3.exe hello.pl';
   if (system("$cmd")) {
-    $$message_ref = "\n\[015\]sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg342: sub $test_name_string cannot system $cmd\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -4748,10 +4346,10 @@ sub pp_minus_v_tests {
   #           pp:\s+ Running.*parl.exe
   # 
   # 
-  #  . Back tick the created executable and collect the results.
+  #  . pipe the created executable and collect the results.
   #    . If the created text file has an "o" in it,
-  #      Back tick hello.exe on Windows.
-  #      Otherwise back tick just a.exe on windows.
+  #      pipe hello.exe on Windows.
+  #      Otherwise pipe just a.exe on windows.
   # 
   #    Hello should be the result in each case.
   # 
@@ -4800,11 +4398,10 @@ print "hello";
         'pp -v 3 hello.pl -o hello.exe > v_3_h_o.txt',
   );
 
-  if ($_exe ne '.exe') {
-    my $_out = $_exe || '.out';
+  if ($os !~ m/^Win/i) {
     @converted_array = ();
     foreach $command_string (@command_strings) {
-        $command_string =~ s/hello\.exe/hello$_out/g;
+        $command_string =~ s/hello.exe/hello.out/g;
         push(@converted_array, ($command_string));
     }
     @command_strings = ();
@@ -4846,36 +4443,36 @@ print "hello";
   my @results_to_expect_vvv = (
           'pp:\s+Packing\s+hello.pl',
           'pp:\s+Writing\s+PAR\s+on',
-          'pp:.*making\s+MANIFEST',
+          'pp:.*ing\s+MANIFEST',
           'pp:\s+Running.*parl.exe',
   );
 
 
   #............. Remove the ".exe" parts if not Windows
-  if ($_exe ne '.exe') {
+  if ($os !~ m/^Win/i) {
     @converted_array = ();
     foreach $line (@results_to_expect_v) {
-        $line =~ s/parl.exe/parl$_exe/g;
+        $line =~ s/parl.exe/\/parl\\b/g;
         push(@converted_array, ($line));
     }
     @results_to_expect_v = ();
     push(@results_to_expect_v, @converted_array);
   }
     
-  if ($_exe ne '.exe') {
+  if ($os !~ m/^Win/i) {
     @converted_array = ();
     foreach $line (@results_to_expect_vv) {
-        $line =~ s/parl.exe/parl$_exe/g;
+        $line =~ s/parl.exe/\/parl\\b/g;
         push(@converted_array, ($line));
     }
     @results_to_expect_vv = ();
     push(@results_to_expect_vv, @converted_array);
   }
     
-  if ($_exe ne '.exe') {
+  if ($os !~ m/^Win/i) {
     @converted_array = ();
     foreach $line (@results_to_expect_vvv) {
-        $line =~ s/parl.exe/parl$_exe/g;
+        $line =~ s/parl.exe/\/parl\\b/g;
         push(@converted_array, ($line));
     }
     @results_to_expect_vvv = ();
@@ -4889,7 +4486,7 @@ print "hello";
 
   #..........................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg344: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -4904,7 +4501,7 @@ print "hello";
 
   if ($error == EXIT_FAILURE) {
     $$message_ref = "\nsub $test_name_string: " . $$message_ref;
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    return (EXIT_FAILURE);
   }
 
   #..........................................................
@@ -4929,7 +4526,7 @@ print "hello";
       if (-e($hello_executable)) {
         # Remove any executables from prior sub tests
         if (!(unlink($hello_executable))) {
-          $$message_ref = 
+          $$message_ref =  "\namsg346: "                      .
               "Test $test_and_sub_test: $test_name_string "   .
               "cannot remove file $hello_executable\n";
           return(EXIT_FAILURE);
@@ -4939,7 +4536,7 @@ print "hello";
       if (-e($a_default_executable)) {
         # Remove any executables from prior sub tests
         if (!(unlink($a_default_executable))) {
-          $$message_ref = 
+          $$message_ref =  "\namsg348: "                      .
               "Test $test_and_sub_test: $test_name_string "   .
               "cannot remove file $a_default_executable\n";
           return(EXIT_FAILURE);
@@ -4951,7 +4548,7 @@ print "hello";
     #..........................................................
     $cmd = $command_strings[$i];
     if (system("$cmd")) {
-      $$message_ref = "\n\[015\]sub ${test_name_string}_$test_and_sub_test" .
+      $$message_ref = "\namsg350: sub ${test_name_string}_$test_and_sub_test" .
                       " cannot system $cmd\n";
       return (EXIT_FAILURE);
     } else {
@@ -4986,7 +4583,7 @@ print "hello";
         local $/; $all_lines = <FH>;
 
         if (!(close(FH))) {
-          $$message_ref = 
+          $$message_ref =  "\namsg352: "                                  .
              "Something is wrong with test $test_name_string "            .
              "in directory $test_dir\n"                                   .
              "File $text_file_to_examine exists, and I opened it, "       .
@@ -4996,7 +4593,7 @@ print "hello";
         }
 
       } else {
-        $$message_ref = 
+        $$message_ref = "\namsg354: "                                   .
            "Something is wrong with test $test_name_string "            .
            "in directory $test_dir\n"                                   .
            "File $text_file_to_examine exists but I cannot open it.\n"  .
@@ -5005,7 +4602,7 @@ print "hello";
       }
 
     } else {
-      $$message_ref = 
+      $$message_ref =  "\namsg356: "                                  .
          "Something is wrong with test $test_name_string "            .
          "in directory $test_dir\n"                                   .
          "Command $cmd did not create file $text_file_to_examine\n"   .
@@ -5025,12 +4622,12 @@ print "hello";
     }
     #..........................................................
     if ($at_least_one_line_not_found) {
-      $$message_ref = 
+      $$message_ref =  "\namsg358: "                                  .
          "Something is wrong with test $test_name_string "            .
          "in directory $test_dir\n"                                   .
          "Command $cmd did provide the expected results in file "     .
          "$text_file_to_examine.\n  I expected matches to regexp \n"  .
-         join("\n", @expected_lines)                                  .
+         "@expected_lines"                                            .
          "\nbut instead got \n$all_lines\n"                           .
          "Cannot continue with test $test_name_string\n";
       return (EXIT_FAILURE);
@@ -5094,7 +4691,7 @@ sub pp_minus_V {
   #
   # Outline
   # -------
-  # . Back tick "pp -V" and collect the results.
+  # . pipe "pp -V" and collect the results.
   # . The string
   #     "Such use shall not be construed as a distribution"
   #   should be part of what was collected.
@@ -5111,7 +4708,7 @@ sub pp_minus_V {
 
   #..........................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg360: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -5137,7 +4734,7 @@ sub pp_minus_V {
   if ($error == EXIT_FAILURE) {
     $$message_ref =
       $$message_ref . "\nDid $cmd produce $expected_string?\n";
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    return (EXIT_FAILURE);
   }
 
   #.................................................................
@@ -5160,7 +4757,7 @@ sub pp_minus_V {
   if ($error == EXIT_FAILURE) {
     $$message_ref =
       $$message_ref . "\nDid $cmd produce $expected_string?\n";
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    return (EXIT_FAILURE);
   }
 
 
@@ -5188,7 +4785,7 @@ sub pp_help_tests {
   #
   # Outline
   # -------
-  # . Back tick "pp -h" and collect the results
+  # . pipe "pp -h" and collect the results
   # . The string "Perl Packager" should have been collected.
   # 
   #--------------------------------------------------------------------
@@ -5201,7 +4798,7 @@ sub pp_help_tests {
 
   #..........................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg370: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -5257,428 +4854,6 @@ sub pp_help_tests {
 }
 
 #########################################################################
-sub test_par_clean_cache_count {
-  my (
-       $test_name_string,
-       $os,
-       $test_number,
-       $test_dir,
-       $hello_pl_file,
-       $hello_executable,
-       $verbose,
-       $message_ref,
-     ) = @_;
-
-  #--------------------------------------------------------------------
-  # Goal: Test cache counts with PAR_GLOBAL_CLEAN
-  # ----
-  #
-  # Outline
-  # -------
-  # . Cache tests ...
-  # . Set PAR_GLOBAL_CLEAN = 0 for the rest of the tests
-  #
-  # . Compute the name of the par scratchpad directory.
-  # . Remove it if it exists.
-  # . Create hello.pl with the code that will print out the word "hello".
-  # 
-  # . system pp -o hello hello.pl
-  #   There should be 1 cache dir
-  # . Back tick the hello executable and collect the results.
-  #   There should be 2 cache dirs
-  # . Success if "hello"
-  #
-  # . Repeat the system pp -o hello hello.pl
-  #   There should be 2 cache dirs
-  # .
-  # . Back tick the new hello executable and collect the results.
-  #   There should be 3 cache dirs
-  # . Success if "hello"
-  #
-  # . Rerun the same back tick test
-  #   There should still be 3 cache dirs
-  # . Success if "hello"
-  #
-  # . Rerun the same back tick test yet again
-  #   There should still be 3 cache dirs
-  # . Success if "hello"
-  #--------------------------------------------------------------------
-
-  my $error = EXIT_FAILURE;
-  my $sub_test = 0;
-  my $test_file = $hello_pl_file;
-  my $pipe_command_string = "";
-  my $cmd = "";
-  my $number_of_cache_dirs = 0;
-  my $message = "";
-  my $par_scratch_dir = find_par_temp_base($verbose);
-  my $print_cannot_locate_message = $FALSE;
-
-  #..........................................................
-  $$message_ref = "";
-  #.................................................................
-  if (-e($par_scratch_dir)) {
-    print ("pgc_msg106: Removing $par_scratch_dir\n") if $verbose;
-    $error = deltree($par_scratch_dir, 0, $message_ref);
-    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
-  }
-
-  #.................................................................
-  if (!(chdir("$test_dir"))) {
-      $$message_ref = "\npgc_msg010: sub $test_name_string cannot " .
-                      "chdir $test_dir\n:$!:\n";
-      return (EXIT_FAILURE);
-  }
-  print ("pgc_msg012:chdir to $test_dir\n") if ($verbose);
-
-  #.................................................................
-  $error = create_file($test_file, "hello", $verbose, $message_ref);
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = "\npgc_msg014: sub $test_name_string: $$message_ref";
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
-  }
-
-  #.................................................................
-  $ENV{PAR_GLOBAL_CLEAN} = 0;
-  #.................................................................
-  $cmd = "pp -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
-  print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
-  if (system("$cmd")) {
-    $$message_ref = "\npgc_msg110:sub $test_name_string cannot system $cmd\n";
-    return (EXIT_FAILURE);
-  }
-  print ("pgc_msg112: sub $test_name_string did $cmd \n") if ($verbose);
-
-  #.................................................................
-
-  $error = how_many_cache_dirs($par_scratch_dir,
-                               \$number_of_cache_dirs,
-                               $message_ref,
-                               $verbose);
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = $$message_ref .
-              "\npgc_msg114: Error from call to how_many_cache_dirs\n";
-    return ($error);
-  }
-
-  #.................................................................
-  if ($verbose) {
-    $message = "\npgc_msg116: "                                      .
-               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}   .
-               "  and   \"system $cmd\",\n there are now "           .
-               "$number_of_cache_dirs cache dirs under \n$par_scratch_dir\n";
-    print ($message);
-  }
-
-  #.................................................................
-  # How many cache dirs are there now?
-  if ($number_of_cache_dirs > 1) {
-    $$message_ref = $$message_ref    .
-         "pgc_msg120: The number of cache dirs should be <= 1, "   .
-         "\n\tbut there are $number_of_cache_dirs of them.\n";
-    return(EXIT_FAILURE);
-  }
-  #.................................................................
-  $error = pipe_a_command
-                         (
-                           $test_number,
-                           $sub_test++,
-                           $test_name_string,
-                           $test_dir,
-                           $pipe_command_string,
-                           $hello_executable,
-                           "hello",
-                           $os,
-                           $verbose,
-                           $message_ref,
-                           $print_cannot_locate_message,
-                         );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref =
-      $$message_ref . "\npgc_msg130:Did $cmd produce $hello_executable?\n";
-    return ($error);
-  }
-
-  #.................................................................
-  if (!(-e($par_scratch_dir))) {
-    $$message_ref = $$message_ref .
-        "\npgc_msg132:The par scratchpad dir \n$par_scratch_dir\n " .
-        "should have existed, but it does not.\n";
-    return (EXIT_FAILURE);
-  }
-  #.................................................................
-
-  $error = how_many_cache_dirs($par_scratch_dir,
-                               \$number_of_cache_dirs,
-                               $message_ref,
-                               $verbose);
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = $$message_ref .
-              "\npgc_msg140: Error from call to how_many_cache_dirs\n";
-    return ($error);
-  }
-
-  #.................................................................
-  if ($verbose) {
-    $message = "\npgc_msg142: "                                      .
-               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}   .
-               "  and back ticking the hello executable\n"           .
-               "there are now $number_of_cache_dirs cache dirs "     .
-               "under \n$par_scratch_dir\n";
-    print ($message);
-  }
-  #.................................................................
-  # How many cache dirs are there now?
-  if ($number_of_cache_dirs > 2) {
-    $$message_ref = $$message_ref    .
-         "pgc_msg144: The number of cache dirs should be <= 2, "   .
-         "\n\tbut there are $number_of_cache_dirs of them.\n";
-    return(EXIT_FAILURE);
-  }
-  #.................................................................
-
-  #######################
-  # Next sub test
-  #######################
-
-  #.................................................................
-  $cmd = "pp -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
-  print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
-  if (system("$cmd")) {
-    $$message_ref = "\npgc_msg150:sub $test_name_string cannot system $cmd\n";
-    return (EXIT_FAILURE);
-  }
-  print ("pgc_msg154: sub $test_name_string did $cmd \n") if ($verbose);
-
-  #.................................................................
-
-  $error = how_many_cache_dirs($par_scratch_dir,
-                               \$number_of_cache_dirs,
-                               $message_ref,
-                               $verbose);
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = $$message_ref .
-              "\npgc_msg160: Error from call to how_many_cache_dirs\n";
-    return ($error);
-  }
-
-  #.................................................................
-  if ($verbose) {
-    $message = "\npgc_msg168: "                                      .
-               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}   .
-               "  and   \"system $cmd\",\n there are now "           .
-               "$number_of_cache_dirs cache dirs under \n$par_scratch_dir\n";
-    print ($message);
-  }
-  #.................................................................
-  # How many cache dirs are there now?
-  if ($number_of_cache_dirs > 2) {
-    $$message_ref = $$message_ref    .
-         "pgc_msg170: The number of cache dirs should be <= 2, "   .
-         "\n\tbut there are $number_of_cache_dirs of them.\n";
-    return(EXIT_FAILURE);
-  }
-  #.................................................................
-  $error = pipe_a_command
-                         (
-                           $test_number,
-                           $sub_test++,
-                           $test_name_string,
-                           $test_dir,
-                           $pipe_command_string,
-                           $hello_executable,
-                           "hello",
-                           $os,
-                           $verbose,
-                           $message_ref,
-                           $print_cannot_locate_message,
-                         );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref =
-      $$message_ref . "\npgc_msg180:Did $cmd produce $hello_executable?\n";
-    return ($error);
-  }
-
-  #.................................................................
-
-  $error = how_many_cache_dirs($par_scratch_dir,
-                               \$number_of_cache_dirs,
-                               $message_ref,
-                               $verbose);
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = $$message_ref .
-              "\npgc_msg182: Error from call to how_many_cache_dirs\n";
-    return ($error);
-  }
-
-  #.................................................................
-  if ($verbose) {
-    $message = "\npgc_msg184: "                                         .
-               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}      .
-               "  and back ticking the hello executable\n"              .
-               "there are now $number_of_cache_dirs cache dirs under "  .
-               "\n$par_scratch_dir\n";
-    print ($message);
-  }
-  #.................................................................
-  # How many cache dirs are there now?
-  if ($number_of_cache_dirs > 3) {
-    $$message_ref = $$message_ref    .
-         "pgc_msg190: The number of cache dirs should be <= 3, "   .
-         "\n\tbut there are $number_of_cache_dirs of them.\n";
-    return(EXIT_FAILURE);
-  }
-  #.................................................................
-  if (!(-e($par_scratch_dir))) {
-    $$message_ref = $$message_ref .
-        "\npgc_msg192:The par scratchpad dir \n$par_scratch_dir\n " .
-        "should have existed, but it does not.\n";
-    return (EXIT_FAILURE);
-  }
-
-  #.................................................................
-  # Back tick the same executable again
-  #.................................................................
-  $error = pipe_a_command
-                         (
-                           $test_number,
-                           $sub_test++,
-                           $test_name_string,
-                           $test_dir,
-                           $pipe_command_string,
-                           $hello_executable,
-                           "hello",
-                           $os,
-                           $verbose,
-                           $message_ref,
-                           $print_cannot_locate_message,
-                         );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref =
-      $$message_ref . "\npgc_msg200:Did $cmd produce $hello_executable?\n";
-    return ($error);
-  }
-
-  #.................................................................
-
-  $error = how_many_cache_dirs($par_scratch_dir,
-                               \$number_of_cache_dirs,
-                               $message_ref,
-                               $verbose);
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = $$message_ref .
-              "\npgc_msg202: Error from call to how_many_cache_dirs\n";
-    return ($error);
-  }
-
-  #.................................................................
-  if ($verbose) {
-    $message = "\npgc_msg204: "                                         .
-               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}      .
-               "  and back ticking the same hello executable\n"         .
-               "there are now $number_of_cache_dirs cache dirs under "  .
-               "\n$par_scratch_dir\n";
-    print ($message);
-  }
-  #.................................................................
-  # How many cache dirs are there now?
-  if ($number_of_cache_dirs > 3) {
-    $$message_ref = $$message_ref    .
-         "pgc_msg206: The number of cache dirs should be <= 3, "   .
-         "\n\tbut there are $number_of_cache_dirs of them.\n";
-    return(EXIT_FAILURE);
-  }
-  #.................................................................
-  if (!(-e($par_scratch_dir))) {
-    $$message_ref = $$message_ref .
-        "\npgc_msg208:The par scratchpad dir \n$par_scratch_dir\n " .
-        "should have existed, but it does not.\n";
-    return (EXIT_FAILURE);
-  }
-  #.................................................................
-
-  #######################
-  # Next sub test
-  #######################
-
-  #.................................................................
-  # Back tick the same executable for the third time
-  #.................................................................
-  $error = pipe_a_command
-                         (
-                           $test_number,
-                           $sub_test++,
-                           $test_name_string,
-                           $test_dir,
-                           $pipe_command_string,
-                           $hello_executable,
-                           "hello",
-                           $os,
-                           $verbose,
-                           $message_ref,
-                           $print_cannot_locate_message,
-                         );
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref =
-      $$message_ref . "\npgc_msg300:Did $cmd produce $hello_executable?\n";
-    return ($error);
-  }
-
-  #.................................................................
-
-  $error = how_many_cache_dirs($par_scratch_dir,
-                               \$number_of_cache_dirs,
-                               $message_ref,
-                               $verbose);
-
-  if ($error == EXIT_FAILURE) {
-    $$message_ref = $$message_ref .
-              "\npgc_msg302: Error from call to how_many_cache_dirs\n";
-    return ($error);
-  }
-
-  #.................................................................
-  if ($verbose) {
-    $message = "\npgc_msg304: "                                         .
-               "With PAR_GLOBAL_CLEAN = " . $ENV{PAR_GLOBAL_CLEAN}      .
-               "  and back ticking the same hello executable\n"         .
-               "there are now $number_of_cache_dirs cache dirs under "  .
-               "\n$par_scratch_dir\n";
-    print ($message);
-  }
-
-  #.................................................................
-  # How many cache dirs are there now?
-  if ($number_of_cache_dirs > 3) {
-    $$message_ref = $$message_ref    .
-         "pgc_msg306: The number of cache dirs should be <= 3, "   .
-         "\n\tbut there are $number_of_cache_dirs of them.\n";
-    return(EXIT_FAILURE);
-  }
-  #.................................................................
-  if (!(-e($par_scratch_dir))) {
-    $$message_ref = $$message_ref .
-        "\npgc_msg308:The par scratchpad dir \n$par_scratch_dir\n " .
-        "should have existed, but it does not.\n";
-    return (EXIT_FAILURE);
-  }
-  #.................................................................
-
-  #.................................................................
-  return(EXIT_SUCCESS);
-  #.................................................................
-
-}
-
-#########################################################################
 sub test_par_clean {
   my (
        $test_name_string,
@@ -5694,61 +4869,87 @@ sub test_par_clean {
   #--------------------------------------------------------------------
   # Goal: Test PAR_GLOBAL_CLEAN with different parameters
   # ----
-  #
+  # Notes:  PAR_GLOBAL_CLEAN overides -C. If you set 
+  #         PAR_GLOBAL_CLEAN to 1 or 0, -C doesn't do anything. 
+  #         If -C does work, it creates temp-pid dirs, not
+  #         cache-sha1 dirs (important for how_many_cache_dirs()).
+  # 
   # Outline
   # -------
   # . Compute the name of the par scratchpad directory.
-  # . Remove it if it exists.
+  # . Try to delete each PAR cache directory
+  #   . Skip over the ones that cannot be deleted.  It usually
+  #     means that they are in use.  i.e. another PAR application
+  #     is running.
+  # . $leftover = Count of the cache directories that are left.
+  #
   # . Create hello.pl with the code that will print out the word "hello".
   # .
   # . Set PAR_GLOBAL_CLEAN = 0
   # . system pp -o hello hello.pl
-  # . Back tick the hello executable and collect the results.
+  # . pipe the hello executable and collect the results.
   # . Success if "hello"
-  # . The par scratchpad directory should exist.
+  # . There should be 2  + $leftover cache directories.
   # .
-  # . Again, remove the par scratchpad directory, if it exists.
+  # . Again, remove the cache dirs that we can, and
+  #   count up $left_over_cache_dirs.
   # . Set PAR_GLOBAL_CLEAN = 1
-  # . Rerun the above test
-  # . The par scratchpad directory should NOT exist.
+  # . Rerun (system and pipe) the above test
+  # . There should be 0  + $leftover cache directories.
   # .
-  # . Again, remove the par scratchpad directory, if it exists.
-  # . Set PAR_GLOBAL_CLEAN = 0
-  # . system pp -d -o hello hello.pl
-  # . Back tick the hello executable and collect the results.
-  # . Success if "hello"
-  # . The par scratchpad directory should exist.
+  # . Again,  remove the cache dirs that we can, and
+  #   count up $left_over_cache_dirs.
+  # . Test when perl was built as shared library
+  #   . Set PAR_GLOBAL_CLEAN = 0
+  #   . system pp -d -o hello hello.pl
+  #   . Pipe the hello executable and collect the results.
+  #   . Success if "hello"
+  #   . There should be 2 + $leftover cache directories.
+  # 
+  # . Again, remove the cache dirs that we can, and
+  #   count up $left_over_cache_dirs.
+  # . Test when perl was built as shared library
+  #   . Set PAR_GLOBAL_CLEAN = 1
+  #   . Rerun (system and pipe) the above test
+  #   . There should be 0 + $leftover cache directories.
   # .
-  # . Again, remove the par scratchpad directory, if it exists.
-  # . Set PAR_GLOBAL_CLEAN = 1
-  # . Rerun the above test
-  # . The par scratchpad directory should NOT exist.
-  # .
-  # . Again, remove the par scratchpad directory, if it exists.
+  # . Again, remove the cache dirs that we can, and
+  #   count up $left_over_cache_dirs.
   # . Set PAR_GLOBAL_CLEAN = 0
   # . system pp -C -o hello hello.pl
-  # . Back tick the hello executable and collect the results.
+  # . pipe the hello executable and collect the results.
   # . Success if "hello"
-  # . The par scratchpad directory should exist.
+  # . There should be 0 + $leftover cache directories.
   # .
-  # . Again, remove the par scratchpad directory, if it exists.
+  # . Again, remove the cache dirs that we can, and
+  #   count up $left_over_cache_dirs.
   # . Set PAR_GLOBAL_CLEAN = 1
-  # . Rerun the above test
-  # . The par scratchpad directory should NOT exist.
+  # . Rerun the above system and pipe test
+  # . There should be 0 + $leftover cache directories.
   # .
-  # . Again, remove the par scratchpad directory, if it exists.
-  # . Set PAR_GLOBAL_CLEAN = 0
-  # . system pp -C -d -o hello hello.pl
-  # . Back tick the hello executable and collect the results.
-  # . Success if "hello"
-  # . The par scratchpad directory should exist.
+  # . Again, remove the cache dirs that we can, and
+  #   count up $left_over_cache_dirs.
+  # . Test when perl was built as shared library
+  #   . Set PAR_GLOBAL_CLEAN = 0
+  #   . system pp -C -d -o hello hello.pl
+  #     . Since PAR_GLOBAL_CLEAN exists, the -C will do NOTHING!
+  #       Hence a cache dir will be produced.
+  #   . Delete PAR_GLOBAL_CLEAN
+  #   . pipe the hello executable and collect the results.
+  #     . Since PAR_GLOBAL_CLEAN does not exist, the -C will
+  #       have its expected effect, and NOT produce a cache.
+  #   . Success if "hello"
+  #   . There should be 1 + $leftover cache directories.
   # .
-  # . Again, remove the par scratchpad directory, if it exists.
-  # . Set PAR_GLOBAL_CLEAN = 1
-  # . Rerun the above test
-  # . The par scratchpad directory should NOT exist.
+  # . Again, remove the cache dirs that we can, and
+  #   count up $left_over_cache_dirs.
+  # . Test when perl was built as shared library
+  #   . Set PAR_GLOBAL_CLEAN = 1
+  #   . Rerun (system and pipe) the above test
+  #   . There should be 0 + $leftover cache directories.
   # .
-  #
+  # . Reset Set PAR_GLOBAL_CLEAN to 0 so as to not interfere
+  #   with future tests.
   #--------------------------------------------------------------------
 
   my $error = EXIT_FAILURE;
@@ -5760,40 +4961,61 @@ sub test_par_clean {
   my $message = "";
   my $par_scratch_dir = find_par_temp_base($verbose);
   my $print_cannot_locate_message = $FALSE;
+  my $ignore_errors = $TRUE;
+  my $left_over_cache_dirs = 0;
+  my $should_be_cache_dirs = 0;
 
   #..........................................................
   $$message_ref = "";
   #..........................................................
-  if (-e($par_scratch_dir)) {
-    print ("Removing $par_scratch_dir\n") if $verbose;
-    $error = deltree($par_scratch_dir, 0, $message_ref);
-    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+
+  print ("\namsg445: Removing $par_scratch_dir caches\n") if $verbose;
+  $error = deltree($par_scratch_dir, 0, $message_ref, $ignore_errors);
+  if ($error) {
+     $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests.
+     return(EXIT_FAILURE);
+   }
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$left_over_cache_dirs,
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\namsg446: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    return ($error);
   }
+  print ("\namsg447: There are $left_over_cache_dirs cache dirs left\n") if $verbose;
   #.................................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\npgc_msg010: sub $test_name_string cannot " .
+      $$message_ref = "\namsg448: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
-      return (EXIT_FAILURE);
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+
+    return (EXIT_FAILURE);
   }
-  print ("pgc_msg012:chdir to $test_dir\n") if ($verbose);
+  print ("amsg450:chdir to $test_dir\n") if ($verbose);
 
   #.................................................................
   $error = create_file($test_file, "hello", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\npgc_msg014: sub $test_name_string: $$message_ref";
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\namsg451: sub $test_name_string: $$message_ref";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    return (EXIT_FAILURE);
   }
 
   #.................................................................
   $ENV{PAR_GLOBAL_CLEAN} = 0;
   #.................................................................
   $cmd = "pp -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
-  print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
+  print ("\namsg452: About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
   if (system("$cmd")) {
-    $$message_ref = "\npgc_msg016:sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg453:sub $test_name_string cannot system $cmd\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
     return (EXIT_FAILURE);
   }
-  print ("pgc_msg018: sub $test_name_string did $cmd \n") if ($verbose);
+  print ("amsg454: sub $test_name_string did $cmd \n") if ($verbose);
 
   #.................................................................
   $error = pipe_a_command
@@ -5813,16 +5035,28 @@ sub test_par_clean {
 
   if ($error == EXIT_FAILURE) {
     $$message_ref =
-      $$message_ref . "\npgc_msg020:Did $cmd produce $hello_executable?\n";
+      $$message_ref . "\namsg455:Did $cmd produce $hello_executable?\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
     return ($error);
   }
 
   #.................................................................
-  if (!(-e($par_scratch_dir))) {
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$number_of_cache_dirs,
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
     $$message_ref = $$message_ref .
-        "\npgc_msg022:The par scratchpad dir \n$par_scratch_dir\n " .
-        "should have existed, but it does not.\n";
-    return (EXIT_FAILURE);
+              "\namsg456: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
+    return ($error);
+  }
+  $should_be_cache_dirs = 2 + $left_over_cache_dirs;
+  if ($number_of_cache_dirs > $should_be_cache_dirs) {
+    $$message_ref =
+       "\namsg457:There should be no more than $should_be_cache_dirs " .
+       "cache dirs, \n but there are $number_of_cache_dirs instead\n";
+    return(EXIT_FAILURE);
   }
   #.................................................................
 
@@ -5831,23 +5065,34 @@ sub test_par_clean {
   #######################
 
   #.................................................................
-  if (-e($par_scratch_dir)) {
-    print ("pgc_msg030: Removing $par_scratch_dir\n") if $verbose;
-    $error = deltree($par_scratch_dir, 0, $message_ref);
-    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
-  }
+  print ("amsg458: Removing $par_scratch_dir caches\n") if $verbose;
+  $error = deltree($par_scratch_dir, 0, $message_ref, $ignore_errors);
+  if ($error) {
+     $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests.
+     return(EXIT_FAILURE);
+   }
 
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$left_over_cache_dirs,
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\namsg460: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    return ($error);
+  }
   #.................................................................
   $ENV{PAR_GLOBAL_CLEAN} = 1;
   #.................................................................
   $cmd = "pp -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
-  print ("About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
+  print ("\namsg461: About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
   if (system("$cmd")) {
-    $$message_ref = "\npgc_msg032:sub $test_name_string cannot system $cmd\n";
+    $$message_ref = "\namsg462:sub $test_name_string cannot system $cmd\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
     return (EXIT_FAILURE);
   }
-  print ("pgc_msg034: sub $test_name_string did $cmd \n") if ($verbose);
-
+  print ("amsg463: sub $test_name_string did $cmd \n") if ($verbose);
   #.................................................................
   $error = pipe_a_command
                          (
@@ -5866,16 +5111,28 @@ sub test_par_clean {
 
   if ($error == EXIT_FAILURE) {
     $$message_ref =
-      $$message_ref . "\npgc_msg036:Did $cmd produce $hello_executable?\n";
+      $$message_ref . "\namsg466:Did $cmd produce $hello_executable?\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
     return ($error);
   }
 
   #.................................................................
-  if (-e($par_scratch_dir)) {
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$number_of_cache_dirs,
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
     $$message_ref = $$message_ref .
-        "\npgc_msg038: The par scratchpad dir \n$par_scratch_dir\n " .
-        "should NOT have existed, but it does.\n";
-    return (EXIT_FAILURE);
+              "\namsg470: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
+    return ($error);
+  }
+  $should_be_cache_dirs = 0 + $left_over_cache_dirs;
+  if ($number_of_cache_dirs > $should_be_cache_dirs) {
+    $$message_ref =
+       "\namsg472:There should be no more than $should_be_cache_dirs " .
+       "cache dirs, \nbut there are $number_of_cache_dirs instead\n";
+    return(EXIT_FAILURE);
   }
   #.................................................................
 
@@ -5884,11 +5141,24 @@ sub test_par_clean {
   #######################
 
   #.................................................................
-  if (-e($par_scratch_dir)) {
-    print ("pgc_msg040:Removing $par_scratch_dir\n") if $verbose;
-    $error = deltree($par_scratch_dir, 0, $message_ref);
-    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  print ("amsg474:Removing $par_scratch_dir caches\n") if $verbose;
+  $error = deltree($par_scratch_dir, 0, $message_ref, $ignore_errors);
+  if ($error) {
+     $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests.
+     return(EXIT_FAILURE);
+   }
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$left_over_cache_dirs,
+                               $message_ref,
+                               $verbose);
+   if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\namsg480: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    return ($error);
   }
+
   #.................................................................
   if ( $Config{useshrplib} and ($Config{useshrplib} ne 'false') ) {
     # Perl was built as shared library, so the -d option is valid.
@@ -5896,14 +5166,15 @@ sub test_par_clean {
     $ENV{PAR_GLOBAL_CLEAN} = 0;
     #.................................................................
     $cmd = "pp -d -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
-    print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
+    print ("\namsg482: About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
     if (system("$cmd")) {
-      $$message_ref = "\npgc_msg042: sub $test_name_string " .
+      $$message_ref = "\namsg484: sub $test_name_string " .
                       "cannot system $cmd\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
       return (EXIT_FAILURE);
     }
-    print ("pgc_msg044: sub $test_name_string did $cmd \n") if ($verbose);
 
+    print ("amsg485: sub $test_name_string did $cmd \n") if ($verbose);
     #.................................................................
     $error = pipe_a_command
                            (
@@ -5922,29 +5193,49 @@ sub test_par_clean {
 
     if ($error == EXIT_FAILURE) {
       $$message_ref =
-        $$message_ref . "\npgc_msg046:Did $cmd produce $hello_executable?\n";
+        $$message_ref . "\namsg486:Did $cmd produce $hello_executable?\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
       return ($error);
     }
 
     #.................................................................
-    if (!(-e($par_scratch_dir)) ) {
+    $error = how_many_cache_dirs($par_scratch_dir,
+                                 \$number_of_cache_dirs,
+                                 $message_ref,
+                                 $verbose);
+    if ($error == EXIT_FAILURE) {
       $$message_ref = $$message_ref .
-          "\npgc_msg048: The par scratchpad dir \n$par_scratch_dir\n " .
-          "should have existed, but it does not.\n";
-      return (EXIT_FAILURE);
+                "\namsg487: Error from call to how_many_cache_dirs\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
+      return ($error);
+    }
+    $should_be_cache_dirs = 2 + $left_over_cache_dirs;
+    if ($number_of_cache_dirs > $should_be_cache_dirs) {
+      $$message_ref =
+         "\namsg488:There should be no more than $should_be_cache_dirs " .
+         "cache dirs\nbut there are $number_of_cache_dirs instead\n";
+      return(EXIT_FAILURE);
     }
     #.................................................................
   } # shared lib
 
-    #######################
-    # Next sub test
-    #######################
-    #.................................................................
-    if (-e($par_scratch_dir)) {
-      print ("pgc_msg050: Removing $par_scratch_dir\n") if $verbose;
-      $error = deltree($par_scratch_dir, 0, $message_ref);
-      return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
-    }
+  #######################
+  # Next sub test
+  #######################
+  #.................................................................
+  print ("amsg489:Removing $par_scratch_dir caches\n") if $verbose;
+  $error = deltree($par_scratch_dir, 0, $message_ref, $ignore_errors);
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$left_over_cache_dirs, # This is what we want
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\namsg490: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    return ($error);
+  }
 
   #.................................................................
   if ( $Config{useshrplib} and ($Config{useshrplib} ne 'false') ) {
@@ -5953,13 +5244,14 @@ sub test_par_clean {
     $ENV{PAR_GLOBAL_CLEAN} = 1;
     #.................................................................
     $cmd = "pp -d -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
-    print ("About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
+    print ("\namsg491: About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
     if (system("$cmd")) {
-      $$message_ref = "\npgc_msg052:sub $test_name_string "  .
+      $$message_ref = "\namsg492:sub $test_name_string "  .
                       "cannot system $cmd\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
       return (EXIT_FAILURE);
     }
-    print ("pgc_msg054: sub $test_name_string did $cmd \n") if ($verbose);
+    print ("amsg493: sub $test_name_string did $cmd \n") if ($verbose);
 
     #.................................................................
     $error = pipe_a_command
@@ -5979,17 +5271,31 @@ sub test_par_clean {
 
     if ($error == EXIT_FAILURE) {
       $$message_ref =
-        $$message_ref . "\npgc_msg056: Did $cmd produce $hello_executable?\n";
+        $$message_ref . "\namsg494: Did $cmd produce $hello_executable?\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
       return ($error);
     }
 
     #.................................................................
-    if (-e($par_scratch_dir) ) {
+    $error = how_many_cache_dirs($par_scratch_dir,
+                                 \$number_of_cache_dirs,
+                                 $message_ref,
+                                 $verbose);
+    if ($error == EXIT_FAILURE) {
       $$message_ref = $$message_ref .
-          "\npgc_msg058: The par scratchpad dir \n$par_scratch_dir\n " .
-          "should NOT have existed, but it does.\n";
-      return (EXIT_FAILURE);
+                "\namsg498: Error from call to how_many_cache_dirs\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0;
+      return ($error);
     }
+
+    $should_be_cache_dirs = 0 + $left_over_cache_dirs;
+    if ($number_of_cache_dirs > $should_be_cache_dirs) {
+      $$message_ref =
+         "\namsg500:There should be no more than $should_be_cache_dirs " .
+         "cache dirs, \nbut there are $number_of_cache_dirs instead\n";
+      return(EXIT_FAILURE);
+    }
+
     #.................................................................
   } # Perl was built as shared library
 
@@ -5997,25 +5303,40 @@ sub test_par_clean {
   # Next sub test
   #######################
   #.................................................................
-  if (-e($par_scratch_dir)) {
-    print ("pgc_msg060: Removing $par_scratch_dir\n") if $verbose;
-    $error = deltree($par_scratch_dir, 0, $message_ref);
-    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  print ("amsg502: Removing $par_scratch_dir caches\n") if $verbose;
+  $error = deltree($par_scratch_dir, 0, $message_ref, $ignore_errors);
+  if ($error) {
+     $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests.
+     return(EXIT_FAILURE);
+   }
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$left_over_cache_dirs,
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\namsg504: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    return ($error);
   }
 
   #.................................................................
   $ENV{PAR_GLOBAL_CLEAN} = 0;
   #.................................................................
+  # Careful!  The -C should clean the cache
   $cmd = "pp -C -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
-  print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
+  print ("\namsg505: About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
   if (system("$cmd")) {
-    $$message_ref = "\npgc_msg062:sub $test_name_string "  .
+    $$message_ref = "\namsg506:sub $test_name_string "  .
                     "cannot system $cmd\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
     return (EXIT_FAILURE);
   }
-  print ("pgc_msg064: sub $test_name_string did $cmd \n") if ($verbose);
+  print ("amsg508: sub $test_name_string did $cmd \n") if ($verbose);
 
   #.................................................................
+  # This, too, should clean the cache due to the -C flag.
   $error = pipe_a_command
                          (
                            $test_number,
@@ -6033,16 +5354,16 @@ sub test_par_clean {
 
   if ($error == EXIT_FAILURE) {
     $$message_ref =
-      $$message_ref . "\npgc_msg066: Did $cmd produce $hello_executable?\n";
+      $$message_ref . "\namsg510: Did $cmd produce $hello_executable?\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
     return ($error);
   }
-
-  #.................................................................
-  if (!(-e($par_scratch_dir)) ) {
-    $$message_ref = $$message_ref .
-        "\npgc_msg068: The par scratchpad dir \n$par_scratch_dir\n " .
-        "should have existed, but it does not.\n";
-    return (EXIT_FAILURE);
+  $should_be_cache_dirs = 0 + $left_over_cache_dirs;
+  if ($number_of_cache_dirs > $should_be_cache_dirs) {
+    $$message_ref =
+       "\namsg511: There should be no more than $should_be_cache_dirs " .
+       "cache dirs\nbut there are $number_of_cache_dirs instead\n";
+    return(EXIT_FAILURE);
   }
   #.................................................................
 
@@ -6052,23 +5373,36 @@ sub test_par_clean {
   #######################
 
   #.................................................................
-  if (-e($par_scratch_dir)) {
-    print ("pgc_msg070: Removing $par_scratch_dir\n") if $verbose;
-    $error = deltree($par_scratch_dir, 0, $message_ref);
-    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  print ("amsg518: Removing $par_scratch_dir caches\n") if $verbose;
+  $error = deltree($par_scratch_dir, 0, $message_ref, $ignore_errors);
+  if ($error) {
+     $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests.
+     return(EXIT_FAILURE);
+   }
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$left_over_cache_dirs,
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\namsg520: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    return ($error);
   }
 
   #.................................................................
   $ENV{PAR_GLOBAL_CLEAN} = 1;
   #.................................................................
   $cmd = "pp -C -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
-  print ("About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
+  print ("\bamsg521: About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
   if (system("$cmd")) {
-    $$message_ref = "\npgc_msg072:sub $test_name_string "  .
+    $$message_ref = "\namsg522:sub $test_name_string "  .
                     "cannot system $cmd\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
     return (EXIT_FAILURE);
   }
-  print ("pgc_msg074: sub $test_name_string did $cmd \n") if ($verbose);
+  print ("amsg524: sub $test_name_string did $cmd \n") if ($verbose);
 
   #.................................................................
   $error = pipe_a_command
@@ -6088,48 +5422,84 @@ sub test_par_clean {
 
   if ($error == EXIT_FAILURE) {
     $$message_ref =
-      $$message_ref . "\npgc_msg076: Did $cmd produce $hello_executable?\n";
+      $$message_ref . "\namsg526: Did $cmd produce $hello_executable?\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
     return ($error);
   }
 
   #.................................................................
-  if ( -e($par_scratch_dir) ) {
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$left_over_cache_dirs,
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
     $$message_ref = $$message_ref .
-        "\npgc_msg078: The par scratchpad dir \n$par_scratch_dir\n " .
-        "should not have existed, but it does.\n";
-    return (EXIT_FAILURE);
+              "\namsg530: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    return ($error);
   }
-  #.................................................................
 
+  $should_be_cache_dirs = 0 + $left_over_cache_dirs;
+  if ($number_of_cache_dirs > $should_be_cache_dirs) {
+    $$message_ref =
+       "\namsg532:There should be no more than $should_be_cache_dirs " .
+       "cache dirs, \nbut there are $number_of_cache_dirs instead\n";
+    return(EXIT_FAILURE);
+  }
+
+  #.................................................................
 
   #######################
   # Next sub test
   #######################
 
   #.................................................................
+  print ("amsg534: Removing $par_scratch_dir caches \n") if $verbose;
+  $error = deltree($par_scratch_dir, 0, $message_ref, $ignore_errors);
+  if ($error) {
+     $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests.
+     return(EXIT_FAILURE);
+   }
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$left_over_cache_dirs,
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\namsg536: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    return ($error);
+  }
+
+  print ("\namsg537: There are $left_over_cache_dirs cache dirs\n") if $verbose;
+   
+  #.................................................................
   if ( $Config{useshrplib} and ($Config{useshrplib} ne 'false') ) {
     # Perl was built as shared library, so the -d option is valid.
     #.................................................................
-    #.................................................................
-    if (-e($par_scratch_dir)) {
-      print ("pgc_msg080: Removing $par_scratch_dir\n") if $verbose;
-      $error = deltree($par_scratch_dir, 0, $message_ref);
-      return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
-    }
-  
-    #.................................................................
     $ENV{PAR_GLOBAL_CLEAN} = 0;
     #.................................................................
+    ###################################################################
+    # Here, $ENV{PAR_GLOBAL_CLEAN} exists, so -C will do NOTHING!!!
+    # Hence we will get a cache from the system command
+    ###################################################################
+
     $cmd = "pp -C -d -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
     print ("About to $cmd with PAR_GLOBAL_CLEAN = 0\n") if ($verbose);
     if (system("$cmd")) {
-      $$message_ref = "\npgc_msg082:sub $test_name_string "  .
+      $$message_ref = "\namsg538:sub $test_name_string "  .
                       "cannot system $cmd\n";
       return (EXIT_FAILURE);
     }
-    print ("pgc_msg084: sub $test_name_string did $cmd \n") if ($verbose);
-  
+    print ("amsg540: sub $test_name_string did $cmd \n") if ($verbose);
+
     #.................................................................
+    delete $ENV{PAR_GLOBAL_CLEAN};
+    ###################################################################
+    # Here, $ENV{PAR_GLOBAL_CLEAN} does NOT exist, so -C WILL work!!!
+    # Hence we will NOT get a cache from the piped command
+    ###################################################################
     $error = pipe_a_command
                            (
                              $test_number,
@@ -6144,21 +5514,37 @@ sub test_par_clean {
                              $message_ref,
                              $print_cannot_locate_message,
                            );
-  
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+
     if ($error == EXIT_FAILURE) {
       $$message_ref =
-        $$message_ref . "\npgc_msg086: Did $cmd produce $hello_executable?\n";
+        $$message_ref . "\namsg542: Did $cmd produce $hello_executable?\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
       return ($error);
     }
-  
+
     #.................................................................
-    if ( !(-e($par_scratch_dir)) ) {
+    $error = how_many_cache_dirs($par_scratch_dir,
+                                 \$number_of_cache_dirs,
+                                 $message_ref,
+                                 $verbose);
+    if ($error == EXIT_FAILURE) {
       $$message_ref = $$message_ref .
-          "\npgc_msg088: The par scratchpad dir \n$par_scratch_dir\n " .
-          "should have existed, but it does not.\n";
-      return (EXIT_FAILURE);
+                "\namsg546: Error from call to how_many_cache_dirs\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0;
+      return ($error);
     }
+    $should_be_cache_dirs = 1 + $left_over_cache_dirs;
+    if ($number_of_cache_dirs > $should_be_cache_dirs) {
+      $$message_ref =
+         "\namsg548:There should be no more than $should_be_cache_dirs \n" .
+         "cache dirs,\nbut there are $number_of_cache_dirs instead\n" .
+         "\$left_over_cache_dirs is $left_over_cache_dirs\n";
+      return(EXIT_FAILURE);
+    }
+
     #.................................................................
+
   }
 
   #######################
@@ -6166,14 +5552,30 @@ sub test_par_clean {
   #######################
 
   #.................................................................
-  if (-e($par_scratch_dir)) {
-    print ("pgc_msg090: Removing $par_scratch_dir\n") if $verbose;
-    $error = deltree($par_scratch_dir, 0, $message_ref);
-    return(EXIT_FAILURE) if ($error == EXIT_FAILURE);
+  print ("amsg550: Removing $par_scratch_dir caches\n") if $verbose;
+  $error = deltree($par_scratch_dir, 0, $message_ref, $ignore_errors);
+  if ($error) {
+     $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests.
+     return(EXIT_FAILURE);
+   }
+
+  $error = how_many_cache_dirs($par_scratch_dir,
+                               \$left_over_cache_dirs,
+                               $message_ref,
+                               $verbose);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = $$message_ref .
+              "\namsg552: Error from call to how_many_cache_dirs\n";
+    $ENV{PAR_GLOBAL_CLEAN} = 0;
+    return ($error);
   }
+
+  print ("\namsg553: There are $left_over_cache_dirs cache dirs\n") if $verbose;
+   
 
   #.................................................................
   $ENV{PAR_GLOBAL_CLEAN} = 1;
+  # Since $ENV{PAR_GLOBAL_CLEAN} is 1, the -C should do NOTHING.
   #.................................................................
   #.................................................................
   if ( $Config{useshrplib} and ($Config{useshrplib} ne 'false') ) {
@@ -6182,12 +5584,13 @@ sub test_par_clean {
     $cmd = "pp -C -d -o " . "\"$hello_executable\" \"$hello_pl_file\" ";
     print ("About to $cmd with PAR_GLOBAL_CLEAN = 1\n") if ($verbose);
     if (system("$cmd")) {
-      $$message_ref = "\npgc_msg092:sub $test_name_string "  .
+      $$message_ref = "\namsg554:sub $test_name_string "  .
                       "cannot system $cmd\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
       return (EXIT_FAILURE);
     }
-    print ("pgc_msg094: sub $test_name_string did $cmd \n") if ($verbose);
-  
+    print ("amsg556: sub $test_name_string did $cmd \n") if ($verbose);
+
     #.................................................................
     $error = pipe_a_command
                            (
@@ -6203,56 +5606,43 @@ sub test_par_clean {
                              $message_ref,
                              $print_cannot_locate_message,
                            );
-  
+
     if ($error == EXIT_FAILURE) {
       $$message_ref =
-        $$message_ref . "\npgc_msg096: Did $cmd produce $hello_executable?\n";
+        $$message_ref . "\namsg558: Did $cmd produce $hello_executable?\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
       return ($error);
     }
-  
+
     #.................................................................
-    if ( -e($par_scratch_dir) ) {
-      $$message_ref = $$message_ref .
-          "\npgc_msg098: The par scratchpad dir \n$par_scratch_dir\n " .
-          "should not exist, but it does.\n";
-      return (EXIT_FAILURE);
-    }
-    #.................................................................
-  
     $error = how_many_cache_dirs($par_scratch_dir,
                                  \$number_of_cache_dirs,
                                  $message_ref,
                                  $verbose);
     if ($error == EXIT_FAILURE) {
       $$message_ref = $$message_ref .
-                "\npgc_msg100: Error from call to how_many_cache_dirs\n";
+                "\namsg562: Error from call to how_many_cache_dirs\n";
+      $ENV{PAR_GLOBAL_CLEAN} = 0;
       return ($error);
     }
-  
-    #.................................................................
-    if ($verbose) {
-      $message = "pgc_msg102: "                             .
-                 "Tried to remove all cache dirs under "    .
-                 "\n$par_scratch_dir\n and there are now "  .
-                 "$number_of_cache_dirs cache dirs.\n";
-      print ($message);
-    }
-  
-    #.................................................................
-    # How many cache dirs are there now?
-    if ($number_of_cache_dirs > 0) {
-      $$message_ref = $$message_ref    .
-           "pgc_msg104: The number of cache dirs should be <= 0, "   .
-           "\n\tbut there are $number_of_cache_dirs of them.\n";
+
+    $should_be_cache_dirs = 0 + $left_over_cache_dirs;
+    if ($number_of_cache_dirs > $should_be_cache_dirs) {
+      $$message_ref =
+         "\namsg564:There should be no more than $should_be_cache_dirs " .
+         "cache dirs, \nbut there are $number_of_cache_dirs instead\n";
       return(EXIT_FAILURE);
     }
-    #.................................................................
-  } # shared lib
+
+
+  $ENV{PAR_GLOBAL_CLEAN} = 0; # Do not interfere with future tests
   #.................................................................
   return(EXIT_SUCCESS);
   #.................................................................
-
+  
+  }
 }
+#########################################################################
 
 #########################################################################
 sub pp_gui_tests { 
@@ -6266,6 +5656,7 @@ sub pp_gui_tests {
        $hello_executable,
        $verbose,
        $message_ref,
+       $no_win32_exe,
      ) = @_;
 
   #--------------------------------------------------------------------
@@ -6312,10 +5703,16 @@ sub pp_gui_tests {
   if ($os !~ m/^Win/i) {
     print ("Test $test_name_string not done on OS: $os\n");
     return(EXIT_SUCCESS);
+  } else {
+    if ($no_win32_exe) {
+      print ("Test $test_name_string not run because ");
+      print ("Win32-Exe is not present\n");
+     return (EXIT_SUCCESS);
+    }
   }
   #..........................................................
   if (!(chdir("$test_dir"))) {
-      $$message_ref = "\n\[005\]sub $test_name_string cannot " .
+      $$message_ref = "\namsg566: sub $test_name_string cannot " .
                       "chdir $test_dir\n:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -6327,7 +5724,7 @@ sub pp_gui_tests {
   #.................................................................
   $file_to_copy = $orig_dir . '/hi.ico';
   if(!(copy($file_to_copy, "$test_dir"))) {
-      $$message_ref = "\n\[030\]sub $test_name_string: cannot " .
+      $$message_ref = "\namsg568: sub $test_name_string: cannot " .
                        "copy $file_to_copy to $test_dir:$!:\n";
       return (EXIT_FAILURE);
   }
@@ -6337,13 +5734,13 @@ sub pp_gui_tests {
   #.................................................................
   $error = create_file($test_file, "hello", $verbose, $message_ref);
   if ($error == EXIT_FAILURE) {
-    $$message_ref = "\npgt_msg014: sub $test_name_string: $$message_ref";
-    return (EXIT_FAILURE) if ($error == EXIT_FAILURE);
+    $$message_ref = "\npgt_msg570: sub $test_name_string: $$message_ref";
+    return (EXIT_FAILURE);
   }
   
   #.................................................................
   if (system("$cmd")) {
-    $$message_ref = "\n\[050\]sub $test_name_string cannot system $cmd:$!:\n";
+    $$message_ref = "\namsg572: sub $test_name_string cannot system $cmd:$!:\n";
     return (EXIT_FAILURE);
   } else {
     if ($verbose) {
@@ -6360,8 +5757,8 @@ sub pp_gui_tests {
     $ico_is_okay = $TRUE;
   } else {
     $ico_is_okay = $FALSE;
-    $$message_ref = $$message_ref . "pgt_msg16: sub $test_name_string " .
-               "pgt_msg16: ico->dump_iconfile is not exe->dump_iconfile\n";
+    $$message_ref = $$message_ref . "amsg574: sub $test_name_string " .
+               ": ico->dump_iconfile is not exe->dump_iconfile\n";
   }
 
   #.................................................................
@@ -6369,8 +5766,8 @@ sub pp_gui_tests {
     $exe_is_okay = $TRUE;
   } else {
     $exe_is_okay = $FALSE;
-    $$message_ref = $$message_ref . "pgt_msg18: sub $test_name_string " .
-               "pgt_msg18: exe->Subsystem is not windows\n";
+    $$message_ref = $$message_ref . "amsg576: sub $test_name_string " .
+               ": exe->Subsystem is not windows\n";
   }
 
   if ($exe_is_okay && $ico_is_okay) {
@@ -6384,6 +5781,1086 @@ sub pp_gui_tests {
         "\nThe command $cmd did not produce a good icon on exe\n";
     return (EXIT_FAILURE)
   }
+  #.................................................................
+
+}
+
+########################################################################
+sub create_small_minus_a_pl_file {
+  my ($test_name_string,
+      $sub_test, 
+      $verbose, 
+      $hello_pl_file,
+      $modified_fqpn,
+      $message_ref) = @_;
+
+  $$message_ref = "";
+  my $error;
+
+  if ($verbose) {
+    print ("amsg580: sub create_small_minus_a_pl_file has \n");
+    print ("test_name_string is $test_name_string\n");
+    print ("sub_test is $sub_test\n");
+    print ("hello_pl_file is $hello_pl_file\n");
+    print ("modified_fqpn is $modified_fqpn\n");
+  }
+
+#......................................................................
+my $pl_verbiage = 
+'#!/usr/bin/perl' . "\n" .
+'use PAR;' . "\n" .
+'my $line;' . "\n" .
+"\n" .
+'my $text = "";' . "\n" .
+'$text = PAR::read_file("' . $modified_fqpn . '");' . "\n" .
+"\n" .
+'print($text);' . "\n" .
+"\n";
+
+#......................................................................
+  $error = create_file($hello_pl_file,
+                       "",
+                       $verbose,
+                       $message_ref,
+                       $pl_verbiage);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg582: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  return(EXIT_SUCCESS);
+
+}
+
+#########################################################################
+sub pp_test_small_minus_a {
+  my (
+       $test_name_string,
+       $os,
+       $test_number,
+       $test_dir,
+       $hello_pl_file,
+       $hello_executable,
+       $verbose,
+       $message_ref,
+     ) = @_;
+
+  #--------------------------------------------------------------------
+  # Goal: Test the small -a flag
+  # ----
+  #
+  # Outline
+  # -------
+  # First Pass Outline
+  # ------------------
+  # . Run two groups of tests, four total subtests
+  #   ........................................................................
+  #   . my $text = PAR::read_file("a/small_a/text");
+  #     . Test the above line to work with
+  #           pp -o hello.exe -a c:\a\small_a\text hello.pl
+  #       or
+  #           pp -o hello.exe -a c:/a/small_a/text hello.pl
+  #       or
+  #           pp -o hello.exe -a "c:/a/small_a/text;a/small_a/text" hello.pl
+  #
+  #   . my $text = PAR::read_file("/a/small_a/text");
+  #     . Test the above line to work with
+  #           pp -o hello.exe -a "c:/a/small_a/text;/a/small_a/text" hello.pl
+  #   ........................................................................
+  # 
+  # Detailed Outline
+  # ----------------
+  # Note: "fqpn" means "fully qualified path name"
+  #  Examples:  Assume the text file c:\a\small_a\text
+  #  $orig_fqpn = c:\a\small_a\text
+  #        This is the original fqpn 
+  #  $forward_fqpn = c:/a/small_a/text
+  #        This is the original fqpn with forward slashes
+  #  $forward_with_slash_fqpn = /a/small_a/text
+  #        This is forward_fqpn with no drive letter or colon
+  #  $forward_no_slash_fqpn = a/small_a/text
+  #        This is forward_fqpn with no drive letter,colon or first slash
+  # ..............................................................
+  # Preliminary things to be done:
+  # . Create the file $textfile, with a line of text ("hello").
+  # . Create $expected_results = "hello from open hello"
+  #  . Create (As shown in Examples just above)
+  #    . $orig_fqpn
+  #    . $forward_fqpn, 
+  #    . $forward_with_slash_fqpn
+  #    . $forward_no_slash_fqpn
+  #   ..................
+  #   . Create hello.pl file to look like this:
+  #      my $text = PAR::read_file("$modified_fqpn");
+  #      print($text);
+  #   ..................
+  #    
+  # ..............................................................
+  # First test group
+  #   . Obtain $modified_fqpn = $forward_no_slash_fqpn,
+  #   Test 1
+  #     . system (pp -o hello.exe -a $orig_fqpn hello.pl);
+  #     . Run hello.exe
+  #     . Delete $textfile and run hello.exe again
+  #     . Copy to, and run, hello.exe from a different directory
+  #
+  #   Test 2
+  #     . Recreate $textfile
+  #     . system (pp -o hello.exe -a $forward_fqpn hello.pl);
+  #     . Run hello.exe
+  #     . Delete $textfile and run hello.exe again
+  #     . Copy to, and run, hello.exe from a different directory
+  #
+  #   Test 3
+  #     . Recreate $textfile
+  #     . system (pp -o hello.exe -a "$forward_fqpn;$forward_no_slash_fqpn" hello.pl);
+  #     . Run hello.exe
+  #     . Delete $textfile and run hello.exe again
+  #     . Copy to, and run, hello.exe from a different directory
+  #
+  # ..............................................................
+  # Second test group
+  #   . Obtain $modified_fqpn = $forward_with_slash_fqpn,
+  #   Test 4
+  #     . Make all of the slashes to be forward slashes.
+  #     . Recreate $textfile
+  #     . system (pp -o hello.exe -a "$forward_fqpn;$forward_with_slash_fqpn" hello.pl);
+  #     . Run hello.exe
+  #     . Delete $textfile and run hello.exe again
+  #     . Copy to, and run, hello.exe from a different directory
+  #
+  #--------------------------------------------------------------------
+
+  my $error = EXIT_FAILURE;
+  my $test_file = $hello_pl_file;
+  my $pipe_command_string = "";
+  my $cmd = "";
+  my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
+  my $message = "";
+
+  my $expected_results = "hello";
+  my $textfile = File::Spec->catdir($test_dir, "text");
+  my $orig_fqpn = $textfile;
+  my $forward_fqpn;
+  my $forward_with_slash_fqpn;
+  my $forward_no_slash_fqpn;
+  my $modified_fqpn;
+
+  ($forward_fqpn = $textfile) =~ s!\\!\/!g;
+  ($forward_with_slash_fqpn = $forward_fqpn) =~ s!^\w:!!;
+  ($forward_no_slash_fqpn = $forward_with_slash_fqpn) =~ s!^\/!!;
+  $modified_fqpn = $forward_no_slash_fqpn;
+
+  #.................................................................
+
+  if ($verbose) {
+    $message =
+      "\$textfile = $textfile\n"                                  .
+      "\$orig_fqpn = $orig_fqpn\n"                                .
+      "\$forward_fqpn = $forward_fqpn\n"                          .
+      "\$forward_with_slash_fqpn = $forward_with_slash_fqpn\n"    .
+      "\$forward_no_slash_fqpn = $forward_no_slash_fqpn\n"        .
+      "\$$modified_fqpn = $modified_fqpn\n"
+      ; # 
+    print $message;
+  }
+
+  #.................................................................
+  $$message_ref = "";
+  #.................................................................
+  #                            Sub Test 1
+  #.................................................................
+
+  #.................................................................
+  if (!(chdir("$test_dir"))) {
+      $$message_ref = "\namsg590: sub $test_name_string cannot " .
+                      "chdir $test_dir\n:$!:\n";
+      return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = create_file($textfile, "", $verbose, $message_ref, "hello");
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg592: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = create_small_minus_a_pl_file ($test_name_string,
+                                         $sub_test,
+                                         $verbose, 
+                                         $hello_pl_file,
+                                         $modified_fqpn,
+                                         $message_ref);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg594: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+  $cmd = "pp -o $hello_executable -a $orig_fqpn hello.pl";
+
+  if (system("$cmd")) {
+    $$message_ref = "\namsg596: sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           $expected_results,
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                        );
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to remove a file and try executable again\n") if ($verbose);
+  $error = remove_file_and_try_executable_again
+                                  (
+                                    $textfile,
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  if ($error == EXIT_FAILURE) {
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to test in a different subdir\n") if ($verbose);
+  $error = test_in_further_subdir (
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $SUBDIR1,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  #.................................................................
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+     return ($error);
+  }
+
+  #.................................................................
+
+
+  #.................................................................
+  #                            Sub Test 2
+  #.................................................................
+  if (!(chdir("$test_dir"))) {
+      $$message_ref = "\namsg598: sub $test_name_string cannot " .
+                      "chdir $test_dir\n:$!:\n";
+      return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = create_file($textfile, "", $verbose, $message_ref, "hello");
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg600: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $cmd = "pp -o $hello_executable -a $forward_fqpn hello.pl";
+  if (system("$cmd")) {
+    $$message_ref = "\namsg602: sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           $expected_results,
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                        );
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to remove a file and try executable again\n") if ($verbose);
+  $error = remove_file_and_try_executable_again
+                                  (
+                                    $textfile,
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  if ($error == EXIT_FAILURE) {
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to test in a different subdir\n") if ($verbose);
+  $error = test_in_further_subdir (
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $SUBDIR2,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  #.................................................................
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+     return ($error);
+  }
+
+  #.................................................................
+
+  #.................................................................
+  #                             Sub Test 3
+  #.................................................................
+  if (!(chdir("$test_dir"))) {
+      $$message_ref = "\namsg604: sub $test_name_string cannot " .
+                      "chdir $test_dir\n:$!:\n";
+      return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = create_file($textfile, "", $verbose, $message_ref, "hello");
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg606: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $cmd = "pp -o $hello_executable -a \"$forward_fqpn;$forward_no_slash_fqpn\" hello.pl";
+  if (system("$cmd")) {
+    $$message_ref = "\namsg608: sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           $expected_results,
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                        );
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to remove a file and try executable again\n") if ($verbose);
+  $error = remove_file_and_try_executable_again
+                                  (
+                                    $textfile,
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  if ($error == EXIT_FAILURE) {
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to test in a different subdir\n") if ($verbose);
+  $error = test_in_further_subdir (
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $SUBDIR3,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  #.................................................................
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+     return ($error);
+  }
+  #.................................................................
+
+  #.................................................................
+  # Second test group
+  #                             Sub Test 4
+  #.................................................................
+
+  $modified_fqpn = $forward_with_slash_fqpn;
+
+  #.................................................................
+  if (!(chdir("$test_dir"))) {
+      $$message_ref = "\namsg610: sub $test_name_string cannot " .
+                      "chdir $test_dir\n:$!:\n";
+      return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = create_file($textfile, "", $verbose, $message_ref, "hello");
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg614: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = create_small_minus_a_pl_file ($test_name_string,
+                                         $sub_test,
+                                         $verbose, 
+                                         $hello_pl_file,
+                                         $modified_fqpn,
+                                         $message_ref);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg616: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+
+  $cmd = "pp -o $hello_executable -a \"$forward_fqpn;$forward_with_slash_fqpn\" hello.pl";
+  if (system("$cmd")) {
+    $$message_ref = "\namsg618: sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           $expected_results,
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                        );
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to remove a file and try executable again\n") if ($verbose);
+  $error = remove_file_and_try_executable_again
+                                  (
+                                    $textfile,
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  if ($error == EXIT_FAILURE) {
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to test in a different subdir\n") if ($verbose);
+  $error = test_in_further_subdir (
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $SUBDIR4,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  #.................................................................
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+     return ($error);
+  }
+
+  #.................................................................
+
+
+  #.................................................................
+  return (EXIT_SUCCESS);
+  #.................................................................
+
+}
+
+########################################################################
+sub create_large_minus_a_pl_file {
+  my ($test_name_string,
+      $sub_test, 
+      $verbose, 
+      $hello_pl_file,
+      $all_text_files,
+      $message_ref) = @_;
+
+  $$message_ref = "";
+  my $error;
+
+  if ($verbose) {
+    print ("amsg630: sub create_large_minus_a_pl_file has \n");
+    print ("test_name_string is $test_name_string\n");
+    print ("sub_test is $sub_test\n");
+    print ("hello_pl_file is $hello_pl_file\n");
+    print ("all_text_files is $all_text_files\n");
+  }
+
+  $all_text_files =~ s!^\w:!!;  
+  $all_text_files =~ s!^\\!!;
+  $all_text_files =~ s!\\\\!\/!g;
+
+#......................................................................
+my $pl_verbiage = 
+'#!/usr/bin/perl -w' . "\n" .
+"\n" .
+'use PAR;' . "\n" .
+'use strict;' . "\n" .
+"\n" .
+'my @files = split "[\r\n]+", PAR::read_file(' . "\"$all_text_files\"" . ');' . "\n" .
+"\n" .
+'my $file = "";' . "\n" .
+'my $text = "";' . "\n" .
+'my $accumulated_text = "";' . "\n" .
+'foreach $file (@files) {' . "\n" .
+'  $file =~ s!^\w:!!;  ' . "\n" .
+'  $file =~ s!^\\\\!!;' . "\n" .
+'  $file =~ s!\\\\!\/!g;' . "\n" .
+'  $file =~ s!^\\/!!g;' . "\n" .
+"\n" .
+'  $text = PAR::read_file("$file");' . "\n" .
+'  chomp($text);' . "\n" .
+'  $accumulated_text = $accumulated_text . $text;' . "\n" .
+'}' . "\n" .
+'print $accumulated_text;'
+;
+
+
+#......................................................................
+  $error = create_file($hello_pl_file,
+                       "",
+                       $verbose,
+                       $message_ref,
+                       $pl_verbiage);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg632: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  print ("\namsg634: sub create_large_minus_a_pl_file was successful\n") if $verbose;
+  return(EXIT_SUCCESS);
+
+}
+
+
+#########################################################################
+sub pp_test_large_minus_A {
+  my (
+       $test_name_string,
+       $os,
+       $test_number,
+       $test_dir,
+       $hello_pl_file,
+       $hello_executable,
+       $verbose,
+       $message_ref,
+     ) = @_;
+
+  #--------------------------------------------------------------------
+  # Goal: Test the large -A flag
+  # ----
+  # First Pass Outline
+  # ------------------
+  # ........................................................................
+  # . my $text = PAR::read_file("path/list_file");
+  #   . Test the above line to work with
+  #       pp -o hello.exe -A list_file -a list_file hello.pl
+  #     or
+  #       pp -o hello.exe -A c:\path\list_file -a c:\path\list_file hello.pl
+  #     or
+  #       pp -o hello.exe -A c:/path/list_file -a c:\path\list_file hello.pl
+  #  Note for PAR::read_file("path/list_file"): "path" does NOT
+  #       contain the drive letter, colon or leading slash!!!
+  #   ........................................................................
+  # 
+  #
+  # Outline
+  # -------
+  # . Create the files (text1, text2) with a different line of 
+  #   text ("hello01", "hello02") in each.
+  # . Create a fourth text file, all_text_files, and
+  #   list the full path names of the first two files in it.
+  # 
+  # . Create the file hello.pl that will
+  #   . PAR::read_file the file all_text_files and get the names
+  #     of the two files.
+  #   . For each of the two files,
+  #     . Strip any leading drive letter and colon
+  #     . Strip any leading back slash.
+  #     . Convert remaining back slashes to forward slashes 
+  #     . PAR::read_file the file and get it's contents.
+  #   . Print the acumulated contents
+  # 
+  # . system (pp -o hello.exe -A list_file -a list_file hello.pl)
+  # . Run hello
+  # . Delete all text files.
+  # . Run hello again
+  # . Copy hello to a different directory and run it again
+  # 
+  # . system (pp -o hello.exe -A c:\path\list_file -a c:\path\list_file hello.pl)
+  # . Run hello
+  # . Delete all text files.
+  # . Run hello again
+  # . Copy hello to a different directory and run it again
+  # 
+  # . system (pp -o hello.exe -A c:/path/list_file -a c:/path/list_file hello.pl)
+  # . Run hello
+  # . Delete all text files.
+  # . Run hello again
+  # . Copy hello to a different directory and run it again
+  # 
+  #--------------------------------------------------------------------
+
+  my $error = EXIT_FAILURE;
+  my $test_file = $hello_pl_file;
+  my $pipe_command_string = "";
+  my $cmd = "";
+  my $sub_test = 0;
+  my $print_cannot_locate_message = $FALSE;
+  my $all_text_files = "all_text_files";
+  my $all_text_files_fqpn = File::Spec->catdir($test_dir, $all_text_files);
+  my $expected_results = "hello01hello02";
+
+  # Note: The fully qualified path name must be given for PAR::read_file
+  my $textfile01 = File::Spec->catdir($test_dir, "text01");
+  my $textfile02 = File::Spec->catdir($test_dir, "text02");
+
+  my $all_text_files_verbiage = "$textfile01\n$textfile02\n";
+
+  #.................................................................
+  $$message_ref = "";
+  #.................................................................
+  if (!(chdir("$test_dir"))) {
+      $$message_ref = "\namsg638: sub $test_name_string cannot " .
+                      "chdir $test_dir\n:$!:\n";
+      return (EXIT_FAILURE);
+  }
+  #.................................................................
+  $error = create_file($textfile01, "", $verbose, $message_ref, "hello01");
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg640: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = create_file($textfile02, "", $verbose, $message_ref, "hello02");
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg642: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = create_file(  $all_text_files_fqpn, "", 
+                         $verbose,
+                         $message_ref,
+                         "$textfile01\n$textfile02",
+                       );
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg644 sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = create_large_minus_a_pl_file ($test_name_string,
+                                         $sub_test,
+                                         $verbose, 
+                                         $hello_pl_file,
+                                         $all_text_files,
+                                         $message_ref);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg646: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+  $cmd = "pp -o $hello_executable -A $all_text_files " .
+                                " -a $all_text_files " .
+                                " $hello_pl_file";
+  print ("\namsg648: About to system $cmd\n") if $verbose;
+  if (system("$cmd")) {
+    $$message_ref = "\namsg649: sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           $expected_results,
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                        );
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to remove a file and try executable again\n") if ($verbose);
+  $error = remove_file_and_try_executable_again
+                                  (
+                                    $all_text_files,
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  if ($error == EXIT_FAILURE) {
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to test in a different subdir\n") if ($verbose);
+  $error = test_in_further_subdir (
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $SUBDIR1,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  #.................................................................
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+     return ($error);
+  }
+
+  #.................................................................
+  #                        Sub Test
+  #.................................................................
+  $error = create_large_minus_a_pl_file ($test_name_string,
+                                         $sub_test,
+                                         $verbose, 
+                                         $hello_pl_file,
+                                         $all_text_files_fqpn,
+                                         $message_ref);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg650: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+  $error = create_file(  $all_text_files_fqpn, "", 
+                         $verbose,
+                         $message_ref,
+                         "$textfile01\n$textfile02",
+                       );
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg652 sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $cmd = "pp -o $hello_executable -A $all_text_files_fqpn " .
+                                " -a $all_text_files_fqpn " .
+                                " $hello_pl_file";
+  print ("\namsg654: About to system $cmd\n") if $verbose;
+  if (system("$cmd")) {
+    $$message_ref = "\namsg656: sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           $expected_results,
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                        );
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to remove a file and try executable again\n") if ($verbose);
+  $error = remove_file_and_try_executable_again
+                                  (
+                                    $all_text_files_fqpn,
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  if ($error == EXIT_FAILURE) {
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to test in a different subdir\n") if ($verbose);
+  $error = test_in_further_subdir (
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $SUBDIR1,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  #.................................................................
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+     return ($error);
+  }
+
+  #.................................................................
+
+
+
+  #.................................................................
+  #                        Sub Test
+  #.................................................................
+  $error = create_large_minus_a_pl_file ($test_name_string,
+                                         $sub_test,
+                                         $verbose, 
+                                         $hello_pl_file,
+                                         $all_text_files_fqpn,
+                                         $message_ref);
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg658: sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+  #.................................................................
+  $error = create_file(  $all_text_files_fqpn, "", 
+                         $verbose,
+                         $message_ref,
+                         "$textfile01\n$textfile02",
+                       );
+  if ($error == EXIT_FAILURE) {
+    $$message_ref = "\namsg670 sub $test_name_string: " . $$message_ref;
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $all_text_files_fqpn =~ s!\\!\/!g;
+  $cmd = "pp -o $hello_executable -A $all_text_files_fqpn " .
+                                " -a $all_text_files_fqpn " .
+                                " $hello_pl_file";
+  print ("\namsg672: About to system $cmd\n") if $verbose;
+  if (system("$cmd")) {
+    $$message_ref = "\namsg674: sub $test_name_string cannot system $cmd\n";
+    return (EXIT_FAILURE);
+  }
+
+  #.................................................................
+  $error = pipe_a_command
+                         (
+                           $test_number,
+                           $sub_test++,
+                           $test_name_string,
+                           $test_dir,
+                           $pipe_command_string,
+                           $hello_executable,
+                           $expected_results,
+                           $os,
+                           $verbose,
+                           $message_ref,
+                           $print_cannot_locate_message,
+                        );
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to remove a file and try executable again\n") if ($verbose);
+  $error = remove_file_and_try_executable_again
+                                  (
+                                    $all_text_files_fqpn,
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  if ($error == EXIT_FAILURE) {
+    return ($error);
+  }
+
+  #.................................................................
+  print ("About to test in a different subdir\n") if ($verbose);
+  $error = test_in_further_subdir (
+                                    $test_number,
+                                    $sub_test++,
+                                    $test_name_string,
+                                    $test_dir,
+                                    $SUBDIR1,
+                                    $pipe_command_string,
+                                    $hello_executable,
+                                    $expected_results,
+                                    $os,
+                                    $verbose,
+                                    $message_ref,
+                                    $print_cannot_locate_message,
+                                  );
+
+  #.................................................................
+  if ($error == EXIT_FAILURE) {
+    $$message_ref =
+      $$message_ref . "\nDid $cmd produce $hello_executable?\n";
+     return ($error);
+  }
+
+  #.................................................................
+
+
+
+
+
+  #.................................................................
+  return ($error);
   #.................................................................
 
 }
@@ -6467,7 +6944,7 @@ if (!$par) {
 }
 
 if (!(-f($par))) {
-  print ("The par executable \"$par\" does not exist\n");
+  print ("amsg5000: The par executable \"$par\" does not exist\n");
   exit(EXIT_FAILURE);
 }
 
@@ -6495,8 +6972,8 @@ if ($debug) {
 }
 
 #SKIP: { 
-#  $test_number = 33;
-#  skip("Skipping  tests for brevity "  . "$test_number \n", 32);
+#  $test_number = 31;
+#  skip("Skipping  tests for brevity "  . "$test_number \n", 30);
 
 ########################### Next Test 001 ##################################
 $test_name_string = "pp_hello_1";
@@ -6781,8 +7258,6 @@ print ("\n\n\n") if ($error == EXIT_FAILURE);
 
 ########################### Next Test 007 ##################################
 $test_name_string = "pp_minus_S_minus_o_hello_file";
-SKIP: {
-#  skip("Skipping " . $test_number++ . " $test_name_string because we know it does not work\n", 1);
 
 $error = prior_to_test($test_number,
                        $startdir,
@@ -6829,7 +7304,7 @@ if ($debug) {
 after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
-       } # SKIP 1
+
 ########################### Next Test 008 ##################################
 $test_name_string = "pp_minus_p_minus_o_out_dot_par_file";
 
@@ -7518,99 +7993,6 @@ ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
 ########################### Next Test 023 ##################################
-$test_name_string = "pp_minus_M_abbrev_dot_pl_hello";
-
-$error = prior_to_test($test_number,
-                       $startdir,
-                       $os,
-                       \$test_dir,
-                       $verbose,
-                       \$message);
-if ($error == EXIT_FAILURE) {
-  $message = "\nCannot run test $test_name_string due to\n"    .
-             "prior_to_test: Test $test_number : $message\n";
-  die($message);
-}
-
-if ($verbose) {
-  print ("About to run test $test_number: $test_name_string ");
-  print ("in directory $test_dir\n");
-}
-
-$error =
-  pp_minus_M_abbrev_dot_pl_hello
-     (
-        $test_name_string,
-        $os,
-        $test_number,
-        $test_dir,
-        $hello_pl_file,
-        $a_default_executable,
-        $verbose,
-        \$message,
-     );
-
-if ($debug) {
-  if ($error) {
-    print DEBUG ("\n\nTest $test_number: $test_name_string FAILED\n");
-    print DEBUG ("$message\n");
-  } else {
-    print DEBUG ("\n\nTest $test_number: $test_name_string PASSED\n");
-  }
-}
-
-after_test($test_number++, $error, $message, $verbose);
-ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
-print ("\n\n\n") if ($error == EXIT_FAILURE);
-
-########################### Next Test 024 ##################################
-$test_name_string = "pp_minus_M_abbrev_dot_pl_minus_o_hello_hello";
-
-$error = prior_to_test($test_number,
-                       $startdir,
-                       $os,
-                       \$test_dir,
-                       $verbose,
-                       \$message);
-if ($error == EXIT_FAILURE) {
-  $message = "\nCannot run test $test_name_string due to\n"    .
-             "prior_to_test: Test $test_number : $message\n";
-  die($message);
-}
-
-if ($verbose) {
-  print ("About to run test $test_number: $test_name_string ");
-  print ("in directory $test_dir\n");
-}
-
-$error =
-  pp_minus_M_abbrev_dot_pl_minus_o_hello_hello
-     (
-        $test_name_string,
-        $os,
-        $test_number,
-        $test_dir,
-        $hello_pl_file,
-        $hello_executable,
-        $a_default_executable,
-        $verbose,
-        \$message,
-     );
-
-if ($debug) {
-  if ($error) {
-    print DEBUG ("\n\nTest $test_number: $test_name_string FAILED\n");
-    print DEBUG ("$message\n");
-  } else {
-    print DEBUG ("\n\nTest $test_number: $test_name_string PASSED\n");
-  }
-}
-
-after_test($test_number++, $error, $message, $verbose);
-ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
-print ("\n\n\n") if ($error == EXIT_FAILURE);
-
-########################### Next Test 025 ##################################
 $test_name_string = "pp_minus_X_module_foo";
 $error = prior_to_test($test_number,
                        $startdir,
@@ -7655,7 +8037,7 @@ after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
-########################### Next Test 026 ##################################
+########################### Next Test 024 ##################################
 $test_name_string = "pp_minus_r_hello";
 $error = prior_to_test($test_number,
                        $startdir,
@@ -7700,7 +8082,7 @@ after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
-########################### Next Test 027 ##################################
+########################### Next Test 025 ##################################
 $test_name_string = "pp_minus_r_hello_a_b_c";
 $error = prior_to_test($test_number,
                        $startdir,
@@ -7745,7 +8127,7 @@ after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
-########################### Next Test 028 ##################################
+########################### Next Test 026 ##################################
 $test_name_string = "pp_hello_to_log_file";
 $error = prior_to_test($test_number,
                        $startdir,
@@ -7790,8 +8172,7 @@ after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
-
-########################### Next Test 029 ##################################
+########################### Next Test 027 ##################################
 $test_name_string = "pp_name_four_ways";
 $error = prior_to_test($test_number,
                        $startdir,
@@ -7836,7 +8217,7 @@ after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
-########################### Next Test 030 ##################################
+########################### Next Test 028 ##################################
 $test_name_string = "pp_minus_v_tests";
 $error = prior_to_test($test_number,
                        $startdir,
@@ -7882,7 +8263,7 @@ after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
-########################### Next Test 031 ##################################
+########################### Next Test 029 ##################################
 $test_name_string = "pp_minus_V";
 $error = prior_to_test($test_number,
                        $startdir,
@@ -7926,7 +8307,7 @@ ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
 
-########################### Next Test 032 ##################################
+########################### Next Test 030 ##################################
 $test_name_string = "pp_help_tests";
 $error = prior_to_test($test_number,
                        $startdir,
@@ -7968,9 +8349,10 @@ if ($debug) {
 after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
-#       } # SKIP 32
 
-########################### Next Test 033 ##################################
+#      } # SKIP 
+
+########################### Next Test 031 ##################################
 $test_name_string = "test_par_clean";
 $error = prior_to_test($test_number,
                        $startdir,
@@ -8015,53 +8397,7 @@ after_test($test_number++, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
-
-########################### Next Test 034 ##################################
-$test_name_string = "test_par_clean_cache_count";
-$error = prior_to_test($test_number,
-                       $startdir,
-                       $os,
-                       \$test_dir,
-                       $verbose,
-                       \$message);
-if ($error == EXIT_FAILURE) {
-  $message = "\nCannot run test $test_name_string due to\n"     .
-             "prior_to_test: Test $test_number : $message\n";
-  die($message);
-}
-
-if ($verbose) {
-  print ("About to run test $test_number: $test_name_string ");
-  print ("in directory $test_dir\n");
-}
-
-$error =
-  test_par_clean_cache_count
-     (
-        $test_name_string,
-        $os,
-        $test_number,
-        $test_dir,
-        $hello_pl_file,
-        $hello_executable,
-        $verbose,
-        \$message,
-     );
-
-if ($debug) {
-  if ($error) {
-    print DEBUG ("\n\nTest $test_number: $test_name_string FAILED\n");
-    print DEBUG ("$message\n");
-  } else {
-    print DEBUG ("\n\nTest $test_number: $test_name_string PASSED\n");
-  }
-}
-
-after_test($test_number++, $error, $message, $verbose);
-ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
-print ("\n\n\n") if ($error == EXIT_FAILURE);
-
-####################### Next Test 035 ###########################
+########################### Next Test 032 ##################################
 $test_name_string = "pp_gui_tests";
 $error = prior_to_test($test_number,
                        $startdir,
@@ -8092,13 +8428,105 @@ $error =
         $hello_executable,
         $verbose,
         \$message,
+        $no_win32_exe,
      );
 
 after_test($test_number, $error, $message, $verbose);
 ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
 print ("\n\n\n") if ($error == EXIT_FAILURE);
 
+########################### Next Test 033 ##################################
+$test_name_string = "pp_test_small_minus_a";
+$error = prior_to_test($test_number,
+                       $startdir,
+                       $os,
+                       \$test_dir,
+                       $verbose,
+                       \$message);
+if ($error == EXIT_FAILURE) {
+  $message = "\nCannot run test $test_name_string due to\n"     .
+             "prior_to_test: Test $test_number : $message\n";
+  die($message);
+}
+
+if ($verbose) {
+  print ("About to run test $test_number: $test_name_string ");
+  print ("in directory $test_dir\n");
+}
+
+$error =
+  pp_test_small_minus_a
+     (
+        $test_name_string,
+        $os,
+        $test_number,
+        $test_dir,
+        $hello_pl_file,
+        $hello_executable,
+        $verbose,
+        \$message,
+     );
+
+if ($debug) {
+  if ($error) {
+    print DEBUG ("\n\nTest $test_number: $test_name_string FAILED\n");
+    print DEBUG ("$message\n");
+  } else {
+    print DEBUG ("\n\nTest $test_number: $test_name_string PASSED\n");
+  }
+}
+
+after_test($test_number++, $error, $message, $verbose);
+ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
+print ("\n\n\n") if ($error == EXIT_FAILURE);
+
+########################### Next Test 034 ##################################
+$test_name_string = "pp_test_large_minus_A";
+$error = prior_to_test($test_number,
+                       $startdir,
+                       $os,
+                       \$test_dir,
+                       $verbose,
+                       \$message);
+if ($error == EXIT_FAILURE) {
+  $message = "\nCannot run test $test_name_string due to\n"     .
+             "prior_to_test: Test $test_number : $message\n";
+  die($message);
+}
+
+if ($verbose) {
+  print ("About to run test $test_number: $test_name_string ");
+  print ("in directory $test_dir\n");
+}
+
+$error =
+  pp_test_large_minus_A
+     (
+        $test_name_string,
+        $os,
+        $test_number,
+        $test_dir,
+        $hello_pl_file,
+        $hello_executable,
+        $verbose,
+        \$message,
+     );
+
+if ($debug) {
+  if ($error) {
+    print DEBUG ("\n\nTest $test_number: $test_name_string FAILED\n");
+    print DEBUG ("$message\n");
+  } else {
+    print DEBUG ("\n\nTest $test_number: $test_name_string PASSED\n");
+  }
+}
+
+after_test($test_number++, $error, $message, $verbose);
+ok ($error == EXIT_SUCCESS, "$test_name_string" . " $message");
+print ("\n\n\n") if ($error == EXIT_FAILURE);
+
 ########################################################################
+
 if ($debug) {
   close(DEBUG) or die ("At end of test: Cannot close file $debug_log:$!:\n");
 }

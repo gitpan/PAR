@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR/Packer.pm $ $Author: autrijus $
-# $Revision: #10 $ $Change: 10713 $ $DateTime: 2004/05/29 15:04:54 $ vim: expandtab shiftwidth=4
+# $Revision: #12 $ $Change: 10969 $ $DateTime: 2004/07/02 09:05:35 $ vim: expandtab shiftwidth=4
 
 package PAR::Packer;
-$PAR::Packer::VERSION = '0.11';
+$PAR::Packer::VERSION = '0.12';
 
 use 5.006;
 use strict;
@@ -17,8 +17,9 @@ PAR::Packer - App::Packer backend for making PAR files
 This module implements the B<App::Packer::Backend> interface, for generating
 stand-alone executables, perl scripts and PAR files.
 
-Currently, this module is only used by the command line tool B<pp> internally.
-Improvements on documenting the API are most welcome.
+Currently, this module is used by the command line tool B<pp> internally, as 
+well as by the contributed F<contrib/gui_pp/gpp> program.  Improvements on
+documenting the API will be most appreciated.
 
 =cut
 
@@ -496,11 +497,7 @@ sub _add_add_manifest {
 sub _make_manifest {
     my ($self) = @_;
 
-    my $input = $self->{input};
-
     my $full_manifest = $self->{full_manifest};
-    my $dep_manifest  = $self->{dep_manifest};
-    my $add_manifest  = $self->{add_manifest};
 
     my $opt      = $self->{options};
     my $par_file = $self->{par_file};
@@ -532,16 +529,22 @@ par:
   version: $PAR::VERSION
 YAML
 
-    $self->_vprint(2, "... making $_") for qw(MANIFEST META.yml);
+    $self->_vprint(2, "... updating $_") for qw(MANIFEST META.yml);
 
-    my %manifest = map { $_ => 1 } ('MANIFEST', 'META.yml');
+    my $zip = $self->{zip};
 
-    $full_manifest->{'MANIFEST'} = [ string => $manifest ];
-    $full_manifest->{'META.yml'} = [ string => $meta_yaml ];
-
-    $dep_manifest->{'MANIFEST'} = [ string => $manifest ];
-    $dep_manifest->{'META.yml'} = [ string => $meta_yaml ];
-
+    $zip->removeMember( 'MANIFEST' );
+    $zip->addString(
+        $manifest => 'MANIFEST',
+        desiredCompressionMethod => Archive::Zip::COMPRESSION_DEFLATED(),
+        desiredCompressionLevel  => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
+    );
+    $zip->removeMember( 'META.yml' );
+    $zip->addString(
+        $meta_yaml => 'META.yml',
+        desiredCompressionMethod => Archive::Zip::COMPRESSION_DEFLATED(),
+        desiredCompressionLevel  => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
+    );
 }
 
 sub get_par_file {
@@ -869,7 +872,7 @@ sub _add_manifest {
         }
         else {
             my $alias = $file;
-            $alias = s{^[a-zA-Z]:}{} if $^O eq 'MSWin32';
+            $alias =~ s{^[a-zA-Z]:}{} if $^O eq 'MSWin32';
             $alias =~ s{^/}{};
             push(@$return, [ $file, $alias ]);
         }

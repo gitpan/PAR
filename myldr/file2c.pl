@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #18 $ $Change: 8557 $ $DateTime: 2003/10/26 02:36:51 $
+# $Revision: #19 $ $Change: 10967 $ $DateTime: 2004/07/02 09:01:03 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -56,6 +56,7 @@ if (!$chunk_size) {
 }
 else {
     my $chunk_count = int(length($pl_text) / $chunk_size) + 1;
+    print OUT "unsigned long size_$c_var = " . length($pl_text) . ";\n";
 
     for (1 .. $chunk_count) {
 	print_chunk( substr($pl_text, ($_ - 1) * $chunk_size, $chunk_size), "_$_" );

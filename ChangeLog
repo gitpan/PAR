@@ -1,5 +1,21 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #39 $ $Change: 10715 $ $DateTime: 2004/05/29 15:31:21 $
+# $Revision: #40 $ $Change: 10970 $ $DateTime: 2004/07/02 09:05:49 $
+
+[Changes for 0.85 - July 2, 2004]
+
+* New Features
+
+    - New version of "gpp"; see contrib/gui_pp/gpp_readme.txt for details.
+
+* Bug Fixes
+
+    - MANIFEST and META.yml were not properly updated by PAR::Packer.
+
+    - Setting directory aliases with "pp -a"/"pp -A" was broken.
+      Fixed, and tests were added for it.
+
+    - Statically-built executables was needlessly extracting libperl
+      each time it runs; now it is eliminated and hence much faster.
 
 [Changes for 0.83 - May 29, 2004]
 

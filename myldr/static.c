@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #38 $ $Change: 10645 $ $DateTime: 2004/05/22 16:40:40 $
+   $Revision: #39 $ $Change: 10967 $ $DateTime: 2004/07/02 09:01:03 $
    vim: expandtab shiftwidth=4
 */
 
@@ -27,7 +27,7 @@ extern char load_me_1[];
 
 char *my_file;
 
-int my_mkfile (char* argv0, char* stmpdir, const char* name) {
+int my_mkfile (char* argv0, char* stmpdir, const char* name, unsigned long size) {
     int i;
 #ifndef PL_statbuf
     struct stat PL_statbuf;
@@ -36,10 +36,13 @@ int my_mkfile (char* argv0, char* stmpdir, const char* name) {
     my_file = (char *)malloc(strlen(stmpdir) + strlen(name) + 5);
     sprintf(my_file, "%s/%s", stmpdir, name);
 
+    if ( par_lstat(my_file, &PL_statbuf) == 0 ) {
+        if ( (unsigned long)PL_statbuf.st_size == size ) return -2;
+    }
+
     i = open(my_file, O_CREAT | O_WRONLY | OPEN_O_BINARY);
 
     if (i == -1) {
-        if ( par_lstat(my_file, &PL_statbuf) == 0 ) return -2;
         fprintf(stderr, "%s: creation of %s failed - aborting with %i.\n", argv0, my_file, errno);
         return 0;
     }
@@ -65,7 +68,7 @@ int main ( int argc, char **argv, char **env )
         }
     }
 
-    i = my_mkfile( argv[0], stmpdir, name_load_me_0 );
+    i = my_mkfile( argv[0], stmpdir, name_load_me_0, size_load_me_0 );
     if ( !i ) return 2;
     if ( i != -2 ) {
         WRITE_load_me_0(i);
@@ -74,7 +77,7 @@ int main ( int argc, char **argv, char **env )
 
     my_file = par_basename(par_findprog(argv[0], strdup(par_getenv("PATH"))));
 
-    i = my_mkfile( argv[0], stmpdir, my_file );
+    i = my_mkfile( argv[0], stmpdir, my_file, size_load_me_1 );
     if ( !i ) return 2;
     if ( i != -2 ) {
         WRITE_load_me_1(i);

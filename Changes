@@ -1,4 +1,53 @@
 ____________________________________________________________________________
+[ 10972] By: autrijus                              on 2004/07/02  10:27:59
+        Log: * This be 0.85.
+             * Update Module::Signature dependencies, so it can be
+             built even on machines without a C compiler, using
+             Digest::SHA::PurePerl.
+	   ! Makefile.PL
+____________________________________________________________________________
+[ 10970] By: autrijus                              on 2004/07/02  09:05:49
+        Log: * In preparation of 0.85.
+             * Update to new M::I.
+	   ! ChangeLog inc/Module/Install.pm
+	   ! inc/Module/Install/Include.pm lib/PAR.pm
+____________________________________________________________________________
+[ 10969] By: autrijus                              on 2004/07/02  09:05:35
+        Log: * fix PODs typos.
+             * Alan's patch to correctly populate META.yml and MANIFEST.
+	   ! lib/PAR/Packer.pm
+____________________________________________________________________________
+[ 10968] By: autrijus                              on 2004/07/02  09:04:36
+        Log: * import noonings' new tests.
+	   ! contrib/automated_pp_test/automated_pp_test.pl
+____________________________________________________________________________
+[ 10967] By: autrijus                              on 2004/07/02  09:01:03
+        Log: * Gerald Richter pointed out that pp-generated .exe
+             starts up more slowly than it should, due to needless
+             overwriting of libperl.
+	   ! AUTHORS myldr/file2c.pl myldr/mktmpdir.c
+	   ! myldr/static.c
+____________________________________________________________________________
+[ 10881] By: autrijus                              on 2004/06/16  06:06:30
+        Log: * new gpp with history features from Alan
+	   ! contrib/gui_pp/gpp
+	   ! contrib/gui_pp/gpp_readme.txt
+____________________________________________________________________________
+[ 10725] By: autrijus                              on 2004/06/02  10:05:08
+        Log: * Murat Uenalan reports that on Win32, after fetching
+             the prebuilt .par from CPAN, Makefile.PL will die
+             on failing to write to myldr/par.exe.  Attempting a fix.
+	   ! AUTHORS inc/Module/Install/PRIVATE.pm
+	   ! inc/Module/Install/PRIVATE/PAR.pm
+____________________________________________________________________________
+[ 10717] By: autrijus                              on 2004/05/29  17:54:49
+        Log: * Argh. Broke $alias on "pp -a" for Win32.
+	   ! lib/PAR/Packer.pm
+____________________________________________________________________________
+[ 10716] By: autrijus                              on 2004/05/29  15:32:43
+        Log: * changes.
+	   ! Changes
+____________________________________________________________________________
 [ 10715] By: autrijus                              on 2004/05/29  15:31:21
         Log: * This be PAR, version 0.83.
              * update changelog and todo.
