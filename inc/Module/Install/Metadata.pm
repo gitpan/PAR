@@ -181,7 +181,10 @@ sub version_from {
 sub abstract_from {
     my ($self, $abstract_from) = @_;
     require ExtUtils::MM_Unix;
-    $self->abstract(ExtUtils::MM_Unix->parse_abstract($abstract_from));
+    $self->abstract(
+        bless( { DISTNAME => $self->name }, 'ExtUtils::MM_Unix')
+            ->parse_abstract($abstract_from)
+    );
 }
 
 1;

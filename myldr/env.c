@@ -74,6 +74,15 @@ __findenv(name, offset)
 	return (NULL);
 }
 
+static char *
+par_getenv(name)
+    const char *name;
+{
+    int i;
+
+    return __findenv(name, &i);
+}
+
 /*
  * setenv --
  *	Set the value of the environmental variable "name" to be
@@ -86,7 +95,7 @@ par_setenv(name, value, rewrite)
 	int rewrite;
 {
 	extern char **environ;
-	static int alloced;			/* if allocated space before */
+	static int alloced = 0;         /* if allocated space before */
 	register char *c;
 	unsigned int l_value, offset;
 

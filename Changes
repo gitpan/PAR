@@ -1,4 +1,106 @@
 ____________________________________________________________________________
+[ 10399] By: autrijus                              on 2004/03/16  16:25:41
+        Log: * This be PAR, version 0.80.
+             * don't use File::Temp if we are loading
+             File::Temp itself.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[ 10398] By: autrijus                              on 2004/03/16  16:05:51
+        Log: * remove unused variable "i".
+	   ! myldr/utils.c
+____________________________________________________________________________
+[ 10386] By: autrijus                              on 2004/03/15  10:52:37
+        Log: * nooning's revised test suite, with correct par.pl lookup 
+	   ! contrib/automated_pp_test/automated_pp_test.pl
+____________________________________________________________________________
+[ 10385] By: autrijus                              on 2004/03/15  10:52:22
+        Log: * fix grammo in signature test msg
+	   ! t/0-signature.t
+____________________________________________________________________________
+[ 10382] By: autrijus                              on 2004/03/13  20:18:33
+        Log: * Alan's patch to use par_getenv all the way;
+             this is needed for WinNT to work reliably.
+             * Alan also fixed a bogus rv checking on _findfirst.
+	   ! myldr/env.c myldr/internals.c myldr/main.c
+	   ! myldr/mktmpdir.c myldr/static.c myldr/utils.c
+____________________________________________________________________________
+[ 10380] By: autrijus                              on 2004/03/13  20:16:31
+        Log: * correct a small typo.
+	   ! t/2-pp.t
+____________________________________________________________________________
+[ 10363] By: autrijus                              on 2004/03/11  15:43:55
+        Log: * test our copy of pp, not the installed one.
+	   ! t/2-pp.t
+____________________________________________________________________________
+[ 10362] By: autrijus                              on 2004/03/11  15:41:00
+        Log: * do not run the test if "parl" is not built.
+	   ! t/2-pp.t
+____________________________________________________________________________
+[ 10361] By: autrijus                              on 2004/03/11  15:38:33
+        Log: * rename it to pp.t.
+	  +> t/2-pp.t
+	   - t/2-automated.t
+	   ! MANIFEST
+____________________________________________________________________________
+[ 10360] By: autrijus                              on 2004/03/11  15:35:05
+        Log: * up to newer M::I
+	   ! inc/ExtUtils/AutoInstall.pm
+	   ! inc/Module/Install/Metadata.pm
+____________________________________________________________________________
+[ 10359] By: autrijus                              on 2004/03/11  15:30:35
+        Log: * add the test as part of the standard test suite.
+	   + t/2-automated.t
+	   ! MANIFEST
+____________________________________________________________________________
+[ 10358] By: autrijus                              on 2004/03/11  15:29:58
+        Log: * include Test::More and Test::Builder for Malcolm's test.
+	   + inc/Test/Builder.pm inc/Test/More.pm
+	   ! Makefile.PL
+____________________________________________________________________________
+[ 10357] By: autrijus                              on 2004/03/11  15:29:04
+        Log: * handle the rare case that _find_in_inc returns ().
+	   ! script/pp
+____________________________________________________________________________
+[ 10356] By: autrijus                              on 2004/03/11  15:28:31
+        Log: * move pp_new and ppack into their own subdirs.
+	   + contrib/object_oriented_pp/pp_new
+	   + contrib/object_oriented_pp/ppack
+	   - contrib/pp_new contrib/ppack
+____________________________________________________________________________
+[ 10355] By: autrijus                              on 2004/03/11  15:28:04
+        Log: * incoporate Alan's gpp into contrib/.
+	   + contrib/gui_pp/gpp
+	   + contrib/gui_pp/gpp_readme.txt
+____________________________________________________________________________
+[ 10354] By: autrijus                              on 2004/03/11  15:22:41
+        Log: * Macolm Nooning's excellent test case.
+	   + contrib/automated_pp_test/automated_pp_test.pl
+	   + contrib/automated_pp_test/back_tick_a_command.
+	   + pm contrib/automated_pp_test/hello_tk.pl
+	   + contrib/automated_pp_test/hi.ico
+	   + contrib/automated_pp_test/prior_to_test.pm
+	   + contrib/automated_pp_test/remove_file_and_try_
+	   + executable_again.pm
+	   + contrib/automated_pp_test/test_in_further_subd
+	   + ir.pm
+____________________________________________________________________________
+[ 10328] By: autrijus                              on 2004/03/05  06:51:23
+        Log: * patch from Alan to correctly set PAR_GLOBAL_*.
+	   ! myldr/utils.c script/par.pl
+____________________________________________________________________________
+[ 10327] By: autrijus                              on 2004/03/05  06:16:44
+        Log: * Alan reported VC++ does not like us explicitly
+             declaring environ in main.c.
+	   ! myldr/main.c
+____________________________________________________________________________
+[ 10326] By: autrijus                              on 2004/03/05  06:14:23
+        Log: * changes.
+	   ! Changes
+____________________________________________________________________________
+[ 10314] By: autrijus                              on 2004/03/04  00:31:35
+        Log: * tentative fix for missing 'environ' on NEXTish platforms.
+	   ! myldr/main.c
+____________________________________________________________________________
 [ 10300] By: autrijus                              on 2004/03/03  04:07:09
         Log: * two tiny corrections from Alan.
 	   ! myldr/mktmpdir.c myldr/utils.c

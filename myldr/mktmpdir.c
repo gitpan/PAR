@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #34 $ $Change: 10300 $ $DateTime: 2004/03/03 04:07:09 $
+   $Revision: #35 $ $Change: 10382 $ $DateTime: 2004/03/13 20:18:33 $
    vim: expandtab shiftwidth=4
 */
 
@@ -38,7 +38,7 @@ char *par_mktmpdir ( char **argv ) {
     unsigned char buf[1000];
     unsigned char sha_data[20];
 
-    if ( (val = (char *)getenv("PAR_TEMP")) && strlen(val) ) {
+    if ( (val = (char *)par_getenv("PAR_TEMP")) && strlen(val) ) {
         return strdup(val);
     }
 
@@ -50,7 +50,7 @@ char *par_mktmpdir ( char **argv ) {
     }
 #else
     for ( i = 0 ; username == NULL && strlen(key = user_keys[i]) > 0 ; i++ ) {
-        if ( (val = (char *)getenv(key)) ) {
+        if ( (val = (char *)par_getenv(key)) ) {
             username = strdup(val);
         }
     }
@@ -58,7 +58,7 @@ char *par_mktmpdir ( char **argv ) {
     if ( username == NULL ) username = "SYSTEM";
 
     for ( i = 0 ; tmpdir == NULL && strlen(key = temp_keys[i]) > 0 ; i++ ) {
-        if ( (val = (char *)getenv(key)) &&
+        if ( (val = (char *)par_getenv(key)) &&
              par_lstat(val, &PL_statbuf) == 0 &&
              ( S_ISDIR(PL_statbuf.st_mode) ||
                S_ISLNK(PL_statbuf.st_mode) ) &&
@@ -86,7 +86,7 @@ char *par_mktmpdir ( char **argv ) {
     sprintf(stmpdir, "%s%s%s%s", tmpdir, dir_sep, subdirbuf_prefix, username);
     mkdir(stmpdir, 0755);
 
-    progname = par_findprog(argv[0], getenv("TEMP"));
+    progname = par_findprog(argv[0], par_getenv("TEMP"));
 
     if ( !par_env_clean() && (f = open( progname, O_RDONLY | OPEN_O_BINARY ))) {
         /* "$TEMP/par-$USER/cache-$SHA1" */
@@ -123,7 +123,7 @@ char *par_mktmpdir ( char **argv ) {
     par_setenv(PAR_TEMP, stmpdir);
 
     for ( i = 0 ; strlen(key = ld_path_keys[i]) > 0 ; i++ ) {
-        if ( (val = (char *)getenv(key)) == NULL ) continue;
+        if ( (val = (char *)par_getenv(key)) == NULL ) continue;
 
         if ( strlen(val) == 0 ) {
             par_setenv(key, stmpdir);
@@ -160,7 +160,7 @@ void par_rmtmpdir ( char *stmpdir, int recurse ) {
 
     sprintf(subsubdir, "%s\\*.*", stmpdir);
     hFile = _findfirst( subsubdir, &cur_file );
-    if ( (hFile == ENOENT) || (hFile == EINVAL) ) return;
+    if ( hFile == -1 ) return;
 
     if (!strstr(cur_file.name, "\\")) {
         sprintf(subsubdir, "%s\\%s", stmpdir, cur_file.name);

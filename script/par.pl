@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #100 $ $Change: 10295 $ $DateTime: 2004/03/02 12:40:26 $ vim: expandtab shiftwidth=4
+# $Revision: #101 $ $Change: 10328 $ $DateTime: 2004/03/05 06:51:23 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -628,7 +628,7 @@ sub _set_par_temp {
         if (!$ENV{PAR_CLEAN} and my $mtime = (stat($progname))[9]) {
             my $ctx = eval { require Digest::SHA1; Digest::SHA1->new }
                    || eval { require Digest::MD5; Digest::MD5->new };
-                
+
             if ($ctx and open(my $fh, "<$progname")) {
                 binmode($fh);
                 $ctx->addfile($fh);
@@ -712,7 +712,7 @@ sub _par_init_env {
     if ($ENV{PAR_TEMP}) {
         delete $ENV{PAR_CLEAN};
     }
-    elsif (!$ENV{PAR_CLEAN}) {
+    elsif (!exists $ENV{PAR_GLOBAL_CLEAN}) {
         my $value = substr($par_clean, 12 + length("CLEAN"));
         $ENV{PAR_CLEAN} = $1 if $value =~ /^PAR_CLEAN=(\S+)/;
     }

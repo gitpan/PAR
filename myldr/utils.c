@@ -120,32 +120,30 @@ void par_init_env () {
     char par_clean[] = "__ENV_PAR_CLEAN__               \0";
     char *buf;
 
+    par_unsetenv("PAR_INITIALIZED");
     par_unsetenv("PAR_SPAWNED");
     par_unsetenv("PAR_TEMP");
+    par_unsetenv("PAR_CLEAN");
     par_unsetenv("PAR_DEBUG");
     par_unsetenv("PAR_CACHE");
     par_unsetenv("PAR_PROGNAME");
     par_unsetenv("PAR_ARGC");
     par_unsetenv("PAR_ARGV_0");
 
-    if ( (buf = getenv("PAR_GLOBAL_DEBUG")) != NULL ) {
+    if ( (buf = par_getenv("PAR_GLOBAL_DEBUG")) != NULL ) {
         par_setenv("PAR_DEBUG", buf);
     }
 
-    if ( (buf = getenv("PAR_GLOBAL_TEMP")) != NULL ) {
+    if ( (buf = par_getenv("PAR_GLOBAL_TEMP")) != NULL ) {
         par_setenv("PAR_TEMP", buf);
-        par_unsetenv("PAR_CLEAN");
     }
-    else if ( (buf = getenv("PAR_GLOBAL_CLEAN")) != NULL ) {
+    else if ( (buf = par_getenv("PAR_GLOBAL_CLEAN")) != NULL ) {
         par_setenv("PAR_CLEAN", buf);
     }
     else {
         buf = par_clean + 12 + strlen("CLEAN");
         if (strncmp(buf, "PAR_CLEAN=", strlen("PAR_CLEAN=")) == 0) {
             par_setenv("PAR_CLEAN", buf + strlen("PAR_CLEAN="));
-        }
-        else {
-            par_unsetenv("PAR_CLEAN");
         }
     }
 
@@ -158,7 +156,7 @@ int par_env_clean () {
     static int rv = -1;
 
     if (rv == -1) {
-        char *buf = getenv("PAR_CLEAN");
+        char *buf = par_getenv("PAR_CLEAN");
         rv = ( ((buf == NULL) || (*buf == '\0') || (*buf == '0')) ? 0 : 1);
     }
 

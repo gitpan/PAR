@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #57 $ $Change: 10062 $ $DateTime: 2004/02/15 22:36:52 $
+# $Revision: #58 $ $Change: 10358 $ $DateTime: 2004/03/11 15:29:58 $
 
 use 5.006;
 use inc::Module::Install;
@@ -10,7 +10,8 @@ abstract    ('Perl Archive Tookit');
 version_from('lib/PAR.pm');
 license	    ('perl');
 
-requires    ('File::Temp');
+requires    ('perl'             => 5.006);
+requires    ('File::Temp'       => 0.05);
 requires    ('Compress::Zlib'	=> ($^O eq 'MSWin32') ? 1.16 : 1.30);
 requires    ('Archive::Zip'	=> 1.00);
 requires    ('Module::ScanDeps'	=> 0.37);
@@ -33,6 +34,7 @@ features    (
      (eval { require Crypt::OpenPGP; 1 } or can_run('gpg'));
 
 include('ExtUtils::AutoInstall');
+include_deps('Test::More');
 
 sign(1);
 auto_install( -default => 0 );

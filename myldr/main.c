@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #47 $ $Change: 10299 $ $DateTime: 2004/03/03 01:01:23 $
+   $Revision: #50 $ $Change: 10382 $ $DateTime: 2004/03/13 20:18:33 $
    vim: expandtab shiftwidth=4
 */
 
@@ -22,6 +22,17 @@ extern char load_me_2[];
 static char *stmpdir;
 static int options_count;
 static char **fakeargv;
+
+#if defined(NeXT) || defined(__NeXT)
+#    include <mach-o/dyld.h>
+#    define environ (*environ_pointer)
+EXT char *** environ_pointer;
+#else
+#    if defined(PERL_DARWIN)
+#        include <crt_externs.h>
+#        define environ (*_NSGetEnviron())
+#    endif
+#endif
 
 #ifdef HASX_PROCSELFEXE
 /* This is a function so that we don't hold on to MAXPATHLEN
@@ -136,9 +147,9 @@ int main ( int argc, char **argv, char **env )
 
     perl_destruct( my_perl );
 
-    if ( getenv("PAR_SPAWNED") == NULL ) {
+    if ( par_getenv("PAR_SPAWNED") == NULL ) {
         if ( stmpdir == NULL ) {
-            stmpdir = getenv("PAR_TEMP");
+            stmpdir = par_getenv("PAR_TEMP");
         }
         if ( stmpdir != NULL ) {
             par_cleanup(stmpdir);

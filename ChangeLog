@@ -1,9 +1,12 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #35 $ $Change: 10297 $ $DateTime: 2004/03/02 12:51:26 $
+# $Revision: #36 $ $Change: 10400 $ $DateTime: 2004/03/16 16:59:01 $
 
-[Changes for 0.80 - tentative]
+[Changes for 0.80 - March 17, 2004]
 
 * New Features
+
+    - A comprehensive test suite for pp in contrib/automated_pp_test/.
+      It is run as part of the "make test" process from t/2-pp.t.
 
     - Much better support for "pp -i" and "pp -N" (--icon/--info)
       using the Win32::Exe module.  You may now use EXE and DLL as
@@ -24,11 +27,15 @@
 
     - The user-settable PAR_CLEAN and PAR_TEMP environment variables has
       been renamed to PAR_GLOBAL_CLEAN and PAR_GLOBAL_TEMP; the original
-      variables is still preserved within the program.  This is so that a
+      variables are still accessible within the program.  This is so that a
       pp-generated program can exec() or system() another one without
       crippling its environment variables.
 
     - File lookups are now case-insensitive on case-insensitive filesystems.
+
+    - Another Tk-based GUI in contrib/gui_pp/; not installed by default.
+
+    - OOified "pp" in contrib/object_oriented_pp/; not installed by default.
 
 * Bug fixes
     

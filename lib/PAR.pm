@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #67 $ $Change: 10296 $ $DateTime: 2004/03/02 12:45:32 $ vim: expandtab shiftwidth=4
+# $Revision: #68 $ $Change: 10399 $ $DateTime: 2004/03/16 16:25:41 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.79_99';
+$PAR::VERSION = '0.80';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.79_99 of PAR, released March 3, 2004.
+This document describes version 0.80 of PAR, released March 17, 2004.
 
 =head1 SYNOPSIS
 
@@ -469,15 +469,17 @@ sub _tempfile {
     if ($ENV{PAR_CLEAN} or !@_) {
         require File::Temp;
 
-        # under Win32, the file is created with O_TEMPORARY,
-        # and will be deleted by the C runtime; having File::Temp
-        # delete it has the only effect of giving ugly warnings
-        my ($fh, $filename) = File::Temp::tempfile(
-            DIR     => $par_temp,
-            UNLINK  => ($^O ne 'MSWin32'),
-        ) or die "Cannot create temporary file: $!";
-        binmode($fh);
-        return ($fh, 1, $filename);
+        if (defined &File::Temp::tempfile) {
+            # under Win32, the file is created with O_TEMPORARY,
+            # and will be deleted by the C runtime; having File::Temp
+            # delete it has the only effect of giving ugly warnings
+            my ($fh, $filename) = File::Temp::tempfile(
+                DIR     => $par_temp,
+                UNLINK  => ($^O ne 'MSWin32'),
+            ) or die "Cannot create temporary file: $!";
+            binmode($fh);
+            return ($fh, 1, $filename);
+        }
     }
 
     require File::Spec;

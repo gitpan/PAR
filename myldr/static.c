@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/static.c $ $Author: autrijus $
-   $Revision: #31 $ $Change: 10299 $ $DateTime: 2004/03/03 01:01:23 $
+   $Revision: #32 $ $Change: 10382 $ $DateTime: 2004/03/13 20:18:33 $
    vim: expandtab shiftwidth=4
 */
 
@@ -80,7 +80,7 @@ int main ( int argc, char **argv, char **env )
     par_init_env();
     par_mktmpdir( argv );
 
-    stmpdir = (char *)getenv("PAR_TEMP");
+    stmpdir = (char *)par_getenv("PAR_TEMP", &i);
     if ( stmpdir != NULL ) {
         i = mkdir(stmpdir, 0755);
         if ( (i != 0) && (i != EEXIST) && (i != -1) ) {
@@ -96,7 +96,7 @@ int main ( int argc, char **argv, char **env )
         close(i); chmod(my_file, 0755);
     }
 
-    my_file = par_basename(par_findprog(argv[0], getenv("PATH")));
+    my_file = par_basename(par_findprog(argv[0], par_getenv("PATH", &i)));
 
     i = my_mkfile( argv[0], stmpdir, my_file );
     if ( !i ) return 2;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #116 $ $Change: 10295 $ $DateTime: 2004/03/02 12:40:26 $ vim: expandtab shiftwidth=4
+# $Revision: #117 $ $Change: 10357 $ $DateTime: 2004/03/11 15:29:04 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -93,7 +93,7 @@ sub compile_par {
     unshift @INC, @{opt(I) || []};
     unshift @SharedLibs, map _find_shlib($_), @{opt(l) || []};
 
-    my %skip = map { (Module::ScanDeps::_find_in_inc($_) => 1) } @exclude;
+    my %skip = map { $_, 1 } map Module::ScanDeps::_find_in_inc($_), @exclude;
     my @files = ((map Module::ScanDeps::_find_in_inc($_), @modules), @Input);
     my $scan_dispatch = (
         opt(n) ? \&Module::ScanDeps::scan_deps_runtime
@@ -113,7 +113,7 @@ sub compile_par {
     );
 
     # Reset the exclusion list so we won't implicitly ignore files in -M
-    %skip = map { (Module::ScanDeps::_find_in_inc($_) => 1) } @exclude;
+    %skip = map { $_, 1 } map Module::ScanDeps::_find_in_inc($_), @exclude;
 
     Module::ScanDeps::add_deps(
         rv      => \%map,

@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/internals.c $ $Author: autrijus $
-   $Revision: #21 $ $Change: 10229 $ $DateTime: 2004/02/29 01:34:30 $
+   $Revision: #22 $ $Change: 10382 $ $DateTime: 2004/03/13 20:18:33 $
    vim: expandtab shiftwidth=4
 */
 
@@ -22,7 +22,7 @@ XS(XS_Internals_PAR_BOOT) {
 
     TAINT;
 
-    if (!(buf = getenv("PAR_INITIALIZED")) || buf[0] != '1' || buf[1] != '\0') {
+    if (!(buf = par_getenv("PAR_INITIALIZED")) || buf[0] != '1' || buf[1] != '\0') {
         par_init_env();
     }
 
@@ -51,7 +51,7 @@ XS(XS_Internals_PAR_BOOT) {
     }
 
     if ((tmpgv = gv_fetchpv("0", TRUE, SVt_PV))) {/* $0 */
-        if ( ( stmpdir = getenv("PAR_TEMP") ) ) {
+        if ( ( stmpdir = par_getenv("PAR_TEMP") ) ) {
             sv_setpv(GvSV(tmpgv), fakeargv[0]);
         }
         else
@@ -88,7 +88,7 @@ XS(XS_Internals_PAR_BOOT) {
     PL_compcv = 0;
 
     /* create temporary PAR directory */
-    stmpdir = getenv("PAR_TEMP");
+    stmpdir = par_getenv("PAR_TEMP");
     if ( stmpdir == NULL ) {
         stmpdir = par_mktmpdir( fakeargv );
 #ifndef WIN32
@@ -113,4 +113,3 @@ static void par_xs_init(pTHX)
     newXSproto("Internals::PAR::CLEARSTACK", XS_Internals_PAR_CLEARSTACK, "", "");
 #endif
 }
-
