@@ -23,7 +23,7 @@ WriteMakefile(
 	'script/pp',
 	$have_cc ? ("script/par$Config{_exe}") : (),
     ],
-    NEEDS_LINKING	=> 0,
+    NEEDS_LINKING	=> 1,
 
     PREREQ_PM		=> {
 	'Archive::Zip'	    => 1.0,

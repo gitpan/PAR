@@ -1,4 +1,35 @@
 ____________________________________________________________________________
+[  2105] By: autrijus                              on 2002/11/13  11:00:51
+        Log: * This be 0.48, the "ActivePerl 5.6 works" edition.
+	   ! PAR.pm
+____________________________________________________________________________
+[  2104] By: autrijus                              on 2002/11/13  10:59:21
+        Log: * turns out that Win32 doesn't need UNLINK => 1 at all.
+	   ! PAR.pm script/par.pl
+____________________________________________________________________________
+[  2103] By: autrijus                              on 2002/11/13  10:58:51
+        Log: * when we say -q we mean -q.
+	   ! script/pp
+____________________________________________________________________________
+[  2102] By: autrijus                              on 2002/11/13  09:55:09
+        Log: * in earlier perl there's no returning of _destruct.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  2101] By: autrijus                              on 2002/11/13  09:51:40
+        Log: * handles ithreads initiation.
+             * fixed ActiverPerl 5.6's memory allocation problem
+             reported by Glenn and Hirosi Taguti.
+	   ! myldr/main.c
+____________________________________________________________________________
+[  2100] By: autrijus                              on 2002/11/13  09:48:48
+        Log: * fix suffixes used by temporary perl modules
+             * merge Mattia's PAR.pm patch to par.pl.
+	   ! script/par.pl
+____________________________________________________________________________
+[  2077] By: autrijus                              on 2002/11/10  09:20:23
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  2076] By: autrijus                              on 2002/11/10  06:34:19
         Log: * This be 0.47.
 	   ! myldr/main.c

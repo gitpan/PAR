@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #5 $ $Change: 2076 $ $DateTime: 2002/11/10 06:34:19 $ */
+   $Revision: #7 $ $Change: 2102 $ $DateTime: 2002/11/13 09:55:09 $ */
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -14,7 +14,6 @@
 #define OP_MAPSTART OP_GREPSTART
 
 static PerlInterpreter *my_perl;
-static void dl_init(pTHX);
 
 #ifdef HAS_PROCSELFEXE
 /* This is a function so that we don't hold on to MAXPATHLEN
@@ -60,16 +59,31 @@ int main( int argc, char **argv, char **env )
     GV* tmpgv;
     int options_count;
 
+#if defined(USE_ITHREADS)
+    /* XXX Ideally, this should really be happening in perl_alloc() or
+     * perl_construct() to keep libperl.a transparently fork()-safe.
+     * It is currently done here only because Apache/mod_perl have
+     * problems due to lack of a call to cancel pthread_atfork()
+     * handlers when shared objects that contain the handlers may
+     * be dlclose()d.  This forces applications that embed perl to
+     * call PTHREAD_ATFORK() explicitly, but if and only if it hasn't
+     * been called at least once before in the current process.
+     * --GSAR 2001-07-20 */
+    PTHREAD_ATFORK(Perl_atfork_lock,
+                   Perl_atfork_unlock,
+                   Perl_atfork_unlock);
+#endif
+
     if (!PL_do_undump) {
         my_perl = perl_alloc();
         if (!my_perl)
             exit(1);
         perl_construct( my_perl );
         PL_perl_destruct_level = 0;
-#ifdef PERL_EXIT_DESTRUCT_END
-        PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
-#endif
     }
+#ifdef PERL_EXIT_DESTRUCT_END
+    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+#endif /* PERL_EXIT_DESTRUCT_END */
 
 #ifdef CSH
     if (!PL_cshlen)
@@ -98,10 +112,14 @@ int main( int argc, char **argv, char **env )
     fakeargv[argc + options_count - 1] = 0;
 
     exitstatus = perl_parse(my_perl, xs_init, argc + options_count - 1,
-                            fakeargv, NULL);
+                            fakeargv, (char **)NULL);
 
-    if (exitstatus)
+    if (exitstatus) {
+	perl_destruct(my_perl);
+        perl_free(my_perl);
+        PERL_SYS_TERM();
         exit( exitstatus );
+    }
 
     TAINT;
 
@@ -138,8 +156,6 @@ int main( int argc, char **argv, char **env )
 
     PERL_SYS_TERM();
 
-    exit( exitstatus );
-
-    return 0;
+    return exitstatus;
 }
 

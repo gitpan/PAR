@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #9 $ $Change: 2073 $ $DateTime: 2002/11/09 23:35:00 $
+# $Revision: #10 $ $Change: 2103 $ $DateTime: 2002/11/13 10:58:51 $
 
 use 5.006;
 use strict;
@@ -138,7 +138,7 @@ YAML
 sub par_to_exe { 
     my $PAR = _can_run("par$Config{_exe}") or _die("can't find par executable");
     vprint 0, "Running $PAR -q -B -O$Output $par_file";
-    system($PAR, "-B", "-O$Output", $par_file);
+    system($PAR, "-q", "-B", "-O$Output", $par_file);
 }
 
 sub generate_code { 

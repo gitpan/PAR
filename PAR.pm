@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #44 $ $Change: 2075 $ $DateTime: 2002/11/10 06:33:51 $
+# $Revision: #46 $ $Change: 2105 $ $DateTime: 2002/11/13 11:00:51 $
 
 package PAR;
-$PAR::VERSION = '0.47';
+$PAR::VERSION = '0.48';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.47 of PAR, released November 10, 2002.
+This document describes version 0.48 of PAR, released November 13, 2002.
 
 =head1 SYNOPSIS
 
@@ -245,9 +245,7 @@ sub _tmpfile {
 	# under Win32, the file is created with O_TEMPORARY,
 	# and will be deleted by the C runtime; having File::Temp
 	# delete it has the only effect of giving an ugly warnings
-	local *File::Temp::_deferred_unlink = sub {} if $^O eq 'MSWin32';
-
-	$fh = File::Temp::tempfile( UNLINK => 1)
+	$fh = File::Temp::tempfile( UNLINK => ($^O ne 'MSWin32') )
 	    or die "Cannot create temporary file: $!";
     }
     return $fh;

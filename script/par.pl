@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #26 $ $Change: 2070 $ $DateTime: 2002/11/09 22:35:42 $
+# $Revision: #28 $ $Change: 2104 $ $DateTime: 2002/11/13 10:59:21 $
 
 package __par_pl;
 
@@ -242,7 +242,7 @@ my ($start_pos, $data_pos);
 	    return $fh;
 	}
 	else {
-	    my ($out, $name) = _tempfile($ext);
+	    my ($out, $name) = _tempfile('.pm');
 	    binmode($out);
 	    print $out $$filename;
 	    close $out;
@@ -452,9 +452,12 @@ sub _tempfile {
     my $ext = shift;
     
     if (defined &File::Temp::tempfile) {
+	# under Win32, the file is created with O_TEMPORARY,
+	# and will be deleted by the C runtime; having File::Temp
+	# delete it has the only effect of giving an ugly warnings
 	return File::Temp::tempfile(
 	    SUFFIX	=> $ext,
-	    UNLINK	=> 1
+	    UNLINK	=> ($^O ne 'MSWin32'),
 	);
     }
     else {
