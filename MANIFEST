@@ -1,9 +1,8 @@
 AUTHORS
 ChangeLog
 Changes
-contrib/file2resourceadder.c
-contrib/replaceicon.exe
-contrib/replaceicon.html
+contrib/pp_new
+contrib/ppack
 inc/ExtUtils/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
@@ -19,6 +18,7 @@ inc/Module/Install/PRIVATE/PAR.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/App/Packer/Backend/PAR.pm
+lib/App/Packer/Temp.pm
 lib/PAR.pm
 lib/PAR/FAQ.pod
 lib/PAR/Filter.pm
@@ -40,6 +40,7 @@ myldr/Makefile.PL
 myldr/mktmpdir.c
 myldr/mktmpdir.h
 myldr/parlsig.pl
+myldr/sha1.c
 myldr/static.c
 myldr/utils.c
 myldr/win32.res

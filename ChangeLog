@@ -1,5 +1,40 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #32 $ $Change: 9630 $ $DateTime: 2004/01/08 10:59:30 $
+# $Revision: #33 $ $Change: 10063 $ $DateTime: 2004/02/15 23:00:43 $
+
+[Changes for 0.80 - tentative]
+
+* New Features
+
+    - Much better support for "pp -i" and "pp -N" (--icon/--info)
+      using the Win32::Exe module.  You may now use EXE and DLL as
+      icon files.
+
+    - If PAR_CLEAN (-C, --clean) is not set, we now preemptively
+      extracts files under the cache directory.  That made POSIX.pm
+      and other modules that depends on %INC pointing to real files
+      work correctly.
+
+    - Now uses SHA-1 to create temporary directories and files,
+      instead of mtime.
+
+    - Verbosity level is now 1..3, not 0..5; "pp -v" now takes
+      an optional integer, so "pp -v input.pl" is no longer an error.
+
+    - New flags "-vv" and "-vvv", as shorthands for "-v 2" and "-v 3".
+
+* Bug fixes
+    
+    - "pp -d" (--dependent) prevented "pp -C" (--clean) from working.
+
+    - The "pp -m" (--multiarch) option was implemented incorrectly
+      and thus broken.
+
+    - Many documentation tweaks.
+
+    - Previously, "pp -M" (--module) did not add the module itself,
+      only its dependencies.
+
+    - Suppress a bogus warning when $ENV{$Config{ldlibpthname}} is empty.
 
 [Changes for 0.79 - January 8, 2004]
 

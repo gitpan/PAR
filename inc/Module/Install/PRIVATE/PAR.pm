@@ -1,6 +1,6 @@
 #line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.2/Module/Install/PRIVATE/PAR.pm"
 # $File: //member/autrijus/Module-Install-PRIVATE/lib/Module/Install/PRIVATE/PAR.pm $ $Author: autrijus $
-# $Revision: #12 $ $Change: 9361 $ $DateTime: 2003/12/20 01:10:25 $ vim: expandtab shiftwidth=4
+# $Revision: #13 $ $Change: 10065 $ $DateTime: 2004/02/15 23:11:28 $ vim: expandtab shiftwidth=4
 
 package Module::Install::PRIVATE::PAR;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
@@ -64,9 +64,6 @@ sub Autrijus_PAR {
             'script/tkpp',
           (!$par and $cc) ? (
             "script/parl$exe",
-            ($^O eq 'MSWin32' and Win32::IsWinNT()) ? (
-                "contrib/replaceicon$exe",
-            ) : (),
             $dynperl ? (
                 "script/parldyn$exe",
             ) : (),

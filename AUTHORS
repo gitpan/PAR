@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #49 $ $Change: 9604 $ $DateTime: 2004/01/04 18:08:49 $
+# $Revision: #52 $ $Change: 10063 $ $DateTime: 2004/02/15 23:00:43 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
@@ -22,6 +22,7 @@ Bruce Winter
 Chia-Liang Kao		(CLKAO)
 Cosimo Streppone	(COSIMO)
 D. Menzel
+Daniel Cohen-Laroque
 Daniel Shane		(DSHANE)
 Doug Gruber
 Doug Miles
@@ -47,6 +48,8 @@ Jouke Visser		(JOUKE)
 Karl Forner
 Lindsay Morris
 Luc Willems
+Malcolm Nooning
+Marcus Ramberg		(MRAMBERG)
 Markus Jansen
 Martin Fabiani
 Matt Sergeant		(MSERGEANT)

@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #94 $ $Change: 9608 $ $DateTime: 2004/01/04 20:17:28 $ vim: expandtab shiftwidth=4
+# $Revision: #98 $ $Change: 9867 $ $DateTime: 2004/02/02 23:24:48 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -32,18 +32,18 @@ To manipulate a I<PAR distribution>:
 
 To use F<Hello.pm> from F<./foo.par>:
 
-    % par.pl -A./foo.par -MHello 
+    % par.pl -A./foo.par -MHello
     % par.pl -A./foo -MHello    # the .par part is optional
 
 Same thing, but search F<foo.par> in the F<@INC>;
 
-    % par.pl -Ifoo.par -MHello 
+    % par.pl -Ifoo.par -MHello
     % par.pl -Ifoo -MHello      # ditto
 
 Run F<test.pl> or F<script/test.pl> from F<foo.par>:
 
     % par.pl foo.par test.pl    # looks for 'main.pl' by default,
-                                # otherwise run 'test.pl' 
+                                # otherwise run 'test.pl'
 
 To make a self-containing script containing a PAR file :
 
@@ -97,7 +97,7 @@ PAR file:
     % ./myapp                   # run it anywhere without perl binaries
 
 With the C<--par-options> flag, generated binaries can act as C<parl>
-to pack new binaries: 
+to pack new binaries:
 
     % ./myapp --par-options -Omyap2 myapp.par   # identical to ./myapp
     % ./myapp --par-options -Omyap3 myap3.par   # now with different PAR
@@ -151,10 +151,10 @@ followed by a 8-bytes magic string: "C<\012PAR.pm\012>".
 =cut
 
 my ($par_temp, $progname, @tmpfile);
-END { if (@tmpfile) {
+END { if ($ENV{PAR_CLEAN}) {
     unlink @tmpfile;
     rmdir $par_temp;
-    $par_temp =~ s{[^\\/]*$}{};
+    $par_temp =~ s{[^\\/]*[\\/]?$}{};
     rmdir $par_temp;
 } }
 
@@ -180,6 +180,11 @@ my %Config = (
 _par_init_env();
 _set_progname();
 _set_par_temp();
+
+# Append ".exe" to $0 if it was missing
+$0 .= $Config{_exe} if $Config{_exe}
+    and $progname =~ /\Q$Config{_exe}\E$/
+    and $0 !~ /\Q$Config{_exe}\E$/;
 
 # Magic string checking and extracting bundled modules {{{
 my ($start_pos, $data_pos);
@@ -242,6 +247,7 @@ my ($start_pos, $data_pos);
             $PAR::Heavy::ModuleCache{$fullname} = {
                 buf => $buf,
                 crc => $crc,
+                name => $fullname,
             };
         }
         read _FH, $buf, 4;
@@ -432,7 +438,7 @@ if ($out) {
         } grep {
             !/BSDPAN/
         } grep {
-            ($bundle ne 'site') or 
+            ($bundle ne 'site') or
             ($_ ne $Config::Config{archlibexp} and
              $_ ne $Config::Config{privlibexp});
         } @INC;
@@ -472,7 +478,10 @@ if ($out) {
 
             next unless defined $name and not $written{$name}++;
             next if !ref($file) and $file =~ /\.\Q$lib_ext\E$/;
-            outs(qq(Packing "$file"...));
+            outs( join "",
+                qq(Packing "), ref $file ? $file->{name} : $file,
+                qq("...)
+            );
 
             my $content;
             if (ref($file)) {
@@ -608,7 +617,17 @@ sub _set_par_temp {
         my $stmpdir = "$path$Config{_delim}par-$username";
         mkdir $stmpdir, 0755;
         if (!$ENV{PAR_CLEAN} and my $mtime = (stat($progname))[9]) {
-            $stmpdir .= "$Config{_delim}cache-$mtime";
+            my $ctx = eval { require Digest::SHA1; Digest::SHA1->new }
+                   || eval { require Digest::MD5; Digest::MD5->new };
+                
+            if ($ctx and open(my $fh, "<$progname")) {
+                binmode($fh);
+                $ctx->addfile($fh);
+                close($fh);
+            }
+
+            $stmpdir .= "$Config{_delim}cache-"
+                     . ( $ctx ? $ctx->hexdigest : $mtime );
         }
         else {
             $ENV{PAR_CLEAN} = 1;
@@ -626,7 +645,7 @@ sub _set_par_temp {
 sub _tempfile {
     my ($ext, $crc) = @_;
     my ($fh, $filename);
-    
+
     $filename = "$par_temp/$crc$ext";
 
     if ($ENV{PAR_CLEAN}) {
@@ -650,6 +669,7 @@ sub _set_progname {
 
     if (-s "$progname$Config{_exe}") {
         $ENV{PAR_PROGNAME} = $progname = "$progname$Config{_exe}";
+        $0 .= $Config{_exe};
         return $progname;
     }
 

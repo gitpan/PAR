@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/tkpp $ $Author: autrijus $
-# $Revision: #12 $ $Change: 9518 $ $DateTime: 2003/12/31 14:09:50 $ vim: expandtab shiftwidth=4
+# $Revision: #13 $ $Change: 10027 $ $DateTime: 2004/02/13 22:56:52 $ vim: expandtab shiftwidth=4
 
 our $VERSION = '1.11';
 
@@ -65,7 +65,7 @@ be written in the user's home directory.
 
 =head2 Verbose (--verbose)
 
-Increase verbosity of output; from 0 to 5, 5 being the most verbose.
+Increase verbosity of output; from 1 to 3, 3 being the most verbose.
 This option is ignored if logging is not enabled.
 
 =head2 Build
@@ -332,7 +332,7 @@ my $guicheck      = $frame3->Checkbutton(
         )
     ),
     (   $verboselevelbox = $frame3->Optionmenu(
-            -options => [ 5, 4, 3, 2, 1 ],
+            -options => [ 3, 2, 1 ],
             -variable => \$verboselevel,
         )
     )
@@ -361,7 +361,7 @@ $frame3balloon->attach(
 $frame3balloon->attach(
     $verboselevelbox,
     -balloonposition => "mouse",
-    -balloonmsg => "The verbosity level from 0 to 5, 5 being the most verbose"
+    -balloonmsg => "The verbosity level from 1 to 3, 3 being the most verbose"
 );
 
 # make the bottom frame

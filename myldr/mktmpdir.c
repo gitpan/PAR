@@ -1,11 +1,17 @@
 /* $File: //member/autrijus/PAR/myldr/mktmpdir.c $ $Author: autrijus $
-   $Revision: #28 $ $Change: 9629 $ $DateTime: 2004/01/07 16:50:29 $
+   $Revision: #29 $ $Change: 9659 $ $DateTime: 2004/01/10 19:08:20 $
    vim: expandtab shiftwidth=4
 */
 
 #include "mktmpdir.h"
 
 #define PAR_TEMP "PAR_TEMP"
+
+#ifdef O_BINARY
+#  define OPEN_O_BINARY O_BINARY
+#else
+#  define OPEN_O_BINARY 0
+#endif
 
 char *par_mktmpdir ( char **argv ) {
     int i;
@@ -26,6 +32,11 @@ char *par_mktmpdir ( char **argv ) {
     char *progname = NULL, *username = NULL;
     char *ld_path_env, *par_temp_env;
     char *stmpdir;
+    int f, j, k;
+    char sha1[41];
+    SHA_INFO sha_info;
+    unsigned char buf[1000];
+    unsigned char sha_data[20];
 
     if ( (val = (char *)getenv("PAR_TEMP")) ) return strdup(val);
 
@@ -77,13 +88,23 @@ char *par_mktmpdir ( char **argv ) {
 
     progname = par_findprog(argv[0], getenv("TEMP"));
 
-    if ( !par_env_clean() && (par_lstat(progname, &PL_statbuf) == 0)) {
-        /* "$TEMP/par-$USER/cache-$MTIME" */
-
+    if ( !par_env_clean() && (f = open( progname, O_RDONLY | OPEN_O_BINARY ))) {
+        /* "$TEMP/par-$USER/cache-$SHA1" */
+        sha_init( &sha_info );
+        while( ( j = read( f, buf, sizeof( buf ) ) ) > 0 )
+        {
+            sha_update( &sha_info, buf, j );
+        }
+        close( f );
+        sha_final( sha_data, &sha_info );
+        for( k = 0; k < 20; k++ )
+        {
+            sprintf( sha1+k*2, "%02x", sha_data[k] );
+        }
         sprintf(
             stmpdir,
-            "%s%scache-%u%s",
-            stmpdir, dir_sep, PL_statbuf.st_mtime, subdirbuf_suffix
+            "%s%scache-%s%s",
+            stmpdir, dir_sep, sha1, subdirbuf_suffix
         );
     }
     else {

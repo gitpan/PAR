@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #56 $ $Change: 9630 $ $DateTime: 2004/01/08 10:59:30 $ vim: expandtab shiftwidth=4
+# $Revision: #63 $ $Change: 10062 $ $DateTime: 2004/02/15 22:36:52 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.79';
+$PAR::VERSION = '0.79_97';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.79 of PAR, released January 8, 2004.
+This document describes version 0.79_97 of PAR, released February 16, 2004.
 
 =head1 SYNOPSIS
 
@@ -119,7 +119,7 @@ Please see L</SYNOPSIS> for most typical use cases.
 Settings in F<META.yml> packed inside the PAR file may affect PAR's
 operation.  For example, F<pp> provides the C<-C> (C<--clean>) option
 to control the default behavior of temporary file creation.
- 
+
 Currently, F<pp>-generated PAR files may attach four PAR-specific
 attributes in F<META.yml>:
 
@@ -152,12 +152,14 @@ If both are not set, use C<I<TEMP>\par-I<USER>\temp-I<MTIME>\>
 as the I<PAR_TEMP>, reusing any existing files inside.  I<MTIME>
 is the last-modified timestamp of the program.
 
+=back
+
 =cut
 
 use vars qw(@PAR_INC);  # explicitly stated PAR library files
 use vars qw(%PAR_INC);  # sets {$par}{$file} for require'd modules
 use vars qw(@LibCache %LibCache);       # I really miss pseudohash.
-use vars qw($LastAccessedPAR);
+use vars qw($LastAccessedPAR $LastTempFile);
 
 my $ver  = $Config{version};
 my $arch = $Config{archname};
@@ -192,6 +194,8 @@ sub import {
     if (unpar($0)) {
         # XXX - handle META.yml here!
         push @PAR_INC, unpar($0, undef, undef, 1);
+
+        _extract_inc($0) unless $ENV{PAR_CLEAN};
 
         my $zip = $LibCache{$0};
         my $member = $zip->memberNamed("script/main.pl")
@@ -235,6 +239,20 @@ sub _run_member {
     { do 'main'; die $@ if $@; exit }
 }
 
+sub _extract_inc {
+    my $file = shift;
+    my $inc = "$par_temp/inc";
+
+    if (!-d $inc) {
+        for (1 .. 10) { mkdir("$inc.lock", 0755) and last; sleep 1 }
+        Archive::Zip->new($file)->extractTree( '' => "$inc/" );
+        rmdir("$inc.lock");
+    }
+
+    unshift @INC, grep -d, map join('/', $inc, @$_),
+        [ 'lib' ], [ 'arch' ], [ $arch ], [ $ver ], [ $ver, $arch ], [];
+}
+
 sub find_par {
     my ($self, $file, $member_only) = @_;
 
@@ -250,6 +268,7 @@ sub find_par {
         }
         my $rv = unpar($path, $file, $member_only, 1) or next;
         $PAR_INC{$path}{$file} = 1;
+        $INC{$file} = $LastTempFile if (lc($file) =~ /^(?!tk).*\.pm$/);
         return $rv;
     }
 
@@ -369,7 +388,8 @@ sub unpar {
 
     return $member if $member_only;
 
-    my ($fh, $is_new) = _tempfile($member->crc32String . ".pm");
+    my ($fh, $is_new);
+    ($fh, $is_new, $LastTempFile) = _tempfile($member->crc32String . ".pm");
     die "Bad Things Happened..." unless $fh;
 
     if ($is_new) {
@@ -401,7 +421,19 @@ sub _set_par_temp {
         my $stmpdir = File::Spec->catdir($path, "par-$username");
         mkdir $stmpdir, 0755;
         if (!$ENV{PAR_CLEAN} and my $mtime = (stat($progname))[9]) {
-            $stmpdir = File::Spec->catdir($stmpdir, "cache-$mtime");
+            my $ctx = eval { require Digest::SHA1; Digest::SHA1->new }
+                   || eval { require Digest::MD5; Digest::MD5->new };
+                
+            if ($ctx and open(my $fh, "<$progname")) {
+                binmode($fh);
+                $ctx->addfile($fh);
+                close($fh);
+            }
+
+            $stmpdir = File::Spec->catdir(
+                $stmpdir,
+                "cache-" . ( $ctx ? $ctx->hexdigest : $mtime )
+            );
         }
         else {
             $ENV{PAR_CLEAN} = 1;
@@ -423,12 +455,12 @@ sub _tempfile {
         # under Win32, the file is created with O_TEMPORARY,
         # and will be deleted by the C runtime; having File::Temp
         # delete it has the only effect of giving ugly warnings
-        my $fh = File::Temp::tempfile(
+        my ($fh, $filename) = File::Temp::tempfile(
             DIR     => $par_temp,
             UNLINK  => ($^O ne 'MSWin32'),
         ) or die "Cannot create temporary file: $!";
         binmode($fh);
-        return ($fh, 1);
+        return ($fh, 1, $filename);
     }
 
     require File::Spec;
@@ -436,12 +468,12 @@ sub _tempfile {
     if (-r $filename) {
         open my $fh, '<', $filename or die $!;
         binmode($fh);
-        return ($fh, 0);
+        return ($fh, 0, $filename);
     }
 
     open my $fh, '+>', $filename or die $!;
     binmode($fh);
-    return ($fh, 1);
+    return ($fh, 1, $filename);
 }
 
 sub _set_progname {

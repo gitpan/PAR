@@ -1,4 +1,159 @@
 ____________________________________________________________________________
+[ 10063] By: autrijus                              on 2004/02/15  23:00:43
+        Log: * This be PAR, version 0.79_97.
+             * Update various documentations.
+	   - contrib/file2resourceadder.c
+	   - contrib/replaceicon.exe
+	   - contrib/replaceicon.html
+	   ! AUTHORS ChangeLog MANIFEST TODO
+	   ! lib/App/Packer/Backend/PAR.pm script/pp
+____________________________________________________________________________
+[ 10062] By: autrijus                              on 2004/02/15  22:36:52
+        Log: * bump version to 0.79_97.
+             * bump dependency to Win32::Exe 0.04.
+	   ! Makefile.PL lib/PAR.pm
+____________________________________________________________________________
+[ 10061] By: autrijus                              on 2004/02/15  22:33:33
+        Log: * alright, it really, really works.
+	   ! script/pp
+____________________________________________________________________________
+[ 10059] By: autrijus                              on 2004/02/15  22:19:24
+        Log: * ok, it's confirmed as working.
+	   ! script/pp
+____________________________________________________________________________
+[ 10056] By: autrijus                              on 2004/02/15  21:58:39
+        Log: * try adapting to the new, working Win32::Exe
+	   ! script/pp
+____________________________________________________________________________
+[ 10048] By: autrijus                              on 2004/02/15  14:53:31
+        Log: * "pp -m" was broken. duh.  thanks draven
+	   ! script/pp
+____________________________________________________________________________
+[ 10047] By: autrijus                              on 2004/02/15  14:14:46
+        Log: * the second Win32::Exe->new()->update is redundant.
+             as reported by Jouke.
+	   ! script/pp
+____________________________________________________________________________
+[ 10036] By: autrijus                              on 2004/02/14  20:01:04
+        Log: * add optional support for Win32::Exe
+	   ! Makefile.PL
+____________________________________________________________________________
+[ 10027] By: autrijus                              on 2004/02/13  22:56:52
+        Log: * Since now "-v 0" is the same as "-v 1", reflect
+             this fact in pp and tkpp's documentation by redefining
+             the verbosity range to 1..3.
+	   ! script/pp script/tkpp
+____________________________________________________________________________
+[ 10023] By: autrijus                              on 2004/02/13  20:41:25
+        Log: * -v should take an integer, not a string.
+	   ! script/pp
+____________________________________________________________________________
+[ 10014] By: autrijus                              on 2004/02/12  22:47:48
+        Log: * various documentation patches from Malcolm Nooning.
+	   ! AUTHORS script/pp
+____________________________________________________________________________
+[  9958] By: autrijus                              on 2004/02/08  23:19:59
+        Log: * --info, --gui and --icon may now use
+             Win32::Exe where available.
+	   ! script/pp
+____________________________________________________________________________
+[  9956] By: autrijus                              on 2004/02/08  22:09:46
+        Log: * preliminary support for -N/--info.
+	   ! script/pp
+____________________________________________________________________________
+[  9938] By: autrijus                              on 2004/02/07  17:48:23
+        Log: * --info should take an array of values.
+	   ! script/pp
+____________________________________________________________________________
+[  9884] By: autrijus                              on 2004/02/03  23:23:54
+        Log: * don't extract needlessly for cached directories.
+             * we don't need File::Spec anyway.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  9883] By: autrijus                              on 2004/02/03  22:59:55
+        Log: * preemptive extraction now happens only when
+             $ENV{PAR_CLEAN} is not set.
+             * also, put preemptive things under inc/ to
+             keep it from clobbering other temp files,
+             as well as respecting the directory naming
+             conventions.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  9868] By: autrijus                              on 2004/02/02  23:25:21
+        Log: * unpar($0) now preemptively extracts everything;
+             contributed by Barries.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  9867] By: autrijus                              on 2004/02/02  23:24:48
+        Log: * miscellanous debug messages and make rules
+             suggested by Barrie Slaymaker.
+	   ! myldr/Makefile.PL script/par.pl
+____________________________________________________________________________
+[  9808] By: autrijus                              on 2004/01/30  14:46:58
+        Log: * patch from Ian Cass to suppress error when 
+             $ENV{$Config{ldlibpthname}} is not there.
+	   ! lib/App/Packer/Backend/PAR.pm script/pp
+____________________________________________________________________________
+[  9804] By: autrijus                              on 2004/01/30  05:39:42
+        Log: * Alan noted a bad case of RCS expansion
+	   ! lib/App/Packer/Backend/PAR.pm
+____________________________________________________________________________
+[  9770] By: autrijus                              on 2004/01/26  10:59:48
+        Log: * merged Edward's App::Packer::Backend::PAR
+             refactoring.
+	   + contrib/pp_new contrib/ppack
+	   + lib/App/Packer/Temp.pm
+	   ! lib/App/Packer/Backend/PAR.pm
+____________________________________________________________________________
+[  9769] By: autrijus                              on 2004/01/26  07:45:49
+        Log: * "pp -M Module" was not adding the module
+             itself correctly.
+	   ! script/pp
+____________________________________________________________________________
+[  9768] By: autrijus                              on 2004/01/26  05:21:34
+        Log: * oops, forgot a =back directive in POD
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  9765] By: autrijus                              on 2004/01/25  16:09:58
+        Log: * Daniel Cohen-Laroque reported that FindBin.pm doess not
+             play well with "foo.exe" being invoked with "foo" on Win32.
+	   ! AUTHORS script/par.pl
+____________________________________________________________________________
+[  9731] By: autrijus                              on 2004/01/18  15:57:49
+        Log: * initial check-in for a pure-perl replace_icon.
+	   ! script/pp
+____________________________________________________________________________
+[  9704] By: autrijus                              on 2004/01/14  10:41:47
+        Log: * fix manifest.
+             * unlink temp dir even if no DLLs are extracted
+	   ! MANIFEST script/par.pl
+____________________________________________________________________________
+[  9672] By: autrijus                              on 2004/01/11  14:34:02
+        Log: * wrong ifndef detection in sha1.c.
+	   ! myldr/sha1.c
+____________________________________________________________________________
+[  9671] By: autrijus                              on 2004/01/11  14:33:54
+        Log: * use Digest::SHA1 and Digest::MD5 in pure-perl
+             mode if we can.
+	   ! lib/PAR.pm script/par.pl
+____________________________________________________________________________
+[  9660] By: autrijus                              on 2004/01/10  19:33:57
+        Log: * Set $INC to an actual file, as requested
+             by Barrie Slaymaker.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  9659] By: autrijus                              on 2004/01/10  19:08:20
+        Log: * Alan Stewart contributed SHA-1 based
+             cache name, instead of mtime.  Code
+             taken from Digest::SHA1.
+	   + myldr/sha1.c
+	   ! myldr/mktmpdir.c myldr/mktmpdir.h
+____________________________________________________________________________
+[  9658] By: autrijus                              on 2004/01/10  18:57:57
+        Log: * Alan spotted that "pp -d -C" did not work
+             because par_init_env() is called too late.
+	   ! myldr/main.c
+____________________________________________________________________________
 [  9630] By: autrijus                              on 2004/01/08  10:59:30
         Log: * This be PAR, version 0.79.
 	   ! ChangeLog lib/PAR.pm

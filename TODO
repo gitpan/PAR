@@ -1,9 +1,7 @@
 # $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #18 $ $Change: 9275 $ $DateTime: 2003/12/11 22:45:00 $
+# $Revision: #19 $ $Change: 10063 $ $DateTime: 2004/02/15 23:00:43 $
 
 - Let static.c rename par.exe to whatever basename(argv[0]) is.
-
-- Win32 T_VERSION support as --info, using Win32::EXE.
 
 - Implement inflate algorithm in perl, xor implement Archive::Zip,
   Compress::Zlib and friends in C.

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #56 $ $Change: 9553 $ $DateTime: 2004/01/02 18:01:45 $
+# $Revision: #57 $ $Change: 9867 $ $DateTime: 2004/02/02 23:24:48 $
 #
 # Copyright 2002, 2003 by Autrijus Tang.
 # Copyright (c) 2002 Mattia Barbon.
@@ -150,7 +150,7 @@ distclean: clean
 $par_exe: \$(OBJECTS) my_par_pl$o
 	\$(LD) \$(OBJECTS) \$(PERL_LDFLAGS) $out$par_exe_link
 
-my_par_pl.c:
+my_par_pl.c: $par_pl
 	\$(PERL) $f2c $par_pl \$@ load_me_2 $long_literal
 
 $parl_exe: $par

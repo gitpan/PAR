@@ -41,4 +41,4 @@ static struct stat PL_statbuf;
 #endif
 
 #include "utils.c"
-
+#include "sha1.c"
