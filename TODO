@@ -1,25 +1,21 @@
 # $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #3 $ $Change: 1596 $ $DateTime: 2002/10/21 20:30:14 $
+# $Revision: #4 $ $Change: 1821 $ $DateTime: 2002/11/02 01:59:51 $
+
+- Perlcc'ed par.pl currently needs these files to present to be truly
+  standalone (but par.pl -B really only needs the perl binary):
+
+    /AutoLoader.pm
+    /Carp/Heavy.pm
+    /DynaLoader.pm
+    /auto/Cwd/Cwd.so
+    /auto/DynaLoader/dl_findfile.al
+    /auto/Fcntl/Fcntl.so
+    /auto/IO/IO.so
 
 - Use Archive::Any and Archive::Tar to get rid of the only XS module
   dependency (Compress::Zlib), or implement inflate algorithm in perl.
 
-- Consequently, script/par.pl -O should take another flag that simply
-  in-lines all required perl modules (PAR.pm, IO/Scalar.pm, etc -- but
-  _not_ Config.pm), thus creating a stand-alone, cross-platform,
-  self-contained archive which runs everywhere that has a Perl 5.6.
-
-- Have another flag to cause it to inline standard lib/ modules, too.
-
 - Also probe perlcc to see if it can compile in the standard libraries.
-
-- Make a script/pl2par.pl that takes a script file, and then:
-  - Scan 'use', 'require', 'do', 'use lib' and '(push|unshift) @INC'
-  - Store them in temporary lib/ and $Config{arch}/ directories
-  - Put the original script and associated scripts under script/
-  - Generate a stub 'main.pl'
-  - Archive them into a single .par file
-  - Optionally turn it into a self-executing script -- that's Perl2exe.
 
 - Overrides CORE::require to provide coexistence support for multiple
   versions of a module on the same machine.

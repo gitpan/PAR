@@ -3,10 +3,12 @@ Changes
 MANIFEST			This list of files
 Makefile.PL
 PAR.pm
+PAR/Heavy.pm
 README
 SIGNATURE
 TODO
 patches/perl580.diff
+script/makepar.pl
 script/par.pl
 t/0-signature.t
 t/1-basic.t

@@ -1,21 +1,20 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #10 $ $Change: 1693 $ $DateTime: 2002/10/27 10:16:25 $
+# $Revision: #14 $ $Change: 1814 $ $DateTime: 2002/11/01 22:07:29 $
 
 package __par_pl;
 
-use strict;
-use Config ();
-use File::Temp ();
+# --- This script does not use any modules upfront ---
+# use strict;
+# use warnings;
 
 =head1 NAME
 
-par.pl - Run Perl Archives
+par.pl - Make and Run Perl Archives
 
 =head1 SYNOPSIS
 
-To use F<Hello.pm>, F<lib/Hello.pm> or F<arch/Hello.pm> from
-F<./foo.par>:
+To use F<Hello.pm> from F<./foo.par>:
 
     % par.pl -A./foo.par -MHello 
     % par.pl -A./foo -MHello	# the .par part is optional
@@ -30,16 +29,25 @@ Run F<test.pl> or F<script/test.pl> from F<foo.par>:
     % par.pl foo.par test.pl	# only when $ARGV[0] ends in '.par'
     % par.pl foo.par		# looks for 'main.pl' by default
 
-You can also make a self-containing script containing a PAR file :
+To make a self-containing script containing a PAR file :
 
     % par.pl -O./foo.pl foo.par
     % ./foo.pl test.pl		# same as above
 
-To embed the necessary shared objects for PAR's execution (like
-C<Zlib>, C<IO>, C<Cwd>, etc), use the B<-B> flag:
+To embed the necessary non-core modules and shared objects for PAR's
+execution (like C<Zlib>, C<IO>, C<Cwd>, etc), use the B<-b> flag:
+
+    % par.pl -b -O./foo.pl foo.par
+    % ./foo.pl test.pl		# runs anywhere with core modules installed
+
+If you also wish to embed I<core> modules along, use the B<-B> flag
+instead:
 
     % par.pl -B -O./foo.pl foo.par
-    % ./foo.pl test.pl		# takes care of XS dependencies
+    % ./foo.pl test.pl		# runs anywhere with the perl interpreter
+
+This is particularly useful when making stand-alone binary
+executables; see L<makepar.pl> for details.
 
 =head1 DESCRIPTION
 
@@ -62,7 +70,7 @@ F<script/main.pl>, it is used instead:
 
     % par myapp.par run.pl	# runs main.pl, with 'run.pl' as @ARGV
 
-Finally, as an alternative to C<perl2exe> or C<PerlApp>, the C<-o>
+Finally, as an alternative to C<Perl2exe> or C<PerlApp>, the C<-O>
 option makes a stand-alone binary from a PAR file:
 
     % par -Omyapp myapp.par	# makes a stand-alone executable
@@ -80,7 +88,7 @@ following elements:
 Either in plain-text (F<par.pl>) or native executable format (F<par>
 or F<par.exe>).
 
-=item * Any number of embedded shared objects
+=item * Any number of embedded files
 
 These are typically used for bootstrapping PAR's various XS dependencies.
 Each section begins with the magic string "C<FILE>", length of file name
@@ -91,9 +99,10 @@ C<pack('N')>, and the file's content (not compressed).
 
 This is just a zip file beginning with the magic string "C<PK\003\004>".
 
-=item * Ending magic string
+=item * Ending section
 
-Finally there must be a 8-bytes magic string: "C<\012PAR.pm\012>".
+A pack('N') number of the total length of FILE and PAR sections,
+followed by a 8-bytes magic string: "C<\012PAR.pm\012>".
 
 =back
 
@@ -122,11 +131,12 @@ to build a truly self-containing executable:
 
 =cut
 
+# Argument processing {{{
 my @par_args;
 my ($out, $bundle);
 
 while (@ARGV) {
-    $ARGV[0] =~ /^-([AIMOB])(.*)/ or last;
+    $ARGV[0] =~ /^-([AIMOBb])(.*)/ or last;
 
     if ($1 eq 'I') {
 	push @INC, $2;
@@ -140,64 +150,126 @@ while (@ARGV) {
     elsif ($1 eq 'O') {
 	$out = $2;
     }
+    elsif ($1 eq 'b') {
+	$bundle = 'site';
+    }
     elsif ($1 eq 'B') {
-	$bundle = $2;
+	$bundle = 'all';
     }
 
     shift(@ARGV);
 }
+# }}}
 
-my $fh;
+# Magic string checking and extracting bundled modules {{{
 my ($start_pos, $data_pos);
-
 {
-    require IO::File;
-    $fh = IO::File->new;
-    last unless $fh->open($0);
-
-    binmode($fh);
+    # Check file type, get start of data section {{{
+    open _FH, $0 or last;
+    binmode(_FH);
 
     my $buf;
-    $fh->seek(-8, 2);
-    $fh->read($buf, 8);
+    seek _FH, -8, 2;
+    read _FH, $buf, 8;
     last unless $buf eq "\nPAR.pm\n";
 
-    $fh->seek(-12, 2);
-    $fh->read($buf, 4);
-    $fh->seek(-12 - unpack("N", $buf), 2);
-    $fh->read($buf, 4);
+    seek _FH, -12, 2;
+    read _FH, $buf, 4;
+    seek _FH, -12 - unpack("N", $buf), 2;
+    read _FH, $buf, 4;
 
-    $data_pos = $fh->tell - 4;
+    $data_pos = (tell _FH) - 4;
+    # }}}
 
+    # Extracting each file into memory {{{
+    my %require_list;
     while ($buf eq "FILE") {
-	$fh->read($buf, 4);
-	$fh->read($buf, unpack("N", $buf));
+	read _FH, $buf, 4;
+	read _FH, $buf, unpack("N", $buf);
 
-	my ($basename, $ext) = ($buf =~ m|.*/(.*)(\..*)|);
-	my ($out, $filename) = File::Temp::tempfile(
-	    SUFFIX	=> $ext,
-	    UNLINK	=> 1
-	);
+	my $fullname = $buf;
+	my ($basename, $ext) = ($buf =~ m|(?:.*/)?(.*)(\..*)|);
 
-	$PAR::DLCache{$buf}++;
-	$PAR::DLCache{$basename} = $filename;
+	read _FH, $buf, 4;
+	read _FH, $buf, unpack("N", $buf);
 
-	$fh->read($buf, 4);
-	$fh->read($buf, unpack("N", $buf));
-	print $out $buf;
-	close $out;
+	if (defined($ext) and $ext !~ /\.(?:pm|ix|al)$/i) {
+	    my ($out, $filename) = _tempfile($ext);
+	    print $out $buf;
+	    close $out;
+	    $PAR::Heavy::DLCache{$filename}++;
+	    $PAR::Heavy::DLCache{$basename} = $filename;
+	}
+	else {
+	    $require_list{$fullname} = \"$buf";
+	}
+	read _FH, $buf, 4;
+    }
+    # }}}
 
-	$fh->read($buf, 4);
+    # Set up (optional) external help modules and @INC hook {{{
+    eval { require PerlIO::scalar } if $^O ne 'MSWin32';
+    eval { require File::Temp };
+
+    local @INC = (sub {
+	my ($self, $module) = @_;
+
+	return if ref $module or !$module;
+	return if $module eq 'PerlIO/scalar.pm' and $^O eq 'MSWin32';
+
+	my $filename = delete $require_list{$module} || do {
+	    my $key;
+	    foreach (keys %require_list) {
+		next unless /\Q$module\E$/;
+		$key = $_; last;
+	    }
+	    delete $require_list{$key};
+	} or return;
+
+	if ($INC{'PerlIO/scalar.pm'}) {
+	    open my $fh, '<:scalar', $filename;
+	    return $fh;
+	}
+	else {
+	    my ($out, $name) = _tempfile($ext);
+	    print $out $$filename;
+	    close $out;
+	    open my $fh, $name;
+	    return $fh;
+	}
+
+	die "Bootstrapping failed: cannot find $module!\n";
+    }, @INC);
+    # }}}
+
+    # Now load all bundled files {{{
+
+    # initialize shared object processing
+    require PAR::Heavy;
+    PAR::Heavy::_init_dynaloader();
+
+    # now let's try getting helper modules from within
+    eval { require PerlIO::scalar };
+    eval { require File::Temp };
+
+    # load rest of the group in
+    while (my $filename = (sort keys %require_list)[0]) {
+	require $filename;
+	delete $require_list{$filename};
     }
 
-    last unless $buf eq "PK\003\004";
-    
-    $start_pos = $fh->tell - 4;
-}
+    # }}}
 
+    last unless $buf eq "PK\003\004";
+    $start_pos = (tell _FH) - 4;
+}
+# }}}
+
+# Output mode (-O) handling {{{
 if ($out) {
     my $par = shift(@ARGV);
 
+    # Open input and output files {{{
     open PAR, '<', $par or die $!;
     binmode(PAR);
 
@@ -208,55 +280,75 @@ if ($out) {
     binmode(OUT);
 
     $/ = (defined $start_pos) ? \$start_pos : undef;
-    $fh->seek(0, 0);
-    print OUT scalar $fh->getline;
+    seek _FH, 0, 0;
+    print OUT scalar <_FH>;
     $/ = undef;
+    # }}}
 
+    # Write bundled modules {{{
     my $data_len = 0;
     if (!defined $start_pos and $bundle) {
-	require PAR;
-	PAR::_init_dynaloader();
+	require PAR::Heavy;
+	PAR::Heavy::_init_dynaloader();
+	require_modules();
 
-	eval { require PerlIO::scalar; 1 }
-	    or eval { require IO::Scalar; 1 }
-	    or die "Cannot require either PerlIO::scalar nor IO::Scalar!";
-
-	require IO::File;
-	require Compress::Zlib;
-	require Archive::Zip;
+	my @inc = sort {
+	    length($b) <=> length($a)
+	} grep {
+	    !/BSDPAN/
+	} grep {
+	    ($bundle ne 'site') or 
+	    ($_ ne $Config::Config{archlibexp} and
+	     $_ ne $Config::Config{privlibexp});
+	} @INC;
 
 	foreach (sort keys %::) {
-	    $::{$_} =~ /_<(.*)(\bauto\/.*\.$Config::Config{dlext})$/ or next;
+	    my ($path, $file);
+	    foreach my $dir (@inc) {
+		$::{$_} =~ /_<(\Q$dir\E\/)(.*[^Cc])$/ or next;
+		($path, $file) = ($1, $2);
+		last;
+	    }
 
-	    $data_len += 12 + length($2) + (stat($1.$2))[7];
+	    next unless defined $file;
+	    print "$path$file\n";
+	    open FILE, "$path$file" or die "$file$path: $!";
 
 	    print OUT "FILE";
-	    print OUT pack('N', length($2));
-	    print OUT $2;
-	    print OUT pack('N', (stat($1.$2))[7]);
+	    print OUT pack('N', length($file));
+	    print OUT $file;
+	    print OUT pack('N', (stat("$path$file"))[7]);
 
-	    open FILE, $1.$2 or die $!;
 	    print OUT <FILE>;
 	    close FILE;
+
+	    $data_len += 12 + length($file) + (stat("$path$file"))[7];
 	}
     }
+    # }}}
 
+    # Now write out the PAR and magic strings {{{
     print OUT "PK\003\004";
     print OUT <PAR>;
     print OUT pack('N', $data_len + (stat($par))[7]);
     print OUT "\nPAR.pm\n";
-
     chmod 0755, $out;
+    # }}}
+
     exit;
 }
+# }}}
 
+# Prepare $0 into PAR file cache {{{
 {
     last unless defined $start_pos;
 
+    # Set up fake IO::File routines to point into the PAR subfile {{{
+    require IO::File;
+    my $fh = IO::File->new($0);
     my $seek_ref  = $fh->can('seek');
     my $tell_ref  = $fh->can('tell');
 
-    no strict 'refs';
     *{'IO::File::seek'} = sub {
 	my ($fh, $pos, $whence) = @_;
 	$pos += $start_pos if $whence == 0;
@@ -265,9 +357,11 @@ if ($out) {
     *{'IO::File::tell'} = sub {
 	return $tell_ref->(@_) - $start_pos;
     };
+    # }}}
 
+    # Now load the PAR file and put it into PAR::LibCache {{{
     require PAR;
-    PAR::_init_dynaloader();
+    PAR::Heavy::_init_dynaloader();
     require Archive::Zip;
 
     my $zip = Archive::Zip->new;
@@ -275,15 +369,86 @@ if ($out) {
 
     push @PAR::LibCache, $zip;
     $PAR::LibCache{$0} = $zip;
+    # }}}
 }
+# }}}
 
+# If there's no main.pl to run, show usage {{{
 unless ($PAR::LibCache{$0}) {
     die << "." unless @ARGV;
-Usage: $0 [-Alib.par] [-Idir] [-Mmodule] [src.par] program.pl
-       $0 [-Ooutfile] src.par
+Usage: $0 [ -Alib.par ] [ -Idir ] [ -Mmodule ] [ src.par ] [ program.pl ]
+       $0 [ -B|-b ] [-Ooutfile] src.par
 .
     $0 = shift(@ARGV)
 }
+# }}}
+
+sub require_modules {
+    ($^O ne 'MSWin32' and eval { require PerlIO; require PerlIO::scalar; 1 })
+	or eval { require IO::Scalar; 1 }
+	or die "Cannot require either PerlIO::scalar nor IO::Scalar!";
+
+    require integer;
+    require strict;
+    require warnings;
+    require vars;
+    require Carp;
+    require Carp::Heavy;
+    require Exporter::Heavy;
+    require Exporter;
+    require Fcntl;
+    require Cwd;
+    require File::Temp;
+    require File::Spec;
+    require XSLoader;
+    require Carp::Heavy;
+    require Config;
+    require IO::File;
+    require Compress::Zlib;
+    require Archive::Zip;
+    require PAR;
+}
+
+my $tmpdir;
+sub tmpdir {
+    return $tmpdir if defined $tmpdir;
+    my @dirlist = (@ENV{qw(TMPDIR TEMP TMP)}, qw(C:/temp /tmp /));
+    {
+        if (${"\cTAINT"}) { eval {
+            require Scalar::Util;
+            @dirlist = grep { ! Scalar::Util::tainted $_ } @dirlist;
+        } }
+    }
+    foreach (@dirlist) {
+        next unless defined && -d;
+        $tmpdir = $_;
+        last;
+    }
+    $tmpdir = '' unless defined $tmpdir;
+    return $tmpdir;
+}
+
+my ($tmpfile, @tmpfiles);
+sub _tempfile {
+    my $ext = shift;
+    
+    if ($INC{'File/Temp.pm'}) {
+	return File::Temp::tempfile(
+	    SUFFIX	=> $ext,
+	    UNLINK	=> 1
+	);
+    }
+    else {
+	my $file;
+	my $tmpdir = tmpdir();
+	$tmpfile ||= ($$ . '0000');
+	do { $tmpfile++ } while -e ($file = "$tmpdir/$tmpfile$ext");
+	push @tmpfiles, $file;
+	open my $fh, ">", $file or die $!;
+	return ($fh, $file);
+    }
+}
+END { unlink @tmpfiles if @tmpfiles }
 
 ########################################################################
 # The main package for script execution

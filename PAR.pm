@@ -1,11 +1,12 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #21 $ $Change: 1703 $ $DateTime: 2002/10/27 17:33:48 $
+# $Revision: #26 $ $Change: 1822 $ $DateTime: 2002/11/02 02:02:32 $
 
 package PAR;
-$PAR::VERSION = '0.15';
+$PAR::VERSION = '0.20';
 
 use 5.006;
 use strict;
+use warnings;
 use Config ();
 
 =head1 NAME
@@ -14,7 +15,7 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.15 of PAR, released October 28, 2002.
+This document describes version 0.20 of PAR, released November 2, 2002.
 
 =head1 SYNOPSIS
 
@@ -108,7 +109,7 @@ next time, but if you need the functionality, just mail me. ;-)
 
 use vars qw(@PAR_INC);			# explicitly stated PAR library files
 use vars qw(@LibCache %LibCache);	# I really miss pseudohash.
-use vars qw(%DATACache %DLCache);	# cache for __DATA__ segments
+use vars qw(%DATACache);		# cache for __DATA__ segments
 
 my $ver		= $^V ? sprintf("%vd", $^V) : $];
 my $arch	= $Config::Config{archname};
@@ -125,7 +126,8 @@ sub import {
 
     push @INC, \&find_par unless grep { $_ eq \&find_par } @INC;
 
-    _init_dynaloader();
+    require PAR::Heavy;
+    PAR::Heavy::_init_dynaloader();
 
     if (unpar($0)) {
 	push @PAR_INC, $0;
@@ -141,7 +143,7 @@ sub import {
 	else {
 	    die qq(No program file specified) unless @ARGV;
 
-	    my $file = shift(@ARGV);
+	    $file = shift(@ARGV);
 	    $member = $zip->memberNamed($file)
 		   || $zip->memberNamed("script/$file")
 		or die qq(Can't open perl script "$file": No such file or directory);
@@ -155,6 +157,9 @@ sub import {
 
 	{
 	    package main;
+	    no strict;
+	    no warnings;
+
 	    $0 = $file;
 	    eval $program;
 	    die $@ if $@;
@@ -229,7 +234,6 @@ sub unpar {
     if ($^O ne 'MSWin32' and eval { require PerlIO::scalar; 1 }) {
 	open my $fh, '<:scalar', \(scalar $member->contents);
 	return $fh;
-
 =for comment
 	# Have to use eval STRING here eventually to avoid 5.005 warnings
 	my $fh = eval q{
@@ -237,6 +241,7 @@ sub unpar {
 	    $fh;
 	};
 	return $fh if $fh;
+
 =cut
     }
 
@@ -276,90 +281,12 @@ sub _wrap_data {
     }
 }
 
-########################################################################
-# Dynamic inclusion of XS modules
-
-my ($bootstrap, $dl_findfile);	# caches for code references
-sub _init_dynaloader {
-    return if $bootstrap;
-    return unless eval { require DynaLoader; DynaLoader::dl_findfile(); 1 };
-
-    $bootstrap   = \&DynaLoader::bootstrap;
-    $dl_findfile = \&DynaLoader::dl_findfile;
-
-    no strict 'refs';
-
-    local $^W;
-    *{'DynaLoader::bootstrap'}   = \&_bootstrap;
-    *{'DynaLoader::dl_findfile'} = \&_dl_findfile;
-}
-
-sub _dl_findfile {
-    # print "Finding $_[-1]. DLCache reads ", %DLCache, "\n";
-
-    return $DLCache{$_[-1]} if exists $DLCache{$_[-1]};
-    return $dl_findfile->(@_);
-}
-
-sub _bootstrap {
-    my (@args) = @_;
-    my ($module) = $args[0];
-    my (@dirs, $file);
-
-    if ($module) {
-	my @modparts = split(/::/, $module);
-	my $modfname = $modparts[-1];
-
-	$modfname = &DynaLoader::mod2fname(\@modparts)
-	    if defined &DynaLoader::mod2fname;
-
-	if (($^O eq 'NetWare') && (length($modfname) > 8)) {
-	    $modfname = substr($modfname, 0, 8);
-	}
-
-	my $modpname = join((($^O eq 'MacOS') ? ':' : '/'), @modparts);
-	my $file = "auto/$modpname/$modfname.$dl_dlext";
-
-	# print "Trying to load $file with DLCache $DLCache{$file}\n";
-
-	if (!$DLCache{$file}++ and my $member = find_par(undef, $file, 1)) {
-	    require File::Temp;
-
-	    my ($fh, $filename) = File::Temp::tempfile(
-		SUFFIX	=> ".$dl_dlext",
-		UNLINK	=> 1
-	    );
-
-	    print $fh $member->contents;
-	    close $fh;
-
-	    $DLCache{$modfname} = $filename;
-	}
-    }
-
-    $bootstrap->(@args);
-}
-
-########################################################################
-# Stub __DATA__ filehandle
-
-package PAR::_data;
-
-sub TIEHANDLE {
-    return bless({}, shift);
-}
-
-sub DESTROY {
-}
-
-sub AUTOLOAD {
-    die "Cannot use __DATA__ sections in .par files; ".
-        "please install IO::Scalar first!\n";
-}
-
 1;
 
 =head1 SEE ALSO
+
+My presentation, "Introduction to Perl Archive Toolkit":
+L<http://www.autrijus.org/par-intro/slide001.html>
 
 L<par.pl>
 
@@ -383,7 +310,7 @@ Uri Guttman for suggesting C<read_file> and C<par_handle> interfaces.
 Antti Lankila for making me implement the self-contained executable
 options via C<par.pl -O>.
 
-See the F<AUTHOR> file in the distribution for a list of people who
+See the F<AUTHORS> file in the distribution for a list of people who
 have sent helpful patches, ideas or comments.
 
 =head1 AUTHORS

@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.15.
+signed via the Module::Signature module, version 0.17.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -15,21 +15,23 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 7c001f91d0dbbed911c3bd77f4ada9496e12ded0 AUTHORS
-SHA1 a679b7ffb7e2ad727d781d0054038a63b1ca3dd5 Changes
-SHA1 53d7e60e757a5d23cceae8834053718a630e8f18 MANIFEST
-SHA1 2bff1dc833eddecedcfb35673ebad2fea5cec44f Makefile.PL
-SHA1 ad6447e3576093d10a3bc058d2702ed0240be346 PAR.pm
-SHA1 9346468cea12eaa203bfa1c64b01c3327659ada7 README
-SHA1 3ade9be2e2546af174da03d748c12ced6b0b92d6 TODO
+SHA1 e0ceb66acbc35f33ba8599ec7916d45363ae90e4 Changes
+SHA1 3276ee22fbb5d39c604f962349ccec2866412251 MANIFEST
+SHA1 ae308cd6656e0b182d9b222e05226cdcc6fad356 Makefile.PL
+SHA1 68682014265d7c7094c3cb9c35bf5deb84cc216e PAR.pm
+SHA1 16c19bcb62d13a8323e971f6a46120c3a791890c PAR/Heavy.pm
+SHA1 ef08edea899e49744c3b5b098e3f31733166ab46 README
+SHA1 d2d1b3e04d7a3310fc4b0a56ae77b2d9b789be7b TODO
 SHA1 09d04745e0d6aa0c897ed4f41d9318d583528924 patches/perl580.diff
-SHA1 1e8a6c67b28dd5579727838ff5e1f00651b196ee script/par.pl
-SHA1 d4e8d826539513b06a8f0d41dfbb172745fad1c3 t/0-signature.t
-SHA1 d44eaefd9b8e2b01329a6f7c3d4f9a2834f50b20 t/1-basic.t
-SHA1 601f673d658a8860ac7110516ce0fcb5e406af58 t/hello.par
+SHA1 3201574356ef6580066a53454b825bfb742d516d script/makepar.pl
+SHA1 18d635144fd787284d37d3c4bf0bbe76f9089282 script/par.pl
+SHA1 e6b8353762d6c681281eeea222f84f1e302857e0 t/0-signature.t
+SHA1 64304026a1886c779f58dd19e4525d22e8f53607 t/1-basic.t
+SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.0 (FreeBSD)
 
-iD8DBQE9vCcAtLPdNzw1AaARAmSJAKC3nSM7hml86BdCy+3YWTFLicbhUgCcDfvc
-V8wSrPZpSLxMm0RX7dfIOck=
-=aJhA
+iD8DBQE9wzYCtLPdNzw1AaARAsH+AJ0Q6oPMF9hxnGxn4ycUiP4EO1TxKwCgsPjl
+wpVqlMjoijk0C6IWiG7nhkA=
+=LHCH
 -----END PGP SIGNATURE-----

@@ -1,4 +1,134 @@
 ____________________________________________________________________________
+[  1822] By: autrijus                              on 2002/11/02  02:02:32
+        Log: * This be 0.20.
+             * Mention my slides at
+             <http://www.autrijus.org/par-intro/slide001.html>.
+	   ! PAR.pm README
+____________________________________________________________________________
+[  1821] By: autrijus                              on 2002/11/02  01:59:51
+        Log: * Add perlcc caveats into TODO.
+	   ! TODO
+____________________________________________________________________________
+[  1820] By: autrijus                              on 2002/11/02  01:53:52
+        Log: * massively refactored into Module::ScanDeps.
+	   ! script/makepar.pl
+____________________________________________________________________________
+[  1819] By: autrijus                              on 2002/11/02  01:51:12
+        Log: * we now depend on Module::ScanDeps for makepar.pl.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  1814] By: autrijus                              on 2002/11/01  22:07:29
+        Log: * add comments.
+             * load external PerlIO::scalar and File::Temp if possible.
+	   ! script/par.pl
+____________________________________________________________________________
+[  1813] By: autrijus                              on 2002/11/01  16:20:10
+        Log: * reflect -b/-B distinction in documentation.
+	   ! README script/makepar.pl
+____________________________________________________________________________
+[  1812] By: autrijus                              on 2002/11/01  16:19:49
+        Log: * complete self-loading sequence.
+             * -b now ditches core modules; -B includes them.
+	   ! script/par.pl
+____________________________________________________________________________
+[  1811] By: autrijus                              on 2002/11/01  16:19:11
+        Log: * complement last change.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1810] By: autrijus                              on 2002/11/01  16:18:49
+        Log: * refactor _init_dynaloader() into PAR::Heavy.
+	   + PAR/Heavy.pm
+	   ! MANIFEST
+____________________________________________________________________________
+[  1792] By: autrijus                              on 2002/10/30  21:52:34
+        Log: * pod tweaks.
+	   ! README script/makepar.pl
+____________________________________________________________________________
+[  1790] By: autrijus                              on 2002/10/30  19:00:24
+        Log: * copying the doc into README.
+             * binary bundling cannot use makepar.pl -S, fixed docs.
+	   ! README script/makepar.pl
+____________________________________________________________________________
+[  1789] By: autrijus                              on 2002/10/30  18:54:59
+        Log: * document tweak, suggested by coral.
+	   ! script/makepar.pl
+____________________________________________________________________________
+[  1788] By: autrijus                              on 2002/10/30  18:48:54
+        Log: * finally, a working perl2exe/perlapp alone.
+	   ! script/makepar.pl
+____________________________________________________________________________
+[  1787] By: autrijus                              on 2002/10/30  18:48:40
+        Log: * -B now bundles the necessary .pm and .ix too.
+	   ! script/par.pl
+____________________________________________________________________________
+[  1786] By: autrijus                              on 2002/10/30  18:48:21
+        Log: * fix mis-podifying paragraph.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1785] By: autrijus                              on 2002/10/30  17:24:11
+        Log: * add core module ignore feature: -s and -S
+	   ! script/makepar.pl
+____________________________________________________________________________
+[  1781] By: autrijus                              on 2002/10/30  10:30:55
+        Log: * include it in the distribution.
+	   ! MANIFEST Makefile.PL
+____________________________________________________________________________
+[  1780] By: autrijus                              on 2002/10/30  10:30:45
+        Log: * documentations, -M and -I support, and some more.
+	   ! script/makepar.pl
+____________________________________________________________________________
+[  1779] By: autrijus                              on 2002/10/30  10:05:38
+        Log: * making it -w clean.
+             * now prints percentage of things written.
+	   ! script/makepar.pl
+____________________________________________________________________________
+[  1778] By: autrijus                              on 2002/10/30  09:30:11
+        Log: * now with -B support for script/ inclusion.
+	   ! script/makepar.pl
+____________________________________________________________________________
+[  1777] By: autrijus                              on 2002/10/30  09:21:00
+        Log: * finished!
+	   ! script/makepar.pl
+____________________________________________________________________________
+[  1776] By: autrijus                              on 2002/10/30  09:12:54
+        Log: * rename to makepar.
+	  +> script/makepar.pl
+	   - script/depscan.pl
+____________________________________________________________________________
+[  1774] By: autrijus                              on 2002/10/30  08:12:32
+        Log: * some tweaks to separate warnings.
+	   ! script/depscan.pl
+____________________________________________________________________________
+[  1773] By: autrijus                              on 2002/10/30  08:10:35
+        Log: * depscan, courtesy of Indy Singh.
+	   + script/depscan.pl
+____________________________________________________________________________
+[  1709] By: autrijus                              on 2002/10/27  22:02:16
+        Log: * tpyo.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1708] By: autrijus                              on 2002/10/27  20:53:08
+        Log: * updates test case.
+	   ! t/1-basic.t t/hello.par
+____________________________________________________________________________
+[  1707] By: autrijus                              on 2002/10/27  20:52:53
+        Log: * see the last two changes, applied to par.pl this time.
+	   ! script/par.pl
+____________________________________________________________________________
+[  1706] By: autrijus                              on 2002/10/27  20:51:25
+        Log: * use warnings. that helped us catch a (nonserious) bug.
+             * no strict nor warnings for the included program.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1705] By: autrijus                              on 2002/10/27  20:49:01
+        Log: * Win32 doesn't want PerlIO::scalar at all.
+             * Glenn reported that earlier Archive::Zip doesn't work.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  1704] By: autrijus                              on 2002/10/27  17:36:03
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1703] By: autrijus                              on 2002/10/27  17:33:48
         Log: * This be version 0.15.
              * Added contributor list.

@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/1-basic.t $ $Author: autrijus $
-# $Revision: #6 $ $Change: 1700 $ $DateTime: 2002/10/27 17:19:33 $
+# $Revision: #7 $ $Change: 1708 $ $DateTime: 2002/10/27 20:53:08 $
 
 use Test;
-BEGIN { plan tests => 7 }
+BEGIN { plan tests => 8 }
 
 ok(
     `$^X -Mblib -MPAR -It/hello -MHello -e Hello::hello`,
@@ -13,6 +13,11 @@ ok(
 ok(
     `$^X -Mblib -MPAR t/hello.par hello.pl`,
     "Hello, world!\nGoodbye, world!\n",
+);
+
+ok(
+    `$^X -Mblib -MPAR t/hello.par nostrict.pl`,
+    "No Strict!\n",
 );
 
 skip(

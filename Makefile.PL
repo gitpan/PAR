@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #7 $ $Change: 1565 $ $DateTime: 2002/10/20 12:22:12 $
+# $Revision: #10 $ $Change: 1819 $ $DateTime: 2002/11/02 01:51:12 $
 
 use 5.006;
 use ExtUtils::MakeMaker;
@@ -12,13 +12,14 @@ WriteMakefile(
     VERSION_FROM	=> 'PAR.pm', 
     DISTNAME		=> 'PAR',
     BINARY_LOCATION	=> 'x86/PAR.tar.gz',
-    EXE_FILES		=> [ 'script/par.pl' ],
+    EXE_FILES		=> [ 'script/par.pl', 'script/makepar.pl' ],
 
     PREREQ_PM		=> {
-	'Archive::Zip'	=> 0,
-	'File::Temp'	=> 0,
-(eval { require PerlIO::scalar; 1}) ? () : (
-	'IO::Scalar'	=> 0,
+	'Archive::Zip'	    => 1.0,
+	'File::Temp'	    => 0,
+	'Module::ScanDeps'  => 0,
+(($^O ne 'MSWin32') and eval { require PerlIO::scalar; 1}) ? () : (
+	'IO::Scalar'	    => 0,
 ),
     },
 

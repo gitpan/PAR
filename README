@@ -1,11 +1,15 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #3 $ $Change: 1541 $ $DateTime: 2002/10/19 15:17:50 $
+# $Revision: #7 $ $Change: 1822 $ $DateTime: 2002/11/02 02:02:32 $
 
 This is the README file for PAR, a module to use perl scripts
 and modules stored inside compressed .par files.
 
-Please see the PAR.pm for typical uses, and script/par.pl for a
-solution of bundled perl distributions (aka PerlApp or Perl2exe).
+Please see the PAR.pm for typical uses, script/par.pl for running
+bundled perl distributions, and script/makepar.pl for generating
+PAR files (aka PerlApp or Perl2exe).
+
+There is also a presentation "Introduction to PAR", available on
+the web as <http://www.autrijus.org/par-intro/slide001.html>.
 
 * Installation
 
@@ -27,10 +31,19 @@ and then:
 
     % perlcc -o /usr/local/bin/par script/par.pl
 
-Afterwards, you can generate self-executable PAR files by:
+Afterwards, you can generate self-executable binaries by:
 
-    # put a main.pl inside myapp.par to run it automatically
-    % par -O./myapp myapp.par
+    % makepar.pl -B -O./foo.par /home/test.pl
+    % perlcc -o par.exe par.pl		# only need to do this once
+    % par.exe -B -O./foo.exe foo.par	# self-contained .exe
+    % foo.exe				# runs anywhere with same OS
+
+If you want to make a self-contained script instead (without bundling
+the perl binary and core modules), do this:
+
+    % makepar.pl -S -B -O./foo.par /home/test.pl
+    % par.pl -b -O./foo.pl foo.par	# or -B to bundle core modules
+    % perl foo.pl			# runs anywhere with core modules
 
 * Copyright
 
