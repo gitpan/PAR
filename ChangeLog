@@ -1,3 +1,13 @@
+[Changes for 0.87 - January 31, 2004]
+
+* Bug Fixes
+
+    - On Win32, some versions of File::Spec::Win32 contains explicit
+      "use Cwd;" lines, which renders parl.exe unusable.
+
+    - Executable made by "pp" may fail when invoked as "./a.out" or
+      "../a.out", due to incorrect PWD handling logic.
+
 [Changes for 0.86 - December 11, 2004]
 
 * New Features

@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.86';
+$PAR::VERSION = '0.87';
 
 use 5.006;
 use strict;
@@ -12,7 +12,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.86 of PAR, released December 11, 2004.
+This document describes version 0.87 of PAR, released January 31, 2005.
 
 =head1 SYNOPSIS
 
@@ -598,7 +598,8 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2002, 2003, 2004 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2002, 2003, 2004, 2005 by Autrijus Tang
+E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
