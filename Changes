@@ -1,4 +1,33 @@
 ____________________________________________________________________________
+[  1847] By: autrijus                              on 2002/11/02  21:08:04
+        Log: * 0.21, the General Availability (for non-perlcc usage) edition.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1846] By: autrijus                              on 2002/11/02  21:06:21
+        Log: * adjust load sequence and complain when loading fails.
+             * excise BSDPAN.
+	   ! script/par.pl
+____________________________________________________________________________
+[  1845] By: autrijus                              on 2002/11/02  21:03:41
+        Log: * list caveats pointer to TODO
+	   ! README script/makepar.pl
+____________________________________________________________________________
+[  1843] By: autrijus                              on 2002/11/02  20:34:25
+        Log: * doc tweak for par.pl.
+	   ! script/par.pl
+____________________________________________________________________________
+[  1842] By: autrijus                              on 2002/11/02  20:33:51
+        Log: * provide minimal documentation for PAR::Heavy.
+	   ! PAR/Heavy.pm
+____________________________________________________________________________
+[  1841] By: autrijus                              on 2002/11/02  20:33:29
+        Log: * Module::ScanDeps 0.01 was broken. Bump dep to 0.02.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  1834] By: autrijus                              on 2002/11/02  15:38:50
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1822] By: autrijus                              on 2002/11/02  02:02:32
         Log: * This be 0.20.
              * Mention my slides at

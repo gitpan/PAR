@@ -1,6 +1,10 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/makepar.pl $ $Author: autrijus $
-# $Revision: #12 $ $Change: 1820 $ $DateTime: 2002/11/02 01:53:52 $
+# $Revision: #13 $ $Change: 1845 $ $DateTime: 2002/11/02 21:03:41 $
+
+use strict;
+use Module::ScanDeps;
+use Config ();
 
 =head1 NAME
 
@@ -26,6 +30,7 @@ instead, by bundling the perl executable itself:
     % perlcc -o par.exe par.pl		# only need to do this once
     % par.exe -B -O./foo.exe foo.par	# self-contained .exe
     % foo.exe				# runs anywhere with same OS
+					# (but see TODO for caveats)
 
 =head1 DESCRIPTION
 
@@ -58,15 +63,13 @@ while the B<-s> switch just ignores pure-perl core modules:
     % makepar.pl -s -O./foo.par /home/test.pl	# just skip $Config{privlib}
     % makepar.pl -S -O./foo.par /home/test.pl	# skips privlib and archlib
 
+Note that all module-scanning heuristics are in L<Module::ScanDeps>,
+distributed separately on CPAN.  This script is just a wrapper around
+that module and L<Archive::Zip>.
+
 =cut
 
-use Module::ScanDeps;
-
 # Initialization {{{
-use strict;
-use Config ();
-$|++;
-
 my ($out, $bundle, $skip);
 while (@ARGV) {
     $ARGV[0] =~ /^-([bBsSO]+|[IM])(.*)/ or last;
@@ -105,6 +108,7 @@ if ($out) {
     $zip = Archive::Zip->new;
 }
 
+$|++;
 my $size;
 foreach (sort {$map{$a} cmp $map{$b}} grep length $map{$_}, keys %map) {
     next if $skip and $map{$_} eq "$Config::Config{privlib}/$_";
@@ -144,7 +148,7 @@ __END__
 
 =head1 SEE ALSO
 
-L<PAR>, L<par.pl>
+L<PAR>, L<par.pl>, L<Module::ScanDeps>
 
 =head1 AUTHORS
 

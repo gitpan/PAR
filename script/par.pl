@@ -1,12 +1,14 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
+
+eval 'exec /usr/local/bin/perl  -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #14 $ $Change: 1814 $ $DateTime: 2002/11/01 22:07:29 $
+# $Revision: #16 $ $Change: 1846 $ $DateTime: 2002/11/02 21:06:21 $
 
 package __par_pl;
 
-# --- This script does not use any modules upfront ---
+# --- This script cannot use any modules at compile time ---
 # use strict;
-# use warnings;
 
 =head1 NAME
 
@@ -208,7 +210,7 @@ my ($start_pos, $data_pos);
     # }}}
 
     # Set up (optional) external help modules and @INC hook {{{
-    eval { require PerlIO::scalar } if $^O ne 'MSWin32';
+    eval { require PerlIO; require PerlIO::scalar } if $^O ne 'MSWin32';
     eval { require File::Temp };
 
     local @INC = (sub {
@@ -227,14 +229,14 @@ my ($start_pos, $data_pos);
 	} or return;
 
 	if ($INC{'PerlIO/scalar.pm'}) {
-	    open my $fh, '<:scalar', $filename;
+	    open my $fh, '<', $filename or die $!;
 	    return $fh;
 	}
 	else {
 	    my ($out, $name) = _tempfile($ext);
 	    print $out $$filename;
 	    close $out;
-	    open my $fh, $name;
+	    open my $fh, $name or die $!;
 	    return $fh;
 	}
 
@@ -245,6 +247,7 @@ my ($start_pos, $data_pos);
     # Now load all bundled files {{{
 
     # initialize shared object processing
+    require XSLoader;
     require PAR::Heavy;
     PAR::Heavy::_init_dynaloader();
 
@@ -254,7 +257,7 @@ my ($start_pos, $data_pos);
 
     # load rest of the group in
     while (my $filename = (sort keys %require_list)[0]) {
-	require $filename;
+	require $filename unless $INC{$filename} or $filename =~ /BSDPAN/;
 	delete $require_list{$filename};
     }
 
@@ -432,7 +435,7 @@ my ($tmpfile, @tmpfiles);
 sub _tempfile {
     my $ext = shift;
     
-    if ($INC{'File/Temp.pm'}) {
+    if (defined &File::Temp::tempfile) {
 	return File::Temp::tempfile(
 	    SUFFIX	=> $ext,
 	    UNLINK	=> 1
@@ -467,7 +470,7 @@ exit;
 
 =head1 SEE ALSO
 
-L<PAR>, L<perlcc>
+L<PAR>, L<makepar.pl>, L<perlcc>
 
 =head1 AUTHORS
 

@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #26 $ $Change: 1822 $ $DateTime: 2002/11/02 02:02:32 $
+# $Revision: #27 $ $Change: 1847 $ $DateTime: 2002/11/02 21:08:04 $
 
 package PAR;
-$PAR::VERSION = '0.20';
+$PAR::VERSION = '0.21';
 
 use 5.006;
 use strict;
@@ -15,12 +15,12 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.20 of PAR, released November 2, 2002.
+This document describes version 0.21 of PAR, released November 3, 2002.
 
 =head1 SYNOPSIS
 
 (If you want to make an executable that contains all module, scripts and
-data files, please consult L<par.pl> instead.)
+data files, please consult L<makepar.pl> instead.)
 
 Following examples assume a F<foo.par> file in Zip format; support for
 compressed gzip (F<*.tgz>) format is under consideration.

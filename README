@@ -1,12 +1,13 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #7 $ $Change: 1822 $ $DateTime: 2002/11/02 02:02:32 $
+# $Revision: #8 $ $Change: 1845 $ $DateTime: 2002/11/02 21:03:41 $
 
 This is the README file for PAR, a module to use perl scripts
 and modules stored inside compressed .par files.
 
-Please see the PAR.pm for typical uses, script/par.pl for running
-bundled perl distributions, and script/makepar.pl for generating
-PAR files (aka PerlApp or Perl2exe).
+Please see the PAR.pm for typical uses, script/makepar.pl for
+bundling prerequisite modules of scripts into a PAR file (aka
+PerlApp or Perl2exe), and script/par.pl for running/making
+self-contained PAR executables.
 
 There is also a presentation "Introduction to PAR", available on
 the web as <http://www.autrijus.org/par-intro/slide001.html>.
@@ -37,6 +38,7 @@ Afterwards, you can generate self-executable binaries by:
     % perlcc -o par.exe par.pl		# only need to do this once
     % par.exe -B -O./foo.exe foo.par	# self-contained .exe
     % foo.exe				# runs anywhere with same OS
+					# (but see TODO for caveats)
 
 If you want to make a self-contained script instead (without bundling
 the perl binary and core modules), do this:

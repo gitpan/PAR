@@ -1,4 +1,22 @@
+# $File: //member/autrijus/PAR/PAR/Heavy.pm $ $Author: autrijus $
+# $Revision: #2 $ $Change: 1842 $ $DateTime: 2002/11/02 20:33:51 $
+
 package PAR::Heavy;
+$PAR::Heavy::VERSION = '0.01';
+
+=head1 NAME
+
+PAR::Heavy - PAR guts
+
+=head1 SYNOPSIS
+
+(internal use only)
+
+=head1 DESCRIPTION
+
+No user-serviceable parts inside.
+
+=cut
 
 ########################################################################
 # Dynamic inclusion of XS modules
@@ -44,7 +62,10 @@ sub _bootstrap {
 	my $modpname = join((($^O eq 'MacOS') ? ':' : '/'), @modparts);
 	my $file = "auto/$modpname/$modfname.$dl_dlext";
 
-	if (!$DLCache{$file}++ and defined &PAR::find_par and my $member = PAR::find_par(undef, $file, 1)) {
+	if (!$DLCache{$file}++ and
+	    defined &PAR::find_par and
+	    my $member = PAR::find_par(undef, $file, 1)
+	) {
 	    require File::Temp;
 
 	    my ($fh, $filename) = File::Temp::tempfile(
@@ -80,3 +101,22 @@ sub AUTOLOAD {
 }
 
 1;
+
+=head1 SEE ALSO
+
+L<PAR>
+
+=head1 AUTHORS
+
+Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+See L<http://www.perl.com/perl/misc/Artistic.html>
+
+=cut
