@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #3 $ $Change: 2026 $ $DateTime: 2002/11/06 23:01:32 $ */
+   $Revision: #4 $ $Change: 2061 $ $DateTime: 2002/11/08 20:34:22 $ */
 
 #define PERL_NO_GET_CONTEXT
 #include <EXTERN.h>
@@ -51,26 +51,6 @@ S_procself_val(pTHX_ SV *sv, char *arg0)
 #endif /* HAS_PROCSELFEXE */
 
 
-char** prepare_args( int argc, char** argv, int* my_argc )
-{
-    int i, count = ( argc ? argc : 1 ) + 3;
-    char** my_argv = (char**) malloc( ( count + 1 ) * sizeof(char**) );
-
-    my_argv[0] = strdup( argc ? argv[0] : "" );
-    my_argv[1] = strdup( "-e" );
-    my_argv[2] = strdup( "" );
-
-    for( i = 4; i < count; ++i )
-    {
-        my_argv[i] = strdup( argv[ i - 3 ] );
-    }
-
-    my_argv[ count + 1 ] = NULL;
-
-    *my_argc = count;
-    return my_argv;
-}
-
 int main( int argc, char **argv, char **env )
 {
     int exitstatus;
@@ -85,6 +65,7 @@ int main( int argc, char **argv, char **env )
             exit(1);
         perl_construct( my_perl );
         PL_perl_destruct_level = 0;
+        PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
     }
 
 #ifdef CSH
@@ -101,7 +82,7 @@ int main( int argc, char **argv, char **env )
 
     fakeargv[0] = argv[0];
     fakeargv[1] = "-e";
-    fakeargv[2] = "";
+    fakeargv[2] = load_me_2;
     options_count = 3;
 
 #ifndef ALLOW_PERL_OPTIONS
@@ -149,9 +130,6 @@ int main( int argc, char **argv, char **env )
     PL_compcv = 0;
 
     exitstatus = perl_run( my_perl );
-
-    eval_pv( load_me_2, 1 );
-
     perl_destruct( my_perl );
     perl_free( my_perl );
 

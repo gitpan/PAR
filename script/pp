@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #6 $ $Change: 2051 $ $DateTime: 2002/11/08 14:34:59 $
+# $Revision: #7 $ $Change: 2062 $ $DateTime: 2002/11/08 20:36:23 $
 
 use 5.006;
 use strict;
@@ -149,6 +149,7 @@ sub generate_code {
 
 sub run_code {
     vprint 0, "Running code";
+    $Output = File::Spec->catfile(".", $Output);
     system($Output, @ARGV);
     exit(0);
 }
@@ -263,8 +264,10 @@ sub check_perl {
     my $file = shift;
     unless (-T $file) {
         warn "$0: Binary `$file' sure doesn't smell like perl source!\n";
-        print "Checking file type... ";
-        system("file", $file);  
+	if (my $file_checker = _can_run("file")) {
+	    print "Checking file type... ";
+	    system($file_checker, $file);
+	}
         _die("Please try a perlier file!\n");
     } 
 

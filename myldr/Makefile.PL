@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #2 $ $Change: 2027 $ $DateTime: 2002/11/06 23:01:46 $
+# $Revision: #3 $ $Change: 2060 $ $DateTime: 2002/11/08 20:31:07 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -11,7 +11,7 @@ use strict;
 use Config;
 use ExtUtils::Embed;
 
-xsinit();
+xsinit(undef);
 
 my $debug = 0;
 

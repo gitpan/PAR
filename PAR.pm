@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #40 $ $Change: 2053 $ $DateTime: 2002/11/08 14:36:57 $
+# $Revision: #42 $ $Change: 2063 $ $DateTime: 2002/11/08 20:39:30 $
 
 package PAR;
-$PAR::VERSION = '0.44';
+$PAR::VERSION = '0.45';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.44 of PAR, released November 8, 2002.
+This document describes version 0.45 of PAR, released November 9, 2002.
 
 =head1 SYNOPSIS
 
@@ -154,7 +154,7 @@ sub import {
 	unshift @INC, sub { $fh };
 
 	$PAR::__reading = 0;
-	{ do 'main'; close(STDERR); close(STDOUT); die $@ if $@; exit }
+	{ do 'main'; die $@ if $@; exit }
     }
 
     $_reentrant-- if !@_;
@@ -229,9 +229,24 @@ sub unpar {
 }
 
 sub _tmpfile {
+    # From Mattia Barbon <MBARBON@cpan.org>:
+    # Under Win32, IO::File->new_tmpfile uses the C function tmpfile(),
+    # but the implementation provided by MS creates the temporary files in the
+    # root directory, which is likely not to be writable by ordinary users.
+    # using File::Temp::tempfile solves the problem *except* for files containing
+    # a __DATA__/__END__ <guess>since perl copies(dups?) the filehandle,
+    # at the time File::Temp calls unlink, there is still an open handle around,
+    # and Win32 can't delete opened files...
+    #
     my $fh = IO::File->new_tmpfile;
     unless( $fh ) {
 	require File::Temp;
+
+	# under Win32, the file is created with O_TEMPORARY,
+	# and will be deleted by the C runtime; having File::Temp
+	# delete it has the only effect of giving an ugly warnings
+	local *File::Temp::_deferred_unlink = sub {} if $^O eq 'MSWin32';
+
 	$fh = File::Temp::tempfile( UNLINK => 1)
 	    or die "Cannot create temporary file: $!";
     }
