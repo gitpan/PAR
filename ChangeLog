@@ -1,5 +1,36 @@
 # $File: //member/autrijus/PAR/ChangeLog $
-# $Revision: #23 $ $Change: 8199 $ $DateTime: 2003/09/21 10:45:03 $
+# $Revision: #25 $ $Change: 8586 $ $DateTime: 2003/10/27 12:08:42 $
+
+[Changes for 0.76 - October 28, 2003]
+
+* New Features
+
+    - Input filters. "pp --filter Bleach" now obfuscates the incoming
+      script with PAR::Filter::Bleach; "pp --modfilter Bleach" applies
+      Bleach to all packed modules.
+
+    - Two previously built-in filters, PodStrip and PatchContent,
+      are refactored out as PAR::Filter subclasses.
+
+    - Two new filters, Bleach and Bytecode, are added for source-hiding
+      purporses.
+
+    - New utility, "tkpp", provides a GUI frontend to "pp".
+
+    - New option, "pp --perlscript", to generate stand-alone scripts.
+
+    - The old "PAR::Intro" documentation has been replaced by two
+      new ones: "PAR::Tutorial" and "PAR::FAQ".
+
+    - Tk pixmap (.xpm) files can now be packed with "pp --add".
+
+* Bug fixes
+
+    - Perl 5.8.1 has an off-by-one bug that prevents "parl" to
+      function properly.  We have now provided a workaround;
+      this bug should also be fixed in Perl 5.8.2. 
+
+    - Fixed https support for LWP via the new Module::ScapDeps.
 
 [Changes for 0.75 - September 21, 2003]
 
@@ -312,62 +343,70 @@ This release comes with several significant improvements:
 
 * Automatic binary installation
 
-Previously, users without a C compiler cannot build the 'parl'
-executable, and is therefore unable to create self-contained binaries
-using 'pp'.
+    Previously, users without a C compiler cannot build the 'parl'
+    executable, and is therefore unable to create self-contained
+    binaries using 'pp'.
 
-Now, if there is a binary package available for that architecture under
-my CPAN directory, the Makefile.PL script will automatically fetch it,
-unpack into blib/, and the installation will continue as normal,
-resulting in a fully-functional 'pp'.
+    Now, if there is a binary package available for that architecture
+    under my CPAN directory, the Makefile.PL script will automatically
+    fetch it, unpack into blib/, and the installation will continue as
+    normal, resulting in a fully-functional 'pp'.
 
-This feature is part of the soon-to-be-released Module::Install
-framework; it will greatly benefit all CPAN authors with non-pure-perl
-distributions.
+    This feature is part of the soon-to-be-released Module::Install
+    framework; it will greatly benefit all CPAN authors with non-pure-perl
+    distributions.
 
 * POD stripping
 
-Packages generated with 'pp' will now strip POD sections from all packed
-dependencies (your own scripts is unaffected); all binary executables
-will save at least 276732 bytes, with additional ~20% saving in
-additional packed dependencies.
+    Packages generated with 'pp' will now strip POD sections from all
+    packed dependencies (your own scripts is unaffected); all binary
+    executables will save at least 276732 bytes, with additional ~20%
+    saving in additional packed dependencies.
 
-You can turn off this feature with the PAR_VERBATIM environment
-variable.
+    You can turn off this feature with the PAR_VERBATIM environment
+    variable.
 
 * XS Incompatibility solved
 
-Because 'pp'-generated executables includes some fixed version of shared
-libraries (IO, Zlib, etc), they used to break when the target system has
-different version of shared libraries.
+    Because 'pp'-generated executables includes some fixed version of
+    shared libraries (IO, Zlib, etc), they used to break when the
+    target system has different version of shared libraries.
 
-Now PAR::Heavy intercepts DynaLoader::dl_expandspec to always prefer the
-library inside the PAR file, so this issue is resolved.
+    Now PAR::Heavy intercepts DynaLoader::dl_expandspec to always prefer
+    the library inside the PAR file, so this issue is resolved.
 
 * 5.6.1 Reclaimed
 
-Thanks to Sisyphus and various others, building on Perl 5.6.1 (with its
-old ExtUtils::MakeMaker and lack of PTHREAD_ATFORK) now works again.
+    Thanks to Sisyphus and various others, building on Perl 5.6.1
+    (with its old ExtUtils::MakeMaker and lack of PTHREAD_ATFORK)
+    now works again.
 
 [Changes for 0.64 - March 2, 2003]
 
-This is primarily a bug-fix release for the binmode() bug, reported
-by Bill Atkins, D. Menzel and others, that prevents dynamic loading
-on Win32 from working.
+* New Features
 
-Also fixed is building on Win32 in directory names that contain
-spaces; the t/0-signature.t is re-enabled for people using my
-Module::Signature to verify the module's OpenPGP signature.
+    - The t/0-signature.t test is re-enabled for people using my
+      Module::Signature to verify the module's OpenPGP signature.
 
-This release is also the first distribution on CPAN to use the
-Module::Install framework, which is a stand-alone, extensible
-drop-in replacement for ExtUtils::MakeMaker that needs no extra
-action/prerequisites for end users.
+    - This release is the first distribution on CPAN to use the
+      Module::Install framework, which is a stand-alone, extensible
+      drop-in replacement for ExtUtils::MakeMaker that needs no
+      extra action/prerequisites for end users.
 
+* Bug fixes
+
+    - Dynamic loading on Win32 was broken, due to a binmode() bug
+      reported by Bill Atkins, D. Menzel and others.
+
+    - Building on Win32 in directory names that contain spaces
+      did not work.
+      
 [Changes for 0.63 - February 6, 2003]
 
-Jerry Veldhuis found out a 0.62-specific bug, namely that the new 'parl'
-binary (which replaces the old 'par' or 'par.exe') doesn't work properly
-when bundling perl modules for self-contained executables, rendering
-'pp' useless on machines without core perl.
+* Bug fixes
+
+    - The 'parl' binary (which replaces the old 'par' or 'par.exe')
+      didn't work properly when bundling perl modules for self-
+      contained executables, rendering 'pp' useless on machines
+      without core perl.
 

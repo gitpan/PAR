@@ -1,4 +1,184 @@
 ____________________________________________________________________________
+[  8607] By: autrijus                              on 2003/10/28  12:04:24
+        Log: * This be PAR, Version 0.76.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  8606] By: autrijus                              on 2003/10/28  11:48:53
+        Log: * do not probe for an executable par.pl.
+	   ! script/pp
+____________________________________________________________________________
+[  8595] By: autrijus                              on 2003/10/28  04:38:21
+        Log: * We now warn for missing files, thanks to Matthew Braid.
+	   ! script/pp
+____________________________________________________________________________
+[  8594] By: autrijus                              on 2003/10/28  04:23:56
+        Log: * upgrade M::I.
+	   ! inc/Module/Install.pm
+	   ! inc/Module/Install/Makefile.pm
+	   ! inc/Module/Install/Metadata.pm
+____________________________________________________________________________
+[  8593] By: autrijus                              on 2003/10/28  04:23:11
+        Log: * Add Digest::SHA1 as a pre-prerequisite for
+             Module::Signature.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  8586] By: autrijus                              on 2003/10/27  12:08:42
+        Log: * Mention Bleach and Bytecode filters in changelog.
+	   ! ChangeLog
+____________________________________________________________________________
+[  8585] By: autrijus                              on 2003/10/27  12:06:44
+        Log: * Fully document -f and -F.
+	   ! script/pp
+____________________________________________________________________________
+[  8584] By: autrijus                              on 2003/10/27  11:44:43
+        Log: * Add the long-awaited, PHP-friendly Bytecode filter.
+             We can sa "Perl is equally obscurable as Java" now!
+	   + lib/PAR/Filter/Bytecode.pm
+	   ! MANIFEST lib/PAR/Filter.pm
+____________________________________________________________________________
+[  8583] By: autrijus                              on 2003/10/27  11:27:17
+        Log: * Fix typo.
+	   ! lib/PAR/Filter/Bleach.pm
+____________________________________________________________________________
+[  8582] By: autrijus                              on 2003/10/27  11:27:03
+        Log: * Update documentations
+	   ! README lib/PAR/Tutorial.pod
+____________________________________________________________________________
+[  8581] By: autrijus                              on 2003/10/27  11:26:34
+        Log: * Update authors.
+	   ! AUTHORS
+____________________________________________________________________________
+[  8579] By: autrijus                              on 2003/10/27  10:10:06
+        Log: * proper version detection and explain of the bug.
+	   ! myldr/internals.c
+____________________________________________________________________________
+[  8577] By: autrijus                              on 2003/10/27  09:27:42
+        Log: * We are saddened to learn that 5.9.0 is similarly broken,
+             despite the inclusion of my mg.c patch, against all reason.
+	   ! myldr/internals.c
+____________________________________________________________________________
+[  8575] By: autrijus                              on 2003/10/27  06:31:16
+        Log: * Excise the gpg prompt.
+             * Display the preference setup dialog automatically on the
+	       first time.
+	   ! script/tkpp
+____________________________________________________________________________
+[  8574] By: autrijus                              on 2003/10/27  05:08:02
+        Log: * make it runnable with just Core Tk.
+	   ! script/tkpp
+____________________________________________________________________________
+[  8573] By: autrijus                              on 2003/10/27  02:32:10
+        Log: * another approach, as suggested by Abhijit.
+	   ! myldr/internals.c
+____________________________________________________________________________
+[  8570] By: autrijus                              on 2003/10/26  11:24:43
+        Log: * jouke reports abhijit's fix does not really work.
+	   ! myldr/internals.c
+____________________________________________________________________________
+[  8569] By: autrijus                              on 2003/10/26  10:54:32
+        Log: * requiring M::SD 0.32.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  8567] By: autrijus                              on 2003/10/26  09:16:48
+        Log: * Proper, non-corrupting perl 5.8.1 fix from Abhijit.
+	   ! myldr/internals.c
+____________________________________________________________________________
+[  8566] By: autrijus                              on 2003/10/26  09:11:44
+        Log: * try a more robust open.
+	   ! lib/PAR/Filter.pm
+____________________________________________________________________________
+[  8565] By: autrijus                              on 2003/10/26  08:13:06
+        Log: * Patch from Alan Stewart to fix tkpp's clobbering of
+	       prefs.
+	   ! script/tkpp
+____________________________________________________________________________
+[  8564] By: autrijus                              on 2003/10/26  08:12:54
+        Log: * also manify tkpp.
+	   ! inc/Module/Install/PRIVATE.pm
+	   ! inc/Module/Install/PRIVATE/PAR.pm
+____________________________________________________________________________
+[  8561] By: autrijus                              on 2003/10/26  02:39:27
+        Log: * Add FAQ and Tutorial to MANIFEST and remove Intro.
+	   ! MANIFEST
+____________________________________________________________________________
+[  8560] By: autrijus                              on 2003/10/26  02:39:01
+        Log: * rework README and changelog a bit to reflect new
+	       additions.
+	   ! ChangeLog README
+____________________________________________________________________________
+[  8559] By: autrijus                              on 2003/10/26  02:37:51
+        Log: * Bump version.
+             * Mention tkpp, PAR::Tutorial and PAR::FAQ.
+	   ! lib/PAR.pm script/pp
+____________________________________________________________________________
+[  8558] By: autrijus                              on 2003/10/26  02:37:17
+        Log: * Work around perl 5.8.1 off-by-one bug in mg.c.
+	   ! myldr/internals.c
+____________________________________________________________________________
+[  8557] By: autrijus                              on 2003/10/26  02:36:51
+        Log: * Refactor pod_strip out to use PAR::Filter::PodStrip.
+	   ! myldr/file2c.pl script/par.pl
+____________________________________________________________________________
+[  8556] By: autrijus                              on 2003/10/26  02:35:41
+        Log: * Use __DATA__, not __END__, so "pp" can pack "tkpp".
+	   ! script/tkpp
+____________________________________________________________________________
+[  8555] By: autrijus                              on 2003/10/26  02:34:51
+        Log: * PAR::Intro retired.
+             * Adds PAR::FAQ and PAR::Tutorial.
+	   + lib/PAR/FAQ.pod lib/PAR/Tutorial.pod
+	   - lib/PAR/Intro.pod
+____________________________________________________________________________
+[  8554] By: autrijus                              on 2003/10/26  02:34:27
+        Log: * The PAR filter suite.
+	   ! lib/PAR/Filter.pm lib/PAR/Filter/Bleach.pm
+	   ! lib/PAR/Filter/PatchContent.pm
+	   ! lib/PAR/Filter/PodStrip.pm
+____________________________________________________________________________
+[  8553] By: autrijus                              on 2003/10/26  02:29:48
+        Log: * Run tkpp through perltidy to remove the unsightly tabs.
+             * Re-coded documentations.
+	   ! script/tkpp
+____________________________________________________________________________
+[  8552] By: autrijus                              on 2003/10/24  09:29:01
+        Log: * try letting Tk add image with -M.
+	   ! lib/PAR/Filter/PatchContent.pm
+____________________________________________________________________________
+[  8551] By: autrijus                              on 2003/10/24  09:28:01
+        Log: * update the inc/.
+	   ! MANIFEST inc/ExtUtils/AutoInstall.pm
+	   ! inc/Module/Install/AutoInstall.pm
+	   ! inc/Module/Install/Can.pm
+	   ! inc/Module/Install/Fetch.pm
+	   ! inc/Module/Install/Include.pm
+	   ! inc/Module/Install/Makefile.pm
+	   ! inc/Module/Install/Metadata.pm
+	   ! inc/Module/Install/Win32.pm
+____________________________________________________________________________
+[  8547] By: autrijus                              on 2003/10/24  01:34:05
+        Log: * modified pp and tkpp to make them work with Filters.
+	   ! script/pp script/tkpp
+____________________________________________________________________________
+[  8546] By: autrijus                              on 2003/10/24  01:33:41
+        Log: * upgrade to newer M::I
+	   ! inc/Module/Install.pm
+	   ! inc/Module/Install/Base.pm
+	   ! inc/Module/Install/PAR.pm
+____________________________________________________________________________
+[  8545] By: autrijus                              on 2003/10/24  01:30:02
+        Log: * add PAR::Filter, the input filter suite.
+	   + lib/PAR/Filter.pm
+	   ! lib/PAR/Filter/Bleach.pm
+	   ! lib/PAR/Filter/PatchContent.pm
+	   ! lib/PAR/Filter/PodStrip.pm
+____________________________________________________________________________
+[  8544] By: autrijus                              on 2003/10/23  21:12:21
+        Log: * Filters support landed, as "pp -f" and "pp -F".
+	   + lib/PAR/Filter/Bleach.pm
+	   + lib/PAR/Filter/PatchContent.pm
+	   + lib/PAR/Filter/PodStrip.pm
+	   ! script/pp
+____________________________________________________________________________
 [  8540] By: autrijus                              on 2003/10/23  04:42:43
         Log: * This be 0.75_99, stopgap release to fix 5.8.1
 	       compatibility.

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #85 $ $Change: 8510 $ $DateTime: 2003/10/20 23:35:17 $ vim: expandtab shiftwidth=4
+# $Revision: #91 $ $Change: 8606 $ $DateTime: 2003/10/28 11:48:53 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -23,6 +23,7 @@ use File::Spec;
 use File::Temp qw(tempfile);
 use Getopt::Long; 
 use Module::ScanDeps 0.10;
+use PAR::Filter;
 
 our $VERSION = 0.05;
 $| = 1;
@@ -136,7 +137,12 @@ sub compile_par {
 
     $zip->addDirectory('', substr($root, 0, -1)) if $root and %map and $] >= 5.008;
     $zip->addDirectory('', $root.'lib') if %map and $] >= 5.008;
+
     my $verbatim = ($ENV{PAR_VERBATIM} || 0);
+    my $mod_filter = PAR::Filter->new(
+        'PatchContent',
+        @{ opt(F) || ($verbatim ? [] : ['PodStrip']) },
+    );
     foreach my $pfile (sort grep length $map{$_}, keys %map) {
         next if !opt(B) and ($map{$pfile} eq "$Config{privlib}/$pfile"
                           or $map{$pfile} eq "$Config{archlib}/$pfile");
@@ -145,16 +151,9 @@ sub compile_par {
         vprint 2, "... adding $map{$pfile} as ${root}lib/$pfile";
 
         if ($text{$pfile}) {
-            local $/;
-            open my $file, '<', $map{$pfile} or die $!;
-            binmode($file);
-            my $content = <$file>;
-
-            modify_content($pfile, \$content);
-            $content = pod_strip($content, $map{$pfile}) unless $verbatim;
-
-            $size += length($content);
-            $zip->addString( \$content => $root."lib/$pfile", %zip_args );
+            my $content_ref = $mod_filter->apply($map{$pfile}, $pfile);
+            $size += length( $$content_ref );
+            $zip->addString( $content_ref => $root."lib/$pfile", %zip_args );
         }
         else {
             $zip->addFile($map{$pfile} => $root."lib/$pfile");
@@ -167,11 +166,23 @@ sub compile_par {
     @Input = grep !/\.pm\z/i, @Input;
 
     $zip->addDirectory('', 'script') if @Input and $] >= 5.008;
+
+    my $script_filter = PAR::Filter->new( @{ opt(f) } ) if opt(f);
+
     foreach my $input (@Input) {
         my $name = basename($input);
         $size += -s $input;
 
-        $zip->addFile($input => "script/$name");
+        if ($script_filter) {
+            $zip->addString(
+                $script_filter->apply($input, $name) => "script/$name",
+                %zip_args,
+            );
+        }
+        else {
+            $zip->addFile($input => "script/$name");
+        }
+
         $manifest{"script/$name"}++;
     }
 
@@ -188,6 +199,10 @@ sub compile_par {
     }
 
     foreach my $input (@data) {
+	unless (-r $input and !-d $input) {
+	    warn "'$input' does not exist or is not readable; skipping\n";
+	    next;
+	}
         my $name = basename($input);
         $size += -s $input;
 
@@ -265,66 +280,11 @@ sub _name2moddata {
         $name =~ s/::/\//g;
         push @$mod, "$name.pm";
     }
-    elsif (/\.(?:pm|ix|al)$/i) {
+    elsif ($name =~ /\.(?:pm|ix|al)$/i) {
         push @$mod, $name;
     }
     else {
         push @$dat, $name;
-    }
-}
-
-sub PATCH_CONTENT () { {
-    'Tk.pm'             => [
-        'foreach $dir (@INC)'   => 
-        'if (my $member = PAR::unpar($0, $file, 1)) {
-            $file =~ s![/\\\\]!_!g;
-            return PAR::Heavy::_dl_extract($member,$file,$file);
-         }
-         foreach $dir (@INC)', 
-    ],
-    'Tk/Widget.pm'          => [
-        'if (defined($name=$INC{"$pkg.pm"}))' =>
-        'if (defined($name=$INC{"$pkg.pm"}) and !ref($name) and $name !~ m!^/loader/!)',
-    ],
-    'Win32/API/Type.pm'     => [
-        'INIT ' => '',
-    ],
-    'Win32/SystemInfo.pm'   => [
-        '$dll .= "cpuspd.dll";' =>
-        '$dll = "lib/Win32/cpuspd.dll";
-         if (my $member = PAR::unpar($0, $dll, 1)) {
-             $dll = PAR::Heavy::_dl_extract($member,"cpuspd.dll","cpuspd.dll");
-             $dll =~ s!\\\\!/!g;
-         } else { die $! }',
-    ],
-    'SQL/Parser.pm'   => [
-        'my @dialects;' =>
-        'my @dialects = ();
-         foreach my $member ( $PAR::LastAccessedPAR->members ) {
-             next unless $member->fileName =~ m!\bSQL/Dialects/([^/]+)\.pm$!;
-             push @dialects, $1;
-         }
-        ',
-    ],
-    'diagnostics.pm'        => [
-        'CONFIG: ' => 'CONFIG: if (0) ',
-        'if (eof(POD_DIAG)) ' => 'if (0 and eof(POD_DIAG)) ',
-        'close POD_DIAG' => '# close POD_DIAG',
-        'while (<POD_DIAG>) ' =>
-        'for(map "$_\\n\\n", split/\\r?\\n(?:\\r?\\n)*/, 
-            PAR::read_file("lib/Pod/perldiag.pod") ||
-            PAR::read_file("lib/pod/perldiag.pod")
-        ) ',
-    ],
-} };
-
-sub modify_content {
-    my ($file, $ref) = @_;
-    { use bytes; $$ref =~ s/^\xEF\xBB\xBF//; } # remove utf8 BOM
-
-    my @rule = @{PATCH_CONTENT->{$file}||[]} or return;
-    while (my ($from, $to) = splice(@rule, 0, 2)) {
-        $$ref =~ s/\Q$from\E/$to/g;
     }
 }
 
@@ -333,7 +293,7 @@ sub par_to_exe {
     $parl = 'parldyn' if (opt(d) and $dynperl);
     $parl .= $Config{_exe};
     $parl = 'par.pl' if opt(P);
-    $PARL ||= _can_run($parl) or _die("Can't find par loader");
+    $PARL ||= _can_run($parl, opt(P)) or _die("Can't find par loader");
 
     my $orig_parl = $PARL;
     my $do_unlink;
@@ -372,7 +332,7 @@ sub par_to_exe {
     }
 
     my @args = ('-B', "-O$Output", $par_file);
-    unshift @args, '-q' if opt(v);
+    unshift @args, '-q' unless opt(v);
     if (opt(P)) {
         unshift @args, $PARL;
         $PARL = $^X;
@@ -602,7 +562,7 @@ sub check_perl {
 } 
 
 sub check_par {
-    my $file = shift;
+    my $file = shift or return;
     open(my $handle, "<", $file) or _die("XXX: Can't open $file: $!");
     binmode($handle);
     local $/ = \4;
@@ -702,14 +662,14 @@ sub _find_shlib {
 }
 
 sub _can_run {
-    my $command = shift;
+    my ($command, $no_exec) = @_;
 
     for my $dir (
         File::Basename::dirname($0),
         split(/\Q$Config{path_sep}\E/, $ENV{PATH})
     ) {
         my $abs = File::Spec->catfile($dir, $command);
-        return $abs if $abs = MM->maybe_command($abs);
+        return $abs if $no_exec or $abs = MM->maybe_command($abs);
     }
 
     return;
@@ -803,12 +763,14 @@ verbatim without compilation.
 
 You may think of F<pp> as "F<perlcc> that works without hassle". :-)
 
-It does not provide the compilation-step acceleration provided
-by F<perlcc> (although a ByteLoader variant of F<pp> is entirely
-possible), but makes up for it with better reliability, smaller
+A GUI interface is also available as the F<tkpp> command.
+
+It does not provide the compilation-step acceleration provided by
+F<perlcc> (however, see B<-f> below for byte-compiled, source-hiding
+techniques), but makes up for it with better reliability, smaller
 executable size, and full retrieval of original source code.
 
-If a single input program is specified, the resulting executable will
+When a single input program is specified, the resulting executable will
 behave identically as that program.  However, when multiple programs
 are packaged, the produced executable will run the one that has the
 same basename as C<$0> (i.e. the filename used to invoke it).  If
@@ -859,10 +821,19 @@ Package a one-liner, much the same as C<perl -e '...'>
 Excludes the given module from the dependency search patch and from the
 package.
 
-=item B<-f>, B<--filter>=I<MODULE>
+=item B<-f>, B<--filter>=I<FILTER>
 
-Filter source script(s) with a module.  This feature is currently
-unimplemented.
+Filter source script(s) with a L<PAR::Filter> subclass.  You may specify
+multiple such filters.
+
+If you wish to hide the source code from casual prying, this will do:
+
+    % pp -f Bleach source.pl
+
+Users with Perl 5.8.1 and above may also try out the experimental
+byte-compiling filter, which will strip away all comments and indents:
+
+    % pp -f Bytecode source.pl
 
 =item B<-g>, B<--gui>
 
@@ -907,10 +878,10 @@ C<-l /usr/local/lib/libncurses.so> in most Unixes.
 
 Log the output of packaging to a file rather than to stdout.
 
-=item B<-F>, B<--modfilter>=I<MODULE>
+=item B<-F>, B<--modfilter>=I<FILTER>
 
-Filter included perl modules with a module.  This feature is
-currently unimplemented.
+Filter included perl module(s) with a L<PAR::Filter> subclass.
+You may specify multiple such filters.
 
 =item B<-m>, B<--multiarch>
 
@@ -1008,7 +979,9 @@ can significantly reduce the executable size.
 
 =head1 SEE ALSO
 
-L<PAR>, L<Module::ScanDeps>, L<par.pl>, L<parl>, L<perlcc>
+L<tkpp>, L<par.pl>, L<parl>, L<perlcc>
+
+L<PAR>, L<Module::ScanDeps>
 
 =head1 ACKNOWLEDGMENTS
 

@@ -1,14 +1,17 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/file2c.pl $ $Author: autrijus $
-# $Revision: #17 $ $Change: 7365 $ $DateTime: 2003/08/06 13:00:03 $
+# $Revision: #18 $ $Change: 8557 $ $DateTime: 2003/10/26 02:36:51 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
-use File::Basename;
 use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use File::Basename;
+use PAR::Filter::PodStrip;
 
 my $give_help = 0;
 my $pl_file = shift;
@@ -40,7 +43,8 @@ undef $/;
 my $pl_text = <IN>;
 close IN;
 
-$pl_text = pod_strip($pl_text, basename($pl_file)) if -e $pl_file and $pl_file =~ /\.p[lm]/i;
+PAR::Filter::PodStrip->new->apply(\$pl_text)
+    if -e $pl_file and $pl_file =~ /\.p[lm]/i;
 
 #  make a c-array
 

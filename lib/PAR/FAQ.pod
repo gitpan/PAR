@@ -1,0 +1,112 @@
+# $File: //member/autrijus/PAR/lib/PAR/FAQ.pod $
+# $Revision: #1 $ $Change: 8555 $ $DateTime: 2003/10/26 02:34:51 $ vim: expandtab shiftwidth=4
+
+=head1 NAME
+
+PAR::FAQ - Frequently Asked Questions about PAR
+
+=head1 SYNOPSIS
+
+This is the Frequently Asked Questions list for the Perl Archive Toolkit.
+You can edit this document at L<http://par.perl.org/?FAQ> online.
+
+=head1 DESCRIPTION
+
+=head2 If I try to compile my wxGlade generated script, it doesn't run. What's wrong?
+
+Comment out the line that starts with C<unless (caller)>, and compile it again.
+Note that this is considered a bug; clearing the caller stack is a development
+in progress.
+
+=head2 I get a link error '/usr/bin/ld: cannot find -lperl' during the 'make' step of the installation on Debian. What's wrong?
+
+This is a common problem when building compiled libraries on Debian
+distribution installations with the default perl package.  To fix this problem,
+create a symbolic link from libperl.so.5.6.1 to libperl.so in F</usr/lib>:
+
+    cd /usr/lib; ln -s libperl.so.5.6.1 libperl.so
+
+and re-run the 'make' step of the installation.
+
+=head2 I specify a .ico file with --icon for Win32, but the icon is still the black and white camel.  What's wrong?
+
+Unlike Perl2EXE, which can use a standard 16-color bitmap as an application
+icon, PAR requires a true Windows icon file.  Download a trial version of
+[Microangelo L<http://www.microangelo.us/> and use that to create your .ico
+file. The latest Netpbm tools at L<http://netpbm.sourceforge.net/> has
+B<ppmtowinicon>, which can tack a pbm and convert it to a windows icon.  It is
+open source and has win32 ports.
+
+=head2 I added a directory to my PAR file using "zip -r" or winzip, and then generated an executable from this PAR file, and the executable failed to run (IO error: reading header signature :..). What's wrong?
+
+As pointed out by Alan Stewart, zip adds a directory entry for the new directory, and it causes
+the PAR executable to fail. 
+Just use : 
+
+    zip -r -D hello.par my_dir/ 
+
+or the Archive::Zip::addTree as follows :
+
+    $zip->addTree( $root, $dest, sub { -f } )
+
+=head2 On what platforms can I run PAR?  On what platforms will the resulting executable run?
+
+Win32 (95/98/ME/NT4/2K/XP), FreeBSD, Linux, AIX, Solaris, Darwin and Cygwin.
+
+The resulting executable will run on any platforms that supports the binary
+format of the generating platform.
+
+=head2 How do I extract my script out of packed executable?
+
+In other words, "I did a `pp foo.pl' and I lost foo.pl, how do I get it back?".
+
+The answer is to just use unzip/winzip/winrar/whatever to decompress the
+executable, treating it like a normal Zip file.  You may need to rename the
+executable into a .zip extension first.
+
+=head2 Can PAR completly hide my source code?
+
+Not completely, but possible to a degree.  Starting from version 0.76, PAR
+supports an input filter mechanism (see L<PAR::Filter>), which can be used to
+implement source obfuscators (or even product activation schemes).
+
+But if you are looking for 100% bulletproof way of hiding source code, it is
+not possible with any language.  Learning Perl, 3rd Edition has this answer to
+offer (quoted with permission from RandalSchwartz):
+
+    If you're wishing for an opaque binary, though, we have to tell
+    you that they don't exist. If someone can install and run your
+    program, they can turn it back into source code. Granted, this
+    won't necessarily be the same source that you started with, but
+    it will be some kind of source code. The real way to keep your
+    secret algorithm a secret is, alas, to apply the proper number
+    of attorneys; they can write a license that says "you can do
+    this with the code, but you can't do that. And if you break our
+    rules, we've got the proper number of attorneys to ensure that
+    you'll regret it."
+
+
+=head1 SEE ALSO
+
+L<PAR>, L<PAR::Tutorial>
+
+=head1 AUTHORS
+
+Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
+
+L<http://par.perl.org/> is the official PAR website.  You can write
+to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
+E<lt>par-subscribe@perl.orgE<gt> to participate in the discussion.
+
+Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+
+=head1 COPYRIGHT
+
+Copyright 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+
+This document is free documentation; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+See L<http://www.perl.com/perl/misc/Artistic.html>
+
+=cut

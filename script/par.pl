@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #80 $ $Change: 8491 $ $DateTime: 2003/10/19 15:19:48 $ vim: expandtab shiftwidth=4
+# $Revision: #81 $ $Change: 8557 $ $DateTime: 2003/10/26 02:36:51 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
@@ -393,11 +393,10 @@ if ($out) {
     seek _FH, 0, 0;
     my $loader = scalar <_FH>;
     if (!$ENV{PAR_VERBATIM} and $loader =~ /^(?:#!|\@rem)/) {
-        print OUT pod_strip($loader, $0);
+        require PAR::Filter::PodStrip;
+        PAR::Filter::PodStrip->new->apply(\$loader, $file)
     }
-    else {
-        print OUT $loader;
-    }
+    print OUT $loader;
     $/ = undef;
     # }}}
 
@@ -466,7 +465,7 @@ if ($out) {
                 $content = <FILE>;
                 close FILE;
 
-                $content = pod_strip($content, $file)
+                PAR::Filter::PodStrip->new->apply(\$content, $file)
                     if !$ENV{PAR_VERBATIM} and lc($name) =~ /\.(?:pm|ix|al)$/i;
             }
 
@@ -576,6 +575,7 @@ sub require_modules {
     require PAR;
     require PAR::Heavy;
     require PAR::Dist;
+    require PAR::Filter::PodStrip;
 }
 
 # N.B. we set PAR_TMP_DIR and PAR_TEMP in myldr/main.c
@@ -630,38 +630,6 @@ sub _tempfile {
 }
 
 sub outs { warn("@_\n") unless $quiet }
-
-sub pod_strip {
-    my ($pl_text, $filename) = @_;
-
-    local $^W;
-
-    my $data = '';
-    $data = $1 if $pl_text =~ s/((?:^__DATA__$).*)//ms;
-
-    my $line = 1;
-    if ($pl_text =~ /^=(?:head\d|pod|begin|item|over|for|back|end)\b/) {
-        $pl_text = "\n$pl_text";
-        $line--;
-    }
-    $pl_text =~ s{(
-	(.*?\n)
-	=(?:head\d|pod|begin|item|over|for|back|end)\b
-	.*?\n
-	(?:=cut[\t ]*[\r\n]*?|\Z)
-	(\r?\n)?
-    )}{
-	my ($pre, $post) = ($2, $3);
-        "$pre#line " . (
-	    $line += ( () = ( $1 =~ /\n/g ) )
-	) . $post;
-    }gsex;
-    $pl_text = '#line 1 "' . ($filename) . "\"\n" . $pl_text
-        if length $filename;
-    $pl_text =~ s/^#line 1 (.*\n)(#!.*\n)/$2#line 2 $1/g;
-
-    return $pl_text . $data;
-}
 
 sub init_inc {
     require Config;

@@ -1,6 +1,6 @@
-#line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.0/Module/Install/PRIVATE/PAR.pm"
+#line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.1/Module/Install/PRIVATE/PAR.pm"
 # $File: //member/autrijus/Module-Install-PRIVATE/lib/Module/Install/PRIVATE/PAR.pm $ $Author: autrijus $
-# $Revision: #9 $ $Change: 7197 $ $DateTime: 2003/07/28 11:31:24 $ vim: expandtab shiftwidth=4
+# $Revision: #10 $ $Change: 7210 $ $DateTime: 2003/07/28 14:05:30 $ vim: expandtab shiftwidth=4
 
 package Module::Install::PRIVATE::PAR;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
@@ -53,6 +53,7 @@ sub Autrijus_PAR {
         MAN1PODS		=> {
             'script/par.pl'	=> 'blib/man1/par.pl.1',
             'script/pp'	        => 'blib/man1/pp.1',
+            'script/tkpp'       => 'blib/man1/tkpp.1',
           ($par or $cc) ? (
             'script/parl.pod'   => 'blib/man1/parl.1',
           ) : (),
@@ -60,6 +61,7 @@ sub Autrijus_PAR {
         EXE_FILES		=> [
             'script/par.pl',
             'script/pp',
+            'script/tkpp',
           (!$par and $cc) ? (
             "script/parl$exe",
             ($^O eq 'MSWin32' and Win32::IsWinNT()) ? (

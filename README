@@ -1,24 +1,23 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #24 $ $Change: 7349 $ $DateTime: 2003/08/05 17:22:57 $
+# $Revision: #26 $ $Change: 8582 $ $DateTime: 2003/10/27 11:27:03 $
 
 This is the README file for PAR, a toolkit to use perl scripts and
 modules stored inside compressed .par files.
 
 Please type "perldoc PAR" after installation to see the module usage
-information.
+information, and "perldoc PAR::FAQ" for frequently answered questions.
 
-For bundling prerequisite modules of scripts into a PAR file (ala
-PerlApp, Perl2exe, or 'perlcc that works'), see "perldoc pp".
+For packing scripts with prerequisite modules into stand-alone scripts
+or executables (aka PerlApp, Perl2exe, or 'perlcc that works'), see
+"perldoc pp" and "perldoc tkpp".
 
 For running ".par" files directly, see "perldoc parl".
 
 To generate/execute self-contained perl scripts, see "perldoc par.pl".
 
 An extensive "Cross-Platform Packaging and Deployment with PAR" tutorial
-is availabe at http://www.autrijus.org/par-tutorial/.
-
-There is also a presentation "Introduction to PAR" included as part
-of installation; see "perldoc PAR::Intro".
+is available at <http://www.autrijus.org/par-tutorial/>.  Its POD version
+is also included as part of installation; see "perldoc PAR::Tutorial".
 
 * Installation
 
