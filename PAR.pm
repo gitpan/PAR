@@ -1,12 +1,13 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #10 $ $Change: 1560 $ $DateTime: 2002/10/19 22:15:26 $
+# $Revision: #13 $ $Change: 1569 $ $DateTime: 2002/10/20 12:45:22 $
 
 package PAR;
-$PAR::VERSION = '0.11';
+$PAR::VERSION = '0.12';
 
 use 5.006;
 use strict;
 use Config ();
+use Archive::Zip ();
 
 =head1 NAME
 
@@ -14,7 +15,7 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.11 of PAR, released October 20, 2002.
+This document describes version 0.12 of PAR, released October 20, 2002.
 
 =head1 SYNOPSIS
 
@@ -24,8 +25,7 @@ data files, please consult L<par.pl> instead.)
 Following examples assume a F<foo.par> file in Zip format; support for
 compressed gzip (F<*.tgz>) format is under consideration.
 
-To use F<Hello.pm>, F<lib/Hello.pm>, F<lib/arch/Hello.pm> or
-F<lib/$Config{archname}/Hello.pm> from F<./foo.par>:
+To use F<Hello.pm> from F<./foo.par>:
 
     % perl -MPAR=./foo.par -MHello
     % perl -MPAR=./foo -MHello		# the .par part is optional
@@ -34,6 +34,15 @@ Same thing, but search F<foo.par> in the C<@INC>;
 
     % perl -MPAR -Ifoo.par -MHello
     % perl -MPAR -Ifoo -MHello		# ditto
+
+The search path for the above two examples are:
+
+    /
+    /lib/
+    /arch/
+    /i386-freebsd/		# i.e. $Config{archname}
+    /5.8.0/			# i.e. Perl version number
+    /5.8.0/i386-freebsd/	# both of the above
 
 Run F<test.pl> or F<script/test.pl> from F<foo.par>:
 
@@ -98,11 +107,15 @@ next time, but if you need the functionality, just mail me. ;-)
 
 =cut
 
-our @PAR_INC;
-our (@LibCache, %LibCache); # I really miss pseudohash.
-our (%DATACache, %DLCache); # cache for __DATA__ segments
+our @PAR_INC;			# explicitly stated PAR library files
+our (@LibCache, %LibCache);	# I really miss pseudohash.
+our (%DATACache, %DLCache);	# cache for __DATA__ segments
 
-my $Reentrant;
+my $ver		= sprintf("%vd", $^V);
+my $arch	= $Config::Config{archname};
+my $dl_dlext	= $Config::Config{dlext};
+
+my $Reentrant;			# flag to avoid recursive import
 sub import {
     my $class = shift;
     return if !@_ and $Reentrant++;
@@ -145,8 +158,9 @@ sub import {
 	    package main;
 	    $0 = $file;
 	    eval $program;
+	    die $@ if $@;
 	}
-	die $@ if $@;
+
 	exit;
     }
 
@@ -154,11 +168,12 @@ sub import {
 }
 
 sub incpar {
-    my ($self, $file) = @_;
+    my ($self, $file, $member_only) = @_;
 
     foreach my $path (@PAR_INC ? @PAR_INC : @INC) {
-	my $fh = unpar($path, $file) or next;
-	return $fh;
+	next if ref $file;
+	my $rv = unpar($path, $file, $member_only);
+	return $rv if defined($rv);
     }
 
     return;
@@ -181,7 +196,7 @@ sub par_handle {
 }
 
 sub unpar {
-    my ($par, $file) = @_;
+    my ($par, $file, $member_only) = @_;
     my $zip = $LibCache{$par};
 
     unless ($zip) {
@@ -203,13 +218,16 @@ sub unpar {
     my $member = $zip->memberNamed($file)
 	      || $zip->memberNamed("lib/$file")
 	      || $zip->memberNamed("arch/$file")
-	      || $zip->memberNamed("$Config::Config{archname}/$file") or return;
+	      || $zip->memberNamed("$arch/$file")
+	      || $zip->memberNamed("$ver/$file")
+	      || $zip->memberNamed("$ver/$arch/$file") or return;
 
-    my $fh = IO::Handle->new;
+    return $member if $member_only;
+
     my @lines = map "$_\n", split("\n", scalar $member->contents);
 
-    # You did not see this undocumented jenga piece.
-    return ($fh, sub {
+    # You did not see this undocumented super-jenga piece.
+    return (sub {
 	$_ = shift(@lines);
 	if ($_ eq "__DATA__\n" or $_ eq "__END__\n") {
 	    $DATACache{$par} = join('', @lines);
@@ -253,6 +271,7 @@ sub _init_dynaloader {
     $dl_findfile = \&DynaLoader::dl_findfile;
 
     no strict 'refs';
+    no warnings 'redefine';
     *{'DynaLoader::bootstrap'}   = \&_bootstrap;
     *{'DynaLoader::dl_findfile'} = \&_dl_findfile;
 }
@@ -266,7 +285,6 @@ sub _bootstrap {
     my (@args) = @_;
     my ($module) = $args[0];
     my (@dirs, $file);
-    my $dl_dlext = $Config::Config{dlext};
 
     if ($module) {
 	my @modparts = split(/::/,$module);
@@ -282,11 +300,7 @@ sub _bootstrap {
 	my $modpname = join((($^O eq 'MacOS') ? ':' : '/'),@modparts);
 	my $file = "auto/$modpname/$modfname.$dl_dlext";
 
-	my $content = read_file("arch/$file");
-	$content = read_file("$Config::Config{archname}/$file")
-	    unless defined $content;
-
-	if (defined($content)) {
+	if (my $member = incpar(undef, $file, 1)) {
 	    require File::Temp;
 
 	    my ($fh, $filename) = File::Temp::tempfile(
@@ -294,7 +308,7 @@ sub _bootstrap {
 		UNLINK	=> 1
 	    );
 
-	    print $fh $content;
+	    print $fh $member->contents;
 	    close $fh;
 
 	    $DLCache{$modfname} = $filename;
@@ -323,7 +337,7 @@ L<Archive::Zip>, L<perlfunc/require>
 
 L<ex::lib::zip>, L<Acme::use::strict::with::pride>
 
-L<PerlIO::scalar>, L<IO::Scalar>
+L<PerlIO::scalar>, L<IO::Saclar>
 
 =head1 ACKNOWLEDGMENTS
 

@@ -1,4 +1,35 @@
 ____________________________________________________________________________
+[  1569] By: autrijus                              on 2002/10/20  12:45:22
+        Log: * oops. should require Archive::Zip explicitly lest it fails loading.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1568] By: autrijus                              on 2002/10/20  12:41:04
+        Log: * (documents and really implements the last change)
+	   ! PAR.pm
+____________________________________________________________________________
+[  1567] By: autrijus                              on 2002/10/20  12:27:25
+        Log: * Version 0.12.
+             * Patch from Nicholas Clark: coderef in @INC can just return a coderef.
+             * Multiple-perl version PAR files. Search path is now (e.g.):
+             lib/
+             arch/
+             5.6.0/
+             i386-freebsd/
+             5.6.0/i386-freebsd/
+	   ! PAR.pm
+____________________________________________________________________________
+[  1566] By: autrijus                              on 2002/10/20  12:22:25
+        Log: * update tests to reflect changed main.pl semantic.
+	   ! t/1-basic.t
+____________________________________________________________________________
+[  1565] By: autrijus                              on 2002/10/20  12:22:12
+        Log: * patch from Nicholas Clark: 5.6.0 doesn't have File::Temp core.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  1561] By: autrijus                              on 2002/10/19  22:16:33
+        Log: * changes and signature.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1560] By: autrijus                              on 2002/10/19  22:15:26
         Log: * Thie be 0.11.
              * removed obsoleted test files.
