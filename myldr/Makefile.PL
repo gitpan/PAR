@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #1 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $
+# $Revision: #2 $ $Change: 2027 $ $DateTime: 2002/11/06 23:01:46 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -85,6 +85,12 @@ distclean: clean
 	\$(LD) \$(OBJECTS) \$(LDFLAGS) $out\$@
 
 main$o: main.c
+
+disttest:
+	-\$(RM) Makefile.old
+
+test:
+	-\$(RM) Makefile.old
 
 .DEFAULT:
 	-\$(RM) Makefile.old

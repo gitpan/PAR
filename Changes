@@ -1,4 +1,21 @@
 ____________________________________________________________________________
+[  2029] By: autrijus                              on 2002/11/07  00:22:37
+        Log: * This be 0.42, the "Win32 Works!" edition.
+	   ! PAR.pm
+____________________________________________________________________________
+[  2028] By: autrijus                              on 2002/11/07  00:13:50
+        Log: * par now officially works on win32.
+	   ! PAR.pm script/par.pl
+____________________________________________________________________________
+[  2027] By: autrijus                              on 2002/11/06  23:01:46
+        Log: * nmake doesn't support .DEFAULTS, duh.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  2026] By: autrijus                              on 2002/11/06  23:01:32
+        Log: * utilize HAS_PROCSELFEXE to correctly get $0.
+             * fix $0 by finding it in path on other systems.
+	   ! myldr/main.c script/par.pl
+____________________________________________________________________________
 [  2022] By: autrijus                              on 2002/11/06  12:05:07
         Log: * Version 0.41.
 	   ! PAR.pm
@@ -95,8 +112,8 @@ ____________________________________________________________________________
              * full stand-alone binary support for PAR landed!
 	   + myldr/Makefile.PL myldr/file2c.pl myldr/main.c
 	   - patches/perl580.diff
-	   ! MANIFEST Makefile.PL README TODO
-	   ! script/makepar.pl script/par.pl
+	   ! MANIFEST Makefile.PL README TODO script/makepar.pl
+	   ! script/par.pl
 ____________________________________________________________________________
 [  1923] By: autrijus                              on 2002/11/04  13:29:44
         Log: * add a hint to self.
@@ -134,8 +151,7 @@ ____________________________________________________________________________
 	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  1847] By: autrijus                              on 2002/11/02  21:08:04
-        Log: * 0.21, the General Availability (for non-perlcc usage)
-	       edition.
+        Log: * 0.21, the General Availability (for non-perlcc usage) edition.
 	   ! PAR.pm
 ____________________________________________________________________________
 [  1846] By: autrijus                              on 2002/11/02  21:06:21
@@ -309,8 +325,7 @@ ____________________________________________________________________________
 	   ! t/1-basic.t
 ____________________________________________________________________________
 [  1698] By: autrijus                              on 2002/10/27  17:12:31
-        Log: * For some reason, the PerlIO::scalar way doesn't work on
-	       win32.
+        Log: * For some reason, the PerlIO::scalar way doesn't work on win32.
 	   ! PAR.pm
 ____________________________________________________________________________
 [  1694] By: autrijus                              on 2002/10/27  10:18:21
@@ -337,8 +352,7 @@ ____________________________________________________________________________
 ____________________________________________________________________________
 [  1595] By: autrijus                              on 2002/10/21  20:28:13
         Log: * Beginning backporting to Perl 5.004.
-             * Jan Dubois pointed out a chunk of code that needs
-	       comment,
+             * Jan Dubois pointed out a chunk of code that needs comment,
              lest it obfusticates itself too much.
 	   ! PAR.pm
 ____________________________________________________________________________
@@ -359,8 +373,7 @@ ____________________________________________________________________________
 	   ! TODO script/par.pl
 ____________________________________________________________________________
 [  1574] By: autrijus                              on 2002/10/20  19:05:20
-        Log: * experimental support for embedded .so files for full
-	       self-bootstrapping.
+        Log: * experimental support for embedded .so files for full self-bootstrapping.
 	   ! PAR.pm script/par.pl
 ____________________________________________________________________________
 [  1570] By: autrijus                              on 2002/10/20  12:46:06
@@ -368,8 +381,7 @@ ____________________________________________________________________________
 	   ! Changes SIGNATURE
 ____________________________________________________________________________
 [  1569] By: autrijus                              on 2002/10/20  12:45:22
-        Log: * oops. should require Archive::Zip explicitly lest it
-	       fails loading.
+        Log: * oops. should require Archive::Zip explicitly lest it fails loading.
 	   ! PAR.pm
 ____________________________________________________________________________
 [  1568] By: autrijus                              on 2002/10/20  12:41:04
@@ -378,10 +390,8 @@ ____________________________________________________________________________
 ____________________________________________________________________________
 [  1567] By: autrijus                              on 2002/10/20  12:27:25
         Log: * Version 0.12.
-             * Patch from Nicholas Clark: coderef in @INC can just
-	       return a coderef.
-             * Multiple-perl version PAR files. Search path is now
-	       (e.g.):
+             * Patch from Nicholas Clark: coderef in @INC can just return a coderef.
+             * Multiple-perl version PAR files. Search path is now (e.g.):
              lib/
              arch/
              5.6.0/
@@ -394,8 +404,7 @@ ____________________________________________________________________________
 	   ! t/1-basic.t
 ____________________________________________________________________________
 [  1565] By: autrijus                              on 2002/10/20  12:22:12
-        Log: * patch from Nicholas Clark: 5.6.0 doesn't have File::Temp
-	       core.
+        Log: * patch from Nicholas Clark: 5.6.0 doesn't have File::Temp core.
 	   ! Makefile.PL
 ____________________________________________________________________________
 [  1561] By: autrijus                              on 2002/10/19  22:16:33
@@ -419,8 +428,7 @@ ____________________________________________________________________________
 [  1544] By: autrijus                              on 2002/10/19  17:23:23
         Log: * 0.10.
              * XS modules are now supported!
-             * looks in $Config{archname}/ in addition to arch/ for
-	       cross-platform
+             * looks in $Config{archname}/ in addition to arch/ for cross-platform
              PAR files support.
 	   ! PAR.pm script/par.pl
 ____________________________________________________________________________
@@ -444,11 +452,9 @@ ____________________________________________________________________________
 ____________________________________________________________________________
 [  1537] By: autrijus                              on 2002/10/19  14:18:37
         Log: * Version 0.05.
-             * Full DATA section support with PerlIO::scalar or
-	       IO::Scalar.
+             * Full DATA section support with PerlIO::scalar or IO::Scalar.
              * script/par.pl now dies if the .par file is not found.
-	   ! Makefile.PL PAR.pm script/par.pl t/1-basic.t
-	   ! t/hello.par
+	   ! Makefile.PL PAR.pm script/par.pl t/1-basic.t t/hello.par
 ____________________________________________________________________________
 [  1523] By: autrijus                              on 2002/10/19  02:34:08
         Log: * changes and signature.
@@ -497,8 +503,7 @@ ____________________________________________________________________________
 ____________________________________________________________________________
 [  1514] By: autrijus                              on 2002/10/18  20:49:57
         Log: * 0.02.
-             * thanks to ton hospel, we don't need Filter::Simple
-	       anymore.
+             * thanks to ton hospel, we don't need Filter::Simple anymore.
 	   - PAR/Filter.pm
 	   ! MANIFEST Makefile.PL PAR.pm
 ____________________________________________________________________________
@@ -508,5 +513,5 @@ ____________________________________________________________________________
 ____________________________________________________________________________
 [  1512] By: autrijus                              on 2002/10/18  20:23:57
         Log: * The Perl Archive Library, version 0.01.
-	   + MANIFEST Makefile.PL PAR.pm PAR/Filter.pm
-	   + t/0-signature.t t/1-basic.t t/hello.par
+	   + MANIFEST Makefile.PL PAR.pm PAR/Filter.pm t/0-signature.t
+	   + t/1-basic.t t/hello.par

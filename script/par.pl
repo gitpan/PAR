@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #20 $ $Change: 2020 $ $DateTime: 2002/11/06 10:54:32 $
+# $Revision: #22 $ $Change: 2028 $ $DateTime: 2002/11/07 00:13:50 $
 
 package __par_pl;
 
@@ -149,6 +149,25 @@ while (@ARGV) {
 
     shift(@ARGV);
 }
+
+# fix $0 if invoked from PATH
+unless (-f $0) {
+    $Config{path_sep} = ($^O =~ /^MSWin/ ? ';' : ':');
+    $Config{_exe} = ($^O =~ /^MSWin|OS2/ ? '.exe' : '');
+    $Config{_delim} = ($^O =~ /^MSWin|OS2/ ? '\\' : '/');
+    if (-f "$0$Config{_exe}") {
+        $0 = "$0$Config{_exe}";
+    }
+    else {
+        foreach my $dir (split /$Config{path_sep}/, $ENV{PATH}) {
+	    (($0 = "$dir$Config{_delim}$0$Config{_exe}"), last)
+		if -f "$dir$Config{_delim}$0$Config{_exe}";
+	    (($0 = "$dir$Config{_delim}$0"), last)
+		if -f "$dir$Config{_delim}$0";
+	}
+    }
+}
+
 # }}}
 
 # Magic string checking and extracting bundled modules {{{
@@ -300,6 +319,7 @@ if ($out) {
 	    next unless defined $file;
 	    print "$path$file\n" unless $quiet;
 	    open FILE, "$path$file" or die "$file$path: $!";
+	    binmode(FILE);
 
 	    print OUT "FILE";
 	    print OUT pack('N', length($file));
@@ -319,6 +339,7 @@ if ($out) {
     print OUT <PAR>;
     print OUT pack('N', $data_len + (stat($par))[7]);
     print OUT "\nPAR.pm\n";
+    close OUT;
     chmod 0755, $out;
     # }}}
 
@@ -355,7 +376,7 @@ if ($out) {
 
     local $PAR::__reading = 1;
     my $zip = Archive::Zip->new;
-    $zip->readFromFileHandle($fh) == Archive::Zip::AZ_OK() or last;
+    $zip->readFromFileHandle($fh) == Archive::Zip::AZ_OK() or die "$!: $@";
 
     push @PAR::LibCache, $zip;
     $PAR::LibCache{$0} = $zip;

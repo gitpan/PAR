@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #36 $ $Change: 2022 $ $DateTime: 2002/11/06 12:05:07 $
+# $Revision: #38 $ $Change: 2029 $ $DateTime: 2002/11/07 00:22:37 $
 
 package PAR;
-$PAR::VERSION = '0.41';
+$PAR::VERSION = '0.42';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.41 of PAR, released November 6, 2002.
+This document describes version 0.42 of PAR, released November 7, 2002.
 
 =head1 SYNOPSIS
 
@@ -147,7 +147,7 @@ sub import {
 	unshift @INC, sub { $fh };
 
 	$PAR::__reading = 0;
-	{ do 'main'; die $@ if $@; exit }
+	{ do 'main'; close(STDERR); close(STDOUT); die $@ if $@; exit }
     }
 
     $_reentrant-- if !@_;
