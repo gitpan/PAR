@@ -1,7 +1,7 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #8 $ $Change: 1845 $ $DateTime: 2002/11/02 21:03:41 $
+# $Revision: #10 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $
 
-This is the README file for PAR, a module to use perl scripts
+This is the README file for PAR, a toolkit to use perl scripts
 and modules stored inside compressed .par files.
 
 Please see the PAR.pm for typical uses, script/makepar.pl for
@@ -22,20 +22,11 @@ make
 make test
 make install
 
-After installation, if you want to enable stand-alone binary support,
-please apply the included patch to the B::C module first (5.8.0 only,
-5.6.1 does not need this):
-
-    % patch `perl -MB::C -e'print $INC{"B/C.pm"}'` < patches/perl580.diff
-
-and then:
-
-    % perlcc -o /usr/local/bin/par script/par.pl
-
-Afterwards, you can generate self-executable binaries by:
+If your system has a C compiler, the stand-alone binary version of
+par.pl will be compiled and installed automatically.  You can generate
+self-executable binaries by:
 
     % makepar.pl -B -O./foo.par /home/test.pl
-    % perlcc -o par.exe par.pl		# only need to do this once
     % par.exe -B -O./foo.exe foo.par	# self-contained .exe
     % foo.exe				# runs anywhere with same OS
 					# (but see TODO for caveats)

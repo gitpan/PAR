@@ -1,9 +1,6 @@
-#!/usr/local/bin/perl
-
-eval 'exec /usr/local/bin/perl  -S $0 ${1+"$@"}'
-    if 0; # not running under some shell
+#!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #17 $ $Change: 1855 $ $DateTime: 2002/11/03 12:41:13 $
+# $Revision: #18 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $
 
 package __par_pl;
 
@@ -57,26 +54,22 @@ This stand-alone command offers roughly the same feature as C<perl
 -MPAR>, except that it takes the pre-loaded F<.par> files via
 C<-Afoo.par> instead of C<-MPAR=foo.par>.
 
-The main purpose of this utility is to be feed to C<perlcc>:
-
-    % perlcc -o par par.pl
-
-and use the resulting stand-alone executable F<par> to run F<.par>
-files:
+If you have a C compiler, a binary version of B<par.pl> will also be
+automatically installed.  You can use it to run F<.par> files:
 
     # runs script/run.pl in archive, uses its lib/* as libraries
-    % par myapp.par run.pl	# runs run.pl or script/run.pl in myapp.par
+    % par.exe myapp.par run.pl	# runs run.pl or script/run.pl in myapp.par
 
 However, if the F<.par> archive contains either F<main.pl> or
 F<script/main.pl>, it is used instead:
 
-    % par myapp.par run.pl	# runs main.pl, with 'run.pl' as @ARGV
+    % par.exe myapp.par run.pl	# runs main.pl, with 'run.pl' as @ARGV
 
 Finally, as an alternative to C<Perl2exe> or C<PerlApp>, the C<-O>
 option makes a stand-alone binary from a PAR file:
 
-    % par -Omyapp myapp.par	# makes a stand-alone executable
-    % ./myapp run.pl		# same as above
+    % par.exe -B -Omyapp myapp.par
+    % ./myapp			# run it anywhere without perl binaries
     % ./myapp -Omyap2 myapp.par	# makes a ./myap2, identical to ./myapp
     % ./myapp -Omyap3 myap3.par	# makes another app with different PAR
 
@@ -110,17 +103,9 @@ followed by a 8-bytes magic string: "C<\012PAR.pm\012>".
 
 =head1 NOTES
 
-After installation, if you want to enable stand-alone binary support,
-please apply the included patch to the B::C module first (5.8.0 only,
-5.6.1 does not need this):
-
-    % patch `perl -MB::C -e'print $INC{"B/C.pm"}'` < patches/perl580.diff
-
-and then:
-
-    % perlcc -o /usr/local/bin/par script/par.pl
-
-Afterwards, you can generate self-executable PAR files by:
+If your system has a C compiler, the stand-alone binary version of
+par.pl will be compiled and installed automatically.  You can generate
+self-executable binaries by:
 
     # put a main.pl inside myapp.par to run it automatically
     % par -O./myapp myapp.par
@@ -269,7 +254,7 @@ if ($out) {
     my $par = shift(@ARGV);
 
     # Open input and output files {{{
-    open PAR, '<', $par or die $!;
+    open PAR, '<', $par or die "$!: $par";
     binmode(PAR);
 
     local $/ = \4;
@@ -462,7 +447,7 @@ exit;
 
 =head1 SEE ALSO
 
-L<PAR>, L<makepar.pl>, L<perlcc>
+L<PAR>, L<makepar.pl>
 
 =head1 AUTHORS
 

@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.17.
+signed via the Module::Signature module, version 0.19.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,24 +14,27 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 f2d97c346dbeb74dbb707bfe43495bf8c6c48156 AUTHORS
-SHA1 554ec66f3134ad6556052c25f0a14a5356433067 Changes
-SHA1 3276ee22fbb5d39c604f962349ccec2866412251 MANIFEST
-SHA1 856f79fbae1b57373f6e97f95967753a52bd0445 Makefile.PL
-SHA1 4f8bd275e09bad9e7d50c29aae389c7f1e0a6830 PAR.pm
+SHA1 36879eb5a982651466f61e74f5d3088bab62cf4f AUTHORS
+SHA1 56e008d1b4a230a866bf3e6f07638d7ff1e8751e Changes
+SHA1 556806e9ff269619d301f64308e9f7cf9df73e39 MANIFEST
+SHA1 10effb181920e4a63acd9d191a7421e29dea8226 MANIFEST.SKIP
+SHA1 02ab3b9ff4d0fbb5fd6526946b1cbc06a25ab49a Makefile.PL
+SHA1 2261d974c117129da2f01516c357f4f363327519 PAR.pm
 SHA1 9b05c73a3b1abe0db9487a5e2fd3a883fdb90c89 PAR/Heavy.pm
-SHA1 ca8b73585bae894ac527b0d77b505d57c51bb8d0 README
-SHA1 d2d1b3e04d7a3310fc4b0a56ae77b2d9b789be7b TODO
-SHA1 09d04745e0d6aa0c897ed4f41d9318d583528924 patches/perl580.diff
-SHA1 043c0afa720b3153053b6ea6921491202d0613bb script/makepar.pl
-SHA1 e00288d61a3d35761d2703f76c98bc45989ee335 script/par.pl
-SHA1 e6b8353762d6c681281eeea222f84f1e302857e0 t/0-signature.t
+SHA1 90e306c9daf73306c92f38cc8e15e04afad18a0c README
+SHA1 101164e029840d9397d5176d18625bb32a02e9f1 TODO
+SHA1 8137ee4cbc74782e2d5af9ffcea4159a5ce9b5b8 myldr/Makefile.PL
+SHA1 5d2ed9736d81206c1f61d295f6953063ff4221af myldr/file2c.pl
+SHA1 f3675b26c46e91a2ef4acba8178f9407a07aa85e myldr/main.c
+SHA1 6651ffe0c98e1ca15835b660683d52ef4bf94383 script/makepar.pl
+SHA1 ee5476d2420d790a2b876dfefd5886b48b57bda5 script/par.pl
+SHA1 0736b041bd365457304ac6fbbb5f2e8e01de3fee t/0-signature.t
 SHA1 64304026a1886c779f58dd19e4525d22e8f53607 t/1-basic.t
 SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.0 (FreeBSD)
 
-iD8DBQE9xR6FtLPdNzw1AaARApwCAJoCTkqhzQPifBomlqQM3X5xlZInhACdH+/4
-ogo2yC+hzaHa6T89pbjvRfI=
-=ofRU
+iD8DBQE9x9a5tLPdNzw1AaARAjN/AKCx/bk0JBL7HnKqdHOf0plBFT0X7QCdFph2
+qOaLTao7UDAsdIj78u/womI=
+=NFVP
 -----END PGP SIGNATURE-----

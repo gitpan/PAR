@@ -1,21 +1,8 @@
 # $File: //member/autrijus/PAR/TODO $ $Author: autrijus $
-# $Revision: #4 $ $Change: 1821 $ $DateTime: 2002/11/02 01:59:51 $
-
-- Perlcc'ed par.pl currently needs these files to present to be truly
-  standalone (but par.pl -B really only needs the perl binary):
-
-    /AutoLoader.pm
-    /Carp/Heavy.pm
-    /DynaLoader.pm
-    /auto/Cwd/Cwd.so
-    /auto/DynaLoader/dl_findfile.al
-    /auto/Fcntl/Fcntl.so
-    /auto/IO/IO.so
+# $Revision: #5 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $
 
 - Use Archive::Any and Archive::Tar to get rid of the only XS module
   dependency (Compress::Zlib), or implement inflate algorithm in perl.
-
-- Also probe perlcc to see if it can compile in the standard libraries.
 
 - Overrides CORE::require to provide coexistence support for multiple
   versions of a module on the same machine.

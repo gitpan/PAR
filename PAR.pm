@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #29 $ $Change: 1857 $ $DateTime: 2002/11/03 12:45:26 $
+# $Revision: #31 $ $Change: 1923 $ $DateTime: 2002/11/04 13:29:44 $
 
 package PAR;
-$PAR::VERSION = '0.22';
+$PAR::VERSION = '0.30';
 
 use 5.006;
 use strict;
@@ -11,11 +11,11 @@ use Config ();
 
 =head1 NAME
 
-PAR - Perl Archive
+PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.22 of PAR, released November 3, 2002.
+This document describes version 0.30 of PAR, released November 5, 2002.
 
 =head1 SYNOPSIS
 
@@ -192,6 +192,7 @@ sub unpar {
 	require Archive::Zip;
 
 	$zip = Archive::Zip->new;
+	# XXX: add support for packaged PAR via readFromFileHandle()
 	next unless $zip->read($par) == Archive::Zip::AZ_OK();
 
 	push @LibCache, $zip;

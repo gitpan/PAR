@@ -1,13 +1,16 @@
 AUTHORS
 Changes
 MANIFEST			This list of files
+MANIFEST.SKIP
 Makefile.PL
 PAR.pm
 PAR/Heavy.pm
 README
 SIGNATURE
 TODO
-patches/perl580.diff
+myldr/Makefile.PL
+myldr/file2c.pl
+myldr/main.c
 script/makepar.pl
 script/par.pl
 t/0-signature.t

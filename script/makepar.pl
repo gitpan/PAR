@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/makepar.pl $ $Author: autrijus $
-# $Revision: #13 $ $Change: 1845 $ $DateTime: 2002/11/02 21:03:41 $
+# $Revision: #14 $ $Change: 1985 $ $DateTime: 2002/11/05 14:10:43 $
 
 use strict;
 use Module::ScanDeps;
@@ -27,7 +27,6 @@ Same thing, but making a self-contained binary executable F<foo.exe>
 instead, by bundling the perl executable itself:
 
     % makepar.pl -B -O./foo.par /home/test.pl
-    % perlcc -o par.exe par.pl		# only need to do this once
     % par.exe -B -O./foo.exe foo.par	# self-contained .exe
     % foo.exe				# runs anywhere with same OS
 					# (but see TODO for caveats)
