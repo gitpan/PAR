@@ -3,7 +3,7 @@
 eval 'exec /usr/local/bin/perl  -S $0 ${1+"$@"}'
     if 0; # not running under some shell
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #16 $ $Change: 1846 $ $DateTime: 2002/11/02 21:06:21 $
+# $Revision: #17 $ $Change: 1855 $ $DateTime: 2002/11/03 12:41:13 $
 
 package __par_pl;
 
@@ -209,15 +209,10 @@ my ($start_pos, $data_pos);
     }
     # }}}
 
-    # Set up (optional) external help modules and @INC hook {{{
-    eval { require PerlIO; require PerlIO::scalar } if $^O ne 'MSWin32';
-    eval { require File::Temp };
-
     local @INC = (sub {
 	my ($self, $module) = @_;
 
 	return if ref $module or !$module;
-	return if $module eq 'PerlIO/scalar.pm' and $^O eq 'MSWin32';
 
 	my $filename = delete $require_list{$module} || do {
 	    my $key;
@@ -228,8 +223,10 @@ my ($start_pos, $data_pos);
 	    delete $require_list{$key};
 	} or return;
 
-	if ($INC{'PerlIO/scalar.pm'}) {
-	    open my $fh, '<', $filename or die $!;
+	if (defined(&IO::File::new)) {
+	    my $fh = IO::File->new_tmpfile or die $!;
+	    print $fh $$filename;
+	    seek($fh, 0, 0);
 	    return $fh;
 	}
 	else {
@@ -252,8 +249,7 @@ my ($start_pos, $data_pos);
     PAR::Heavy::_init_dynaloader();
 
     # now let's try getting helper modules from within
-    eval { require PerlIO::scalar };
-    eval { require File::Temp };
+    require IO::File;
 
     # load rest of the group in
     while (my $filename = (sort keys %require_list)[0]) {
@@ -387,10 +383,6 @@ Usage: $0 [ -Alib.par ] [ -Idir ] [ -Mmodule ] [ src.par ] [ program.pl ]
 # }}}
 
 sub require_modules {
-    ($^O ne 'MSWin32' and eval { require PerlIO; require PerlIO::scalar; 1 })
-	or eval { require IO::Scalar; 1 }
-	or die "Cannot require either PerlIO::scalar nor IO::Scalar!";
-
     require integer;
     require strict;
     require warnings;

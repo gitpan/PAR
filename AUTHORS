@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #1 $ $Change: 1703 $ $DateTime: 2002/10/27 17:33:48 $
+# $Revision: #2 $ $Change: 1855 $ $DateTime: 2002/11/03 12:41:13 $
 
 Here is a list of people and their CPAN id, extracted from the ChangeLog
 file and the mailing list archives.  These people have either submitted
@@ -14,6 +14,7 @@ Iain Truskett	(SPOON)
 Indy Singh
 Jan Dubois	(JDB)
 Jesse Vincent	(JESSE)
+Matt Sergeant	(MSERGEANT)
 Nicholas Clark	(NWCLARK)
 Robert Creager	(RCREAGER)
 Ton Hospel

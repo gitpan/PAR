@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #2 $ $Change: 1842 $ $DateTime: 2002/11/02 20:33:51 $
+# $Revision: #3 $ $Change: 1856 $ $DateTime: 2002/11/03 12:42:26 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.01';
@@ -43,6 +43,7 @@ sub _dl_findfile {
     return $dl_findfile->(@_);
 }
 
+my $dl_dlext;
 sub _bootstrap {
     my (@args) = @_;
     my ($module) = $args[0];
@@ -58,6 +59,8 @@ sub _bootstrap {
 	if (($^O eq 'NetWare') && (length($modfname) > 8)) {
 	    $modfname = substr($modfname, 0, 8);
 	}
+
+	$dl_dlext ||= do { require Config; $Config::Config{dlext} };
 
 	my $modpname = join((($^O eq 'MacOS') ? ':' : '/'), @modparts);
 	my $file = "auto/$modpname/$modfname.$dl_dlext";
@@ -81,23 +84,6 @@ sub _bootstrap {
     }
 
     $bootstrap->(@args);
-}
-
-########################################################################
-# Stub __DATA__ filehandle
-
-package PAR::_data;
-
-sub TIEHANDLE {
-    return bless({}, shift);
-}
-
-sub DESTROY {
-}
-
-sub AUTOLOAD {
-    die "Cannot use __DATA__ sections in .par files; ".
-        "please install IO::Scalar first!\n";
 }
 
 1;

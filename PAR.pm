@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #27 $ $Change: 1847 $ $DateTime: 2002/11/02 21:08:04 $
+# $Revision: #29 $ $Change: 1857 $ $DateTime: 2002/11/03 12:45:26 $
 
 package PAR;
-$PAR::VERSION = '0.21';
+$PAR::VERSION = '0.22';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.21 of PAR, released November 3, 2002.
+This document describes version 0.22 of PAR, released November 3, 2002.
 
 =head1 SYNOPSIS
 
@@ -67,7 +67,7 @@ Use in a program:
 
 =head1 DESCRIPTION
 
-This module let you easily bundle a typical F<blib/> tree into a zip
+This module lets you easily bundle a typical F<blib/> tree into a zip
 file, called a Perl Archive, or C<PAR>.
 
 To generate a F<.par> file, all you have to do is compress the modules
@@ -91,14 +91,6 @@ Please see L</SYNOPSIS> for most typical use cases.
 
 =head1 NOTES
 
-For Perl versions without I<PerlIO> support, the B<IO::Scalar> module is
-needed to support C<__DATA__> sections in script and modules inside a
-PAR file.
-
-If you choose to compile F<script/par.pl> with B<perlcc>, it will
-automatically include the correct module (B<PerlIO::scalar> or
-B<IO::Scalar>) if you have it installed.
-
 Since version 0.10, this module supports loading XS modules by overriding
 B<DynaLoader> boostrapping methods; it writes shared object file to a
 temporary file at the time it is needed, and removes it when the program
@@ -109,11 +101,9 @@ next time, but if you need the functionality, just mail me. ;-)
 
 use vars qw(@PAR_INC);			# explicitly stated PAR library files
 use vars qw(@LibCache %LibCache);	# I really miss pseudohash.
-use vars qw(%DATACache);		# cache for __DATA__ segments
 
-my $ver		= $^V ? sprintf("%vd", $^V) : $];
-my $arch	= $Config::Config{archname};
-my $dl_dlext	= $Config::Config{dlext};
+my $ver	 = ($^V ? sprintf("%vd", $^V) : $]);
+my $arch = $Config::Config{archname};
 
 my $_reentrant;				# flag to avoid recursive import
 sub import {
@@ -149,23 +139,12 @@ sub import {
 		or die qq(Can't open perl script "$file": No such file or directory);
 	}
 
-	my $program = $member->contents;
-	if ($program =~ s/^__DATA__\n?(.*)//ms) {
-	    $DATACache{$file} = $1;
-	    $program .= _wrap_data($file);
-	}
-
-	{
-	    package main;
-	    no strict;
-	    no warnings;
-
-	    $0 = $file;
-	    eval $program;
-	    die $@ if $@;
-	}
-
-	exit;
+	my $fh = IO::File->new_tmpfile or die $!;
+	print $fh "package main; shift \@INC;\n#line 1 \"$file\"\n";
+	$member->extractToFileHandle($fh);
+	seek ($fh, 0, 0);
+	unshift @INC, sub { $fh };
+	{ do 'main'; die $@ if $@; exit }
     }
 
     $_reentrant-- if !@_;
@@ -230,55 +209,10 @@ sub unpar {
 
     return $member if $member_only;
 
-    # If lucky enough to have PerlIO, use it instead of ugly filtering.
-    if ($^O ne 'MSWin32' and eval { require PerlIO::scalar; 1 }) {
-	open my $fh, '<:scalar', \(scalar $member->contents);
-	return $fh;
-=for comment
-	# Have to use eval STRING here eventually to avoid 5.005 warnings
-	my $fh = eval q{
-	    open my $fh, '<:scalar', \(scalar $member->contents);
-	    $fh;
-	};
-	return $fh if $fh;
-
-=cut
-    }
-
-    # You did not see this undocumented super-jenga piece.
-    my @lines = split(/(?<=\n)/, scalar $member->contents);
-
-    return (sub {
-	$_ = shift(@lines);
-	if (/^__(END|DATA)__$/) {
-	    $DATACache{$par} = join('', @lines);
-	    @lines = ();
-	    $_ = _wrap_data($par, 1);
-	}
-	return length $_;
-    });
-}
-
-sub _wrap_data {
-    my ($key, $skip_perlio) = @_;
-    $skip_perlio ||= ($^O eq 'MSWin32');
-
-    if (!$skip_perlio and eval {require PerlIO::scalar; 1}) {
-	return "use PerlIO::scalar (".
-	       "    open(*DATA, '<:scalar', \\\$PAR::DATACache{'$key'}) ? () : ()".
-	       ");\n"; 
-    }
-    elsif (eval {require IO::Scalar; 1}) {
-	# This will first load IO::Scalar, *then* tie the handles.
-	return "use IO::Scalar (".
-	       "    tie(*DATA, 'IO::Scalar', \\\$PAR::DATACache{'$key'})".
-	       "    ? () : ()".
-	       ");\n";
-    }
-    else {
-	# only dies when it's used
-	return "use PAR (tie(*DATA, 'PAR::_data') ? () : ())\n";
-    }
+    my $fh = IO::File->new_tmpfile;
+    $member->extractToFileHandle($fh);
+    seek ($fh, 0, 0);
+    return $fh;
 }
 
 1;
@@ -293,8 +227,6 @@ L<par.pl>
 L<Archive::Zip>, L<perlfunc/require>
 
 L<ex::lib::zip>, L<Acme::use::strict::with::pride>
-
-L<PerlIO::scalar>, L<IO::Scalar>
 
 =head1 ACKNOWLEDGMENTS
 

@@ -1,4 +1,23 @@
 ____________________________________________________________________________
+[  1857] By: autrijus                              on 2002/11/03  12:45:26
+        Log: * This be 0.22.
+             * %DATACache no longer used.
+	   ! PAR.pm
+____________________________________________________________________________
+[  1856] By: autrijus                              on 2002/11/03  12:42:26
+        Log: * oops, the DL extension loading was bad.
+             * stub __DATA__ handle no longer needed.
+	   ! PAR/Heavy.pm
+____________________________________________________________________________
+[  1855] By: autrijus                              on 2002/11/03  12:41:13
+        Log: * Matt Sergeant's suggestion obsoletes PerlIO::scalar
+             and IO::Scalar with IO::File.
+	   ! AUTHORS Makefile.PL PAR.pm script/par.pl
+____________________________________________________________________________
+[  1853] By: autrijus                              on 2002/11/03  10:10:27
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1847] By: autrijus                              on 2002/11/02  21:08:04
         Log: * 0.21, the General Availability (for non-perlcc usage) edition.
 	   ! PAR.pm
