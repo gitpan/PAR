@@ -1,4 +1,15 @@
 ____________________________________________________________________________
+[  1544] By: autrijus                              on 2002/10/19  17:23:23
+        Log: * 0.10.
+             * XS modules are now supported!
+             * looks in $Config{archname}/ in addition to arch/ for cross-platform
+             PAR files support.
+	   ! PAR.pm script/par.pl
+____________________________________________________________________________
+[  1542] By: autrijus                              on 2002/10/19  15:18:30
+        Log: * changes and signature.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  1541] By: autrijus                              on 2002/10/19  15:17:50
         Log: * This be 0.06.
              * cleaned up the documentations.

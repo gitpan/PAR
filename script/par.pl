@@ -8,8 +8,11 @@ use PAR ((
     eval { require IO::Scalar; 1 } or
     1
 ) ? () : ());
-use IO::File;
-use Archive::Zip;
+
+use Config ();
+use File::Temp ();
+use IO::File ();
+use Archive::Zip ();
 
 =head1 NAME
 
@@ -17,7 +20,7 @@ par.pl - Run Perl Archives
 
 =head1 SYNOPSIS
 
-To use F<Hello.pm>, F<lib/Hello.pm> or F<lib/arch/Hello.pm> from
+To use F<Hello.pm>, F<lib/Hello.pm> or F<arch/Hello.pm> from
 F<./foo.par>:
 
     % par.pl -A./foo.par -MHello 

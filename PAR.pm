@@ -1,11 +1,12 @@
 # $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #7 $ $Change: 1541 $ $DateTime: 2002/10/19 15:17:50 $
+# $Revision: #8 $ $Change: 1544 $ $DateTime: 2002/10/19 17:23:23 $
 
 package PAR;
-$PAR::VERSION = '0.06';
+$PAR::VERSION = '0.10';
 
 use 5.006;
 use strict;
+use Config ();
 
 =head1 NAME
 
@@ -13,7 +14,7 @@ PAR - Perl Archive
 
 =head1 VERSION
 
-This document describes version 0.06 of PAR, released October 16, 2002.
+This document describes version 0.10 of PAR, released October 20, 2002.
 
 =head1 SYNOPSIS
 
@@ -23,8 +24,8 @@ data files, please consult L<par.pl> instead.)
 Following examples assume a F<foo.par> file in Zip format; support for
 compressed gzip (F<*.tgz>) format is planned.
 
-To use F<Hello.pm>, F<lib/Hello.pm> or F<lib/arch/Hello.pm> from
-F<./foo.par>:
+To use F<Hello.pm>, F<lib/Hello.pm>, F<lib/arch/Hello.pm> or
+F<lib/$Config{archname}/Hello.pm> from F<./foo.par>:
 
     % perl -MPAR=./foo.par -MHello
     % perl -MPAR=./foo -MHello		# the .par part is optional
@@ -84,13 +85,19 @@ If you choose to compile F<script/par.pl> with B<perlcc>, it will
 automatically include the correct module (B<PerlIO::scalar> or
 B<IO::Scalar>) if you have it installed.
 
+Since version 0.10, this module supports loading XS modules by overriding
+B<DynaLoader> boostrapping methods; it writes shared object file to a
+temporary file at the time it is needed, and removes it when the program
+terminates.  Currently there are no plans to leave them around for the
+next time, but if you need the functionality, just mail me. ;-)
+
 =cut
 
-my $Reentrant;
 our @PAR_INC;
 our (@LibCache, %LibCache); # I really miss pseudohash.
-our %DATACache; # cache for __DATA__ segments
+our (%DATACache, %DLCache); # cache for __DATA__ segments
 
+my $Reentrant;
 sub import {
     my $class = shift;
     return if !@_ and $Reentrant++;
@@ -100,6 +107,8 @@ sub import {
     }
 
     push @INC, \&incpar unless grep { $_ eq \&incpar } @INC;
+
+    _init_dynaloader();
 
     if (unpar($0)) {
 	push @PAR_INC, $0;
@@ -181,7 +190,8 @@ sub unpar {
 
     my $member = $zip->memberNamed($file)
 	      || $zip->memberNamed("lib/$file")
-	      || $zip->memberNamed("lib/arch/$file") or return;
+	      || $zip->memberNamed("arch/$file")
+	      || $zip->memberNamed("$Config::Config{archname}/$file") or return;
 
     my $fh = IO::Handle->new;
     my @lines = map "$_\n", split("\n", scalar $member->contents);
@@ -217,6 +227,71 @@ sub _wrap_data {
 	return "use PAR (tie(*DATA, 'PAR::_data') ? () : ())\n";
     }
 }
+
+### BEGINS HEAVY MAGIC ################################################
+# caches for code references
+
+my ($bootstrap, $dl_findfile);
+
+sub _init_dynaloader {
+    return if $bootstrap;
+    return unless eval { require DynaLoader; DynaLoader::dl_findfile(); 1 };
+
+    $bootstrap   = \&DynaLoader::bootstrap;
+    $dl_findfile = \&DynaLoader::dl_findfile;
+
+    no strict 'refs';
+    *{'DynaLoader::bootstrap'}   = \&_bootstrap;
+    *{'DynaLoader::dl_findfile'} = \&_dl_findfile;
+}
+
+sub _dl_findfile {
+    return $DLCache{$_[-1]} if exists $DLCache{$_[-1]};
+    return $dl_findfile->(@_);
+}
+
+sub _bootstrap {
+    my (@args) = @_;
+    my ($module) = $args[0];
+    my (@dirs, $file);
+    my $dl_dlext = $Config::Config{dlext};
+
+    if ($module) {
+	my @modparts = split(/::/,$module);
+	my $modfname = $modparts[-1];
+
+	$modfname = &DynaLoader::mod2fname(\@modparts)
+	    if defined &DynaLoader::mod2fname;
+
+	if (($^O eq 'NetWare') && (length($modfname) > 8)) {
+	    $modfname = substr($modfname, 0, 8);
+	}
+
+	my $modpname = join((($^O eq 'MacOS') ? ':' : '/'),@modparts);
+	my $file = "auto/$modpname/$modfname.$dl_dlext";
+
+	my $content = read_file("arch/$file");
+	$content = read_file("$Config::Config{archname}/$file")
+	    unless defined $content;
+
+	if (defined($content)) {
+	    require File::Temp;
+
+	    my ($fh, $filename) = File::Temp::tempfile(
+		SUFFIX	=> $dl_dlext,
+		UNLINK	=> 1
+	    );
+
+	    print $fh $content;
+	    close $fh;
+
+	    $DLCache{$modfname} = $filename;
+	}
+    }
+
+    $bootstrap->(@args);
+}
+
 
 package PAR::_data;
 
