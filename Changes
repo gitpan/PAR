@@ -1,4 +1,61 @@
 ____________________________________________________________________________
+[  8199] By: autrijus                              on 2003/09/21  10:45:03
+        Log: * This be PAR, version 0.75.
+             * On Win32, the PE info headers should no longer show
+	       PAR_XXXXXXXXXXX.
+	   ! ChangeLog myldr/win32.res
+____________________________________________________________________________
+[  8195] By: autrijus                              on 2003/09/20  20:37:54
+        Log: * depends on Module::ScanDeps 0.30 to fix the "use base"
+             problem reported by Jouke.
+	   ! ChangeLog Makefile.PL
+____________________________________________________________________________
+[  8193] By: autrijus                              on 2003/09/20  19:22:31
+        Log: * prepares for 0.75 release.
+	   ! ChangeLog lib/PAR.pm
+____________________________________________________________________________
+[  8164] By: autrijus                              on 2003/09/17  20:30:36
+        Log: * Up dependencies to Module::ScanDeps 0.29
+             and Module::Signature 0.35.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  8163] By: autrijus                              on 2003/09/17  20:28:23
+        Log: * update to Module::Install 0.23.
+	   ! inc/ExtUtils/AutoInstall.pm
+	   ! inc/Module/Install.pm
+	   ! inc/Module/Install/Base.pm
+	   ! inc/Module/Install/Metadata.pm
+	   ! inc/Module/Install/PAR.pm
+____________________________________________________________________________
+[  8162] By: autrijus                              on 2003/09/17  20:25:55
+        Log: * bump version.
+	   ! lib/PAR.pm
+____________________________________________________________________________
+[  8161] By: autrijus                              on 2003/09/17  20:25:20
+        Log: * Implements Karl Forner's suggestion to allow
+             "pp file.par" to process existing PAR files.
+	   ! script/pp
+____________________________________________________________________________
+[  8160] By: autrijus                              on 2003/09/17  20:06:10
+        Log: * Mike Stok reports that "pp" against multiple
+             scripts was broken.
+	   ! AUTHORS script/pp
+____________________________________________________________________________
+[  8159] By: autrijus                              on 2003/09/17  20:00:48
+        Log: * Karl Forner catches a bug preventing "-M data.file"
+             from being included.  Fixed.
+	   ! AUTHORS script/pp
+____________________________________________________________________________
+[  7864] By: autrijus                              on 2003/09/04  15:19:49
+        Log: * [cpan #3723] Exit code not propagated from PAR-packed
+	       executables
+             (patch from RSHUPP.)
+	   ! myldr/main.c
+____________________________________________________________________________
+[  7648] By: autrijus                              on 2003/08/21  21:16:16
+        Log: * an extra # sign during output.
+	   ! t/0-signature.t
+____________________________________________________________________________
 [  7621] By: autrijus                              on 2003/08/20  09:46:48
         Log: * This be PAR, version 0.74.
 	   ! lib/PAR.pm

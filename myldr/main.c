@@ -1,5 +1,5 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #32 $ $Change: 7614 $ $DateTime: 2003/08/20 08:54:50 $
+   $Revision: #33 $ $Change: 7864 $ $DateTime: 2003/09/04 15:19:49 $
    vim: expandtab shiftwidth=4
 */
 
@@ -131,7 +131,7 @@ int main ( int argc, char **argv, char **env )
         return exitstatus;
     }
 
-    perl_run( my_perl );
+    exitstatus = perl_run( my_perl );
     perl_destruct( my_perl );
 
     if ( getenv("PAR_SPAWNED") == NULL ) {

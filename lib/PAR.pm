@@ -1,8 +1,8 @@
 # $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
-# $Revision: #37 $ $Change: 7621 $ $DateTime: 2003/08/20 09:46:48 $ vim: expandtab shiftwidth=4
+# $Revision: #39 $ $Change: 8193 $ $DateTime: 2003/09/20 19:22:31 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.74';
+$PAR::VERSION = '0.75';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.74 of PAR, released August 20, 2003.
+This document describes version 0.75 of PAR, released September 21, 2003.
 
 =head1 SYNOPSIS
 

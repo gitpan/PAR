@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/Makefile.PL $ $Author: autrijus $
-# $Revision: #43 $ $Change: 7619 $ $DateTime: 2003/08/20 09:37:38 $
+# $Revision: #45 $ $Change: 8195 $ $DateTime: 2003/09/20 20:37:54 $
 
 use 5.006;
 use inc::Module::Install;
@@ -9,14 +9,14 @@ name	    ('PAR');
 abstract    ('Perl Archive Tookit');
 version_from('lib/PAR.pm');
 requires    ('File::Temp');
-requires    ('Compress::Zlib' => 1.14);
-requires    ('Archive::Zip' => 1.0);
-requires    ('Module::ScanDeps' => 0.28);
-requires    ('PAR::Dist' => 0.05);
+requires    ('Compress::Zlib'	=> 1.14);
+requires    ('Archive::Zip'	=> 1.00);
+requires    ('Module::ScanDeps'	=> 0.30);
+requires    ('PAR::Dist'	=> 0.05);
 features    (
     'Digital signature support'	=> [
 	-default => 0,
-	recommends  ('Module::Signature' => 0.25),
+	recommends  ('Module::Signature' => 0.35),
     ],
 ) if eval { require Crypt::OpenPGP; 1 } or can_run('gpg');
 

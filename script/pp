@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #80 $ $Change: 7525 $ $DateTime: 2003/08/14 08:45:06 $ vim: expandtab shiftwidth=4
+# $Revision: #83 $ $Change: 8161 $ $DateTime: 2003/09/17 20:25:20 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -24,7 +24,7 @@ use File::Temp qw(tempfile);
 use Getopt::Long; 
 use Module::ScanDeps 0.10;
 
-our $VERSION = 0.04;
+our $VERSION = 0.05;
 $| = 1;
 
 $SIG{INT} = sub { exit(); }; # exit gracefully and clean up after ourselves.
@@ -269,7 +269,7 @@ sub _name2moddata {
         push @$mod, $name;
     }
     else {
-        push @$dat, $_;
+        push @$dat, $name;
     }
 }
 
@@ -429,7 +429,15 @@ sub strip_console {
 
 sub generate_code { 
     vprint 0, "Compiling @Input";
-    compile_par();
+    if (check_par($Input[0])) {
+	# invoked as "pp foo.par" - never unlink it
+	$par_file = $Input[0];
+	$Options->{S} = 1;
+        par_to_exe();
+    }
+    else {
+        compile_par();
+    }
     exit(0) if (!opt('r'));
 }
 
@@ -559,6 +567,8 @@ sub check_write {
 
 sub check_perl {
     my $file = shift;
+    return if check_par($file);
+
     unless (-T $file) {
         warn "$0: Binary `$file' sure doesn't smell like perl source!\n";
         if (my $file_checker = _can_run("file")) {
@@ -575,6 +585,14 @@ sub check_perl {
     } 
 
 } 
+
+sub check_par {
+    my $file = shift;
+    open(my $handle, "<", $file) or _die("XXX: Can't open $file: $!");
+    binmode($handle);
+    local $/ = \4;
+    return (<$handle> eq "PK\x03\x04");
+}
 
 sub helpme {
     print "Perl Packager, version $VERSION (PAR version $PAR::VERSION)\n\n";
@@ -685,7 +703,7 @@ sub _can_run {
 sub _main_pl_multi {
     return << '__MAIN__';
 my $file = $0;
-my \$zip = \$PAR::LibCache{\$0} || Archive::Zip->new(__FILE__);
+my $zip = $PAR::LibCache{$0} || Archive::Zip->new(__FILE__);
 $file =~ s/^.*[\/\\]//;
 $file =~ s/\.[^.]*$//i ;
 my $member = eval { $zip->memberNamed($file) }
@@ -721,6 +739,10 @@ pp - Perl Packager
 
 =head1 SYNOPSIS
 
+B<pp> S<[ B<-BILMSVXdeghilmoprsv> ]> S<[ I<parfile> | I<scriptfile> ]>...
+
+=head1 OPTIONS
+
     % pp hello                  # Pack 'hello' into executable 'a.out'
     % pp -o hello hello.pl      # Pack 'hello.pl' into executable 'hello'
 
@@ -730,8 +752,9 @@ pp - Perl Packager
     % mv bar baz; ./baz         # Error: Can't open perl script "baz"
 
     % pp -p file                # Creates a PAR file, 'file.par'
-    % pp -S -o hello file       # Creates a PAR file, 'file.par',
-                                # then packages it to executable 'hello'
+    % pp -o hello file.par      # Pack 'file.par' to executable 'hello'
+    % pp -S -o hello file       # Combine the two steps above
+
     % pp -p -o out.par file     # Creates 'out.par' from 'file'
     % pp -B -p -o out.par file  # same as above, but bundles core modules
                                 # (-B is assumed when making executables)

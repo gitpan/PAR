@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/0-signature.t $ $Author: autrijus $
-# $Revision: #7 $ $Change: 7214 $ $DateTime: 2003/07/28 14:35:12 $
+# $Revision: #8 $ $Change: 7648 $ $DateTime: 2003/08/21 21:16:16 $
 
 use strict;
 print "1..1\n";
@@ -11,7 +11,7 @@ if (!-s 'SIGNATURE') {
 elsif (!eval { require Module::Signature; 1 }) {
     print "ok 1 # skip ",
 	    "Next time around, consider install Module::Signature, ",
-	    "# so you can verify the integrity of this distribution.\n";
+	    "so you can verify the integrity of this distribution.\n";
 }
 elsif (!eval { require Socket; Socket::inet_aton('pgp.mit.edu') }) {
     print "ok 1 # skip ",
