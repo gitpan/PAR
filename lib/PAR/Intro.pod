@@ -1,0 +1,387 @@
+# $File: //member/autrijus/PAR/lib/PAR/Intro.pod $
+# $Revision: #2 $ $Change: 4810 $ $DateTime: 2003/03/19 15:03:49 $ vim: expandtab shiftwidth=4
+
+=head1 NAME
+
+PAR::Intro - Introduction to Perl Archive Toolkit
+
+=head1 SYNOPSIS
+
+ # This is a presentation, not a module.
+
+=head1 DESCRIPTION
+
+The following presentation is a POD version of the presentation
+B<Introduction to Perl Archive Toolkit>, available online as
+L<http://www.autrijus.org/par-intro/> (English version) and
+L<http://www.autrijus.org/par-intro.zh/> (Chinese version).
+
+=head2 What is PAR (Perl Archive Toolkit)?
+
+- Do what JAR (Java Archive) does for Perl
+ - Platform-independent, compressed file format (zip)
+ - Aggregates modules, scripts and other files into one file
+ - Easy to generate, update and extract
+
+- Benefits of using PAR:
+ - Decreased download and deployment time
+ - Saves disk space by compression and selective packaging
+ - Version consistency: solves forward-compatibility problems
+ - Community support: C<par@perl.org>
+
+- You can also turn a PAR file into a self-contained script
+ - Bundles all necessary 3rd-party modules with it
+ - Requires only core Perl to run on the target machine
+ - If you use C<pp> to compile the script...
+  - ...you get an executable not even needing core perl
+
+=head2 Getting Started
+
+- First, generate a PAR file with modules in it:
+
+    % zip foo.par Hello.pm
+    % zip -r foo.par lib/       # grab all modules in lib/
+
+- Using modules stored inside a PAR file:
+
+    % perl -MPAR=./foo.par -MHello
+    % perl -MPAR=./foo -MHello  # the .par part is optional
+
+- Or put it in @INC and use it just like a directory:
+
+    % perl -MPAR -Ifoo.par -MHello
+    % perl -MPAR -Ifoo -MHello  # ditto
+
+
+=head2 Command-line Tools
+
+- Use C<pp> to scan scripts and store dependencies as a PAR file:
+
+    % pp -p source.pl           # makes 'source.par'
+    % pp -B -p source.pl        # bundles core modules too
+
+- Use C<par.pl> to run files from a Perl Archive:
+
+    % par.pl foo.par            # looks for 'main.pl' by default
+    % par.pl foo.par test.pl    # runs script/test.pl in foo.par
+
+- Use C<parl> or C<parl.exe> to run files from a Perl Archive:
+
+    % parl foo.par
+    % parl foo.par test.pl
+
+
+=head2 Making Binary Executables
+
+- The C<pp> utility can also generate binary executables:
+
+    % pp -o packed.exe source.pl    # self-contained .exe
+    % packed.exe                    # runs anywhere with the same OS
+
+- You can also bundle additional modules:
+
+    # packs CGI + its dependencies, too
+    % pp -o packed.exe -M CGI source.pl
+
+- Or pack one-liners:
+
+    # turns one-liner into executable
+    % pp -o packed.exe -e 'print "Hi!"'
+       
+- Some notes:
+ - The command-line options of C<pp> are almost identical to C<perlcc>'s
+ - Modules are read directly from the PAR file, not extracted
+ - Shared object files (aka dll) are extracted with File::Temp
+ - Tested on Win32, FreeBSD, Linux, AIX, Solaris and Darwin.
+ - Unfortunately, Cygwin is currently known to fail.
+
+
+=head2 The Anatomy of a PAR file
+
+- Modules can reside in different directories in a PAR file:
+
+    /lib/                       # standard location
+    /arch/                      # for creating from blib/ 
+    /i386-freebsd/              # i.e. $Config{archname}
+    /5.8.0/                     # i.e. Perl version number
+    /5.8.0/i386-freebsd/        # combination of the two above
+    /                           # casual packaging only
+
+- Scripts are stored in one of the two locations:
+
+    /script/                    # standard location
+    /                           # casual packaging only
+
+- Special files:
+
+    /MANIFEST                   # index of the PAR's contents
+    /SIGNATURE                  # digital signature(s)
+    /META.yml                   # dependency, license info, etc.
+    /Build.PL                   # self-contained installer
+
+- Programs can use C<PAR::read_file($filename)> to read file contents inside PAR
+
+
+=head2 Derived Modules
+
+- Apache::PAR
+ - Nathan Byrd's attempt to make self-contained Perl Handlers
+ - Same as the WAR files for Java Servlets
+ - Includes PerlRun and Registry handlers
+ 
+- App::Packer::Backend::PAR
+ - Support module of Mattia Barbon's App::Packer suite
+ - Makes it easy to pick-and-choose dependency scanners and packers
+ - Fine-tuned distribution and packaging controls
+
+- CPANPLUS::Dist::PAR
+ - Cross-platform PPM: Auto-generate PAR out of CPAN distributions
+ - Use the bundled Build.PL to install PAR modules into system
+
+
+=head2 Apache::PAR Demo
+
+- In C<httpd.conf>:
+
+    <VirtualHost *>
+        <IfDefine MODPERL2>
+        PerlModule Apache::ServerUtil
+        </IfDefine>
+        PerlModule Apache::PAR
+        PARDir /opt/myapp
+        PARFile /opt/myapp/myapp.par
+    </VirtualHost>
+
+- In C<web.conf> inside C<myapp.par>:
+
+    Alias /myapp/static/ ##PARFILE##/
+    <Location /myapp/static>
+        SetHandler perl-script
+        PerlHandler Apache::PAR::Static
+        PerlAddVar PARStaticDirectoryIndex index.html
+        PerlSetVar PARStaticDefaultMIME text/html
+    </Location>
+
+    Alias /myapp/cgi-perl/ ##PARFILE##/
+    <Location /myapp/cgi-perl>
+        Options +ExecCGI
+        SetHandler perl-script
+        PerlHandler Apache::PAR::Registry
+    </Location>
+
+
+=head2 Future Development
+
+- Polish C<pp>'s features
+ - Handles corner dependency cases for LWP, Tk, DBI...
+ - Optional encryption support (but *not* obscuring)
+ - Become a worthy competitor to PerlApp and Perl2Exe
+
+- Learning from JAR
+ - Making par.pl's command line interface in sync with jar's
+ - Digital signatures for PAR packages using Module::Signature
+ - File layout compatibility?
+
+- Learning from FreeBSD Bento
+ - Smoke test and make PAR automatically for each CPAN upload
+ - Provide binary packages for users without a compiler
+
+
+=head2 Overview of PAR.pm's Implementation
+
+- Here begins the scary part
+ - Grues, Dragons and Jabberwocks abound...
+ - You are going to learn unpleasant things about Perl internals
+ - Go home now if you have heart condition or digest problems
+
+- PAR invokes five areas of Perl arcana:
+ - @INC code references
+ - On-the-fly source filtering
+ - Faking <DATA> filehandle with PerlIO::scalar and IO::Scalar
+ - Overriding DynaLoader::bootstrap to handle XS modules
+ - Making self-bootstrapping binary executables
+
+- The first two only works on 5.6 or later
+ - PerlIO::scalar is 5.8-specific; IO::scalar only needs 5.005
+ - DynaLoader and %INC are there since Perl 5 was born
+ - PAR currently needs 5.6, but a 5.005 port is possible
+
+
+=head2 Code References in @INC
+
+- On 1999-07-19, Ken Fox submitted a patch to P5P
+ - To "enable using remote modules" by putting hooks in @INC
+ - It's accepted to come in Perl 5.6, but only get documented by 5.8
+ - Type 'perldoc -f require' to read the nitty-gritty details
+
+- Code references in @INC may return a filehandle, or undef to 'pass':
+
+    push @INC, \&my_sub;
+    sub my_sub {
+        my ($coderef, $filename) = @_;  # $coderef is \&my_sub
+        open my $fh, "wget http://example.com/$filename |";
+        return $fh;     # using remote modules, indeed!
+    }
+
+- Perl 5.8 let you open a file handle to a string, so we just use that:
+
+    open my $fh, '<', \($zip->memberNamed($filename)->contents);
+    return $fh;
+
+- But Perl 5.6 does not have that, and I don't want to use temp files...
+
+
+=head2 Source Filtering without Filter::* Modules
+
+- ... Undocumented features to the rescue!
+ - It turns out that @INC hooks can return *two* values
+ - The first is still the file handle
+ - The second is a code reference for line-by-line source filtering!
+
+- This is how C<Acme::use::strict::with::pride> works:
+
+    # Force all modules used to use strict and warnings
+    open my $fh, "<", $filename or return;
+    my @lines = ("use strict; use warnings;\n", "#line 1 \"$full\"\n");
+    return ($fh, sub {
+        return 0 unless @lines; 
+        push @lines, $_; $_ = shift @lines; return length $_;
+    });
+
+- But we don't really have a filehandle for anything
+ - Another undocumented feature to the rescue
+ - We can actually omit the first return value altogether:
+
+    # Return all contents line-by-line from the file inside PAR
+    my @lines = split /(?<=\n)/, $zip->memberNamed($filename)->contents;
+    return (sub { $_ = shift(@lines); return length $_ });
+
+
+=head2 Faking the <DATA> Handle
+
+- The @INC filter stops when it sees C<__END__> or C<__DATA__>
+ - All contents below are lost
+ - Breaks modules that read from the <DATA> filehandle
+ - The same problem appears when we C<eval> the main.pl script
+
+- Therefore, we insert a line before the final token to fake *DATA
+ - It has to be the final line to belong to the correct package
+ - It has to happen in compile time but not inside a BEGIN block
+ - Here is what I came up with (but no longer needed in recent versions):
+
+    $DATACache{$file} = $1 if ($program =~ s/^__DATA__\n?(.*)//ms);
+    if (eval {require PerlIO::scalar; 1}) {
+        "use PerlIO::scalar".
+        "  ( open(*DATA, '<:scalar', \\\$PAR::DATACache{'$key'}) ? () : () )";
+    }
+    elsif (eval {require IO::Scalar; 1}) {
+        # This will first load IO::Scalar, *then* tie the handles.
+        "use IO::Scalar".
+        "  ( tie(*DATA, 'IO::Scalar', \\\$PAR::DATACache{'$key'}) ? () : () )";
+    }
+    else {
+        # only dies when it's used
+        "use PAR (tie(*DATA, 'PAR::_data') ? () : ())\n";
+    }
+    sub PAR::_data::TIEHANDLE { return bless({}, shift) }
+    sub PAR::_data::AUTOLOAD { die "Please install IO::Scalar first!\n" }
+
+
+=head2 Overriding DynaLoader::bootstrap
+
+- XS modules have dynamically loaded libraries (C<.so> or C<.dll>)
+ - They cannot be loaded as part of a zip file, so we extract them out
+ - But I don't want to make any temporary C<auto/> directories
+ - So we have to intercept DynaLoader's library-finding process
+
+- Module names are passed to C<bootstrap> for XS loading
+ - During the process, it calls C<dl_findfile> to locate the file
+ - So we wrap around both functions:
+
+    no strict 'refs'; no warnings 'redefine';
+    $bootstrap   = \&DynaLoader::bootstrap;
+    $dl_findfile = \&DynaLoader::dl_findfile;
+    *{'DynaLoader::bootstrap'}   = \&_bootstrap;
+    *{'DynaLoader::dl_findfile'} = \&_dl_findfile;
+
+- Our C<_bootstrap> just checks if the library is in PARs
+ - If yes, extract it to a File::Temp temp file
+  - The file will be automatically cleaned up when the program ends
+ - It then pass the arguments to the original C<$bootstrap>
+ - Finally, our C<_dl_findfile> intercepts known filenames and return it
+
+
+=head2 Anatomy of a Self-Contained PAR executable
+
+- The par script ($0) itself
+ - May be in plain-text (par.pl)
+ - Or native executable format (par or par.exe)
+
+- Any number of embedded files
+ - Typically used for bootstrapping PAR's various XS dependencies
+ - Each section begins with the magic string "FILE"
+ - Length of filename in pack('N') format and the filename (auto/.../)
+ - File length in pack('N') and the file's content(not compressed)
+
+- One PAR file
+ - This is just a zip file as usual
+ - Beginning with the magic string C<"PK\003\004">
+
+- Ending section
+ - A pack('N') number of the total length of FILE and PAR sections
+ - Finally, there must be a 8-bytes magic string: C<"\012PAR.pm\012">
+
+
+=head2 Self-Bootstrapping Tricks
+
+- All we can expect is a working perl interpreter
+ - The self-contained script *must not* use any modules at all
+ - Not even strict.pm or DynaLoader.pm
+ - But to process PAR files, we need XS modules like Compress::Zlib
+ - A chicken-egg problem
+
+- Solution: bundle all module and object files needed by PAR.pm
+ - That's what the C<FILE> section in the previous slide is for
+ - Load modules to memory, and write object files to disk
+ - Then use a local @INC hook to load them on demand
+
+- We want to minimize the amount of temporary files
+ - First, try getting PerlIO::scalar loaded
+  - So everything else can be in-memory
+ - Next, try getting File::Temp loaded for better C<tempfile()>
+ - Set up an END hook to unlink all temp files up to this point
+ - Load all other bundled files
+ - Finally we are able to look in the compressed PAR section
+
+- This can be so much easier if we have a pure-perl C<inflate()>
+ - Patches welcome!
+
+
+=head1 SEE ALSO
+
+L<PAR>, L<pp>, L<par.pl>, L<parl>
+
+L<ex::lib::zip>, L<Acme::use::strict::with::pride>
+
+L<App::Packer>, L<Apache::PAR>, L<CPANPLUS>, L<Module::Install>
+
+=head1 AUTHORS
+
+Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
+
+PAR has a mailing list, E<lt>par@perl.orgE<gt>, that you can write to;
+send an empty mail to E<lt>par-subscribe@perl.orgE<gt> to join the list
+and participate in the discussion.
+
+Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+
+=head1 COPYRIGHT
+
+Copyright 2002, 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+
+This document is free documentation; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+See L<http://www.perl.com/perl/misc/Artistic.html>
+
+=cut

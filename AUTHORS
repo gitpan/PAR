@@ -1,18 +1,23 @@
 # $File: //member/autrijus/PAR/AUTHORS $
-# $Revision: #14 $ $Change: 4657 $ $DateTime: 2003/03/08 19:17:25 $
+# $Revision: #22 $ $Change: 4808 $ $DateTime: 2003/03/19 14:12:06 $
 
 Here is a list of people and their CPAN id, extracted from the Changes
 file and the mailing list archives.  These people have either submitted
 patches or suggestions, or their bug reports or comments have inspired
 the appropriate patches.  Corrections, additions, deletions welcome:
 
+Alasdair Allan		(AALLAN)
 Andy Lester		(PETDANCE)
 Antti Lankila
 Arthur Bergman		(ABERGMAN)
-D. Menzel
+Ask Bjoern Hansen	(ABH)
+Barry Jaspan 
 Bill Atkins		(BATKINS)
 Chia-Liang Kao		(CLKAO)
+D. Menzel
+Germain Garand		(GGARAND)
 Glenn Mabbutt
+H. Wade Minter
 Hirosi Taguti
 Iain Truskett		(SPOON)
 Indy Singh
@@ -20,15 +25,20 @@ Jan Dubois		(JDB)
 Jeff Goff		(JGOFF)
 Jerry Veldhuis
 Jesse Vincent		(JESSE)
+John McMahon
 Markus Jansen
 Mattia Barbon		(MBARBON)
 Matt Sergeant		(MSERGEANT)
 Nicholas Clark		(NWCLARK)
+Nomota KIM
 Randal L. Schwartz	(MERLYN)
+Reini Urban
 Robert Allerstorfer
 Robert Creager		(RCREAGER)
+Simon Andrews
 Simon Cozens		(SIMON)
 Sisyphus
 Tim Conrow
+Tina Mueller		(TINITA)
 Ton Hospel
 Uri Guttman		(URI)

@@ -1,8 +1,8 @@
 # $File: //depot/cpan/Module-Install/lib/Module/Install/Win32.pm $ $Author: autrijus $
-# $Revision: #7 $ $Change: 1237 $ $DateTime: 2003/03/04 22:44:36 $ vim: expandtab shiftwidth=4
+# $Revision: #8 $ $Change: 1374 $ $DateTime: 2003/03/18 11:50:15 $ vim: expandtab shiftwidth=4
 
 package Module::Install::Win32;
-use base 'Module::Install::Base';
+use Module::Install::Base; @ISA = qw(Module::Install::Base);
 
 $VERSION = '0.01';
 
@@ -26,7 +26,8 @@ sub check_nmake {
 
     require File::Basename;
     my $rv = $self->get_file(
-        url         => 'ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe',
+        url         => 'http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/nmake15.exe',
+        ftp_url     => 'ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe',
         local_dir   => File::Basename::dirname($^X),
         size        => 51928,
         run         => 'nmake15.exe /o > nul',
@@ -37,12 +38,13 @@ sub check_nmake {
     if (!$rv) {
         die << '.';
 
-------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 Since you are using Microsoft Windows, you will need the 'nmake' utility
 before installation. It's available at:
 
-    ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe
+  http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/nmake15.exe
+  ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe
 
 Please download the file manually, save it to a directory in %PATH (e.g.
 C:\WINDOWS\COMMAND), then launch the MS-DOS command line shell, "cd" to
@@ -51,7 +53,7 @@ that directory, and run "nmake15.exe" from there; that will create the
 
 You may then resume the installation process described in README.
 
-------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 .
     }
 }

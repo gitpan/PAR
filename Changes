@@ -1,4 +1,265 @@
 ____________________________________________________________________________
+[  4818] By: autrijus                              on 2003/03/19  15:30:30
+        Log: * This be PAR 0.66, the "Too Many Fixes To Note" edition.
+	   ! README
+____________________________________________________________________________
+[  4817] By: autrijus                              on 2003/03/19  15:27:16
+        Log: * the topmost TODO has been resolved.
+	   ! TODO
+____________________________________________________________________________
+[  4816] By: autrijus                              on 2003/03/19  15:26:40
+        Log: * ...but mingw have unistd.h...
+	   ! inc/Module/Install/private/PAR.pm
+____________________________________________________________________________
+[  4814] By: autrijus                              on 2003/03/19  15:23:54
+        Log: * skip asking for shlib on platforms without parl or
+	       unistd.h.
+	   ! inc/Module/Install/private/PAR.pm
+____________________________________________________________________________
+[  4811] By: autrijus                              on 2003/03/19  15:13:21
+        Log: * regenerate the patchset.
+	   ! patches/shlib.diff
+____________________________________________________________________________
+[  4810] By: autrijus                              on 2003/03/19  15:03:49
+        Log: * document and note that Cygwin fails.
+	   ! inc/Module/Install/private/PAR.pm
+	   ! lib/PAR/Intro.pod
+____________________________________________________________________________
+[  4808] By: autrijus                              on 2003/03/19  14:12:06
+        Log: * John McMahon pointed out the redundant 'parl.exe.bat'.
+	   ! AUTHORS Makefile.PL
+	   ! inc/Module/Install/private.pm
+	   ! inc/Module/Install/private/PAR.pm
+____________________________________________________________________________
+[  4806] By: autrijus                              on 2003/03/19  13:46:56
+        Log: * cosmetic change. 
+	   ! inc/ExtUtils/AutoInstall.pm
+____________________________________________________________________________
+[  4803] By: autrijus                              on 2003/03/19  13:34:15
+        Log: * Mattia agreed for me to carry over A::P::PAR.
+	   + lib/App/Packer/PAR.pm
+____________________________________________________________________________
+[  4802] By: autrijus                              on 2003/03/19  13:33:53
+        Log: * switch from PAR... etc for lib/PAR...
+             * trying to fix the dmake bug reported by Sisyphus
+	  +> lib/PAR.pm lib/PAR/Heavy.pm lib/PAR/Intro.pod
+	   - PAR.pm PAR/Heavy.pm PAR/Intro.pod
+	   ! MANIFEST Makefile.PL
+	   ! inc/ExtUtils/AutoInstall.pm
+____________________________________________________________________________
+[  4799] By: autrijus                              on 2003/03/19  13:03:23
+        Log: * the last change is correlated to Reini Urban's bug
+	       report.
+	   ! AUTHORS
+____________________________________________________________________________
+[  4798] By: autrijus                              on 2003/03/19  13:01:31
+        Log: * ported to cygwin.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  4797] By: autrijus                              on 2003/03/19  12:44:29
+        Log: * fix ftp_base's trailing /.
+	   ! inc/Module/Install/PAR.pm
+____________________________________________________________________________
+[  4796] By: autrijus                              on 2003/03/19  08:35:25
+        Log: * Simon Andrews prompted me to write the
+	       clean-after-0.63-mess code.
+	   ! AUTHORS
+____________________________________________________________________________
+[  4792] By: autrijus                              on 2003/03/19  05:04:00
+        Log: * Markus reported that his 'patch' doesn't like read-only
+             files.	Fixed.
+	   ! inc/Module/Install/private/PAR.pm
+____________________________________________________________________________
+[  4790] By: autrijus                              on 2003/03/18  20:25:57
+        Log: * fix autoinstall + patching.
+	   ! inc/Module/Install/AutoInstall.pm
+	   ! inc/Module/Install/Base.pm
+	   ! inc/Module/Install/Include.pm
+	   ! inc/Module/Install/Makefile.pm
+	   ! inc/Module/Install/Metadata.pm
+	   ! inc/Module/Install/private/PAR.pm
+____________________________________________________________________________
+[  4789] By: autrijus                              on 2003/03/18  20:25:33
+        Log: * explicitly depend on Compress::Zlib.
+	   ! Makefile.PL
+____________________________________________________________________________
+[  4787] By: autrijus                              on 2003/03/18  20:10:07
+        Log: * add -p0 to 'patch'.
+	   ! inc/Module/Install/private/PAR.pm
+____________________________________________________________________________
+[  4785] By: autrijus                              on 2003/03/18  20:06:54
+        Log: * self-referencial patches considered harmful
+	   ! patches/shlib.diff
+____________________________________________________________________________
+[  4784] By: autrijus                              on 2003/03/18  20:00:03
+        Log: * update manifest and EU::AI version.
+	   ! MANIFEST inc/ExtUtils/AutoInstall.pm
+____________________________________________________________________________
+[  4781] By: autrijus                              on 2003/03/18  19:46:56
+        Log: * now supports http downloading of nmake.exe if needed.
+	   ! inc/Module/Install/Fetch.pm
+	   ! inc/Module/Install/PAR.pm
+	   ! inc/Module/Install/Win32.pm
+____________________________________________________________________________
+[  4780] By: autrijus                              on 2003/03/18  19:34:15
+        Log: * new round of Module::Install.
+             * supports http fetching over ftp via LWP::Simple
+             (this should make firewalled people happier.)
+	   ! inc/Module/Install.pm
+	   ! inc/Module/Install/Can.pm
+	   ! inc/Module/Install/Fetch.pm
+	   ! inc/Module/Install/PAR.pm
+	   ! inc/Module/Install/private.pm
+	   ! inc/Module/Install/private/PAR.pm
+____________________________________________________________________________
+[  4779] By: autrijus                              on 2003/03/18  19:22:24
+        Log: * fix up manifest.
+             * 0.66-rc1.
+	   ! MANIFEST PAR.pm README
+____________________________________________________________________________
+[  4777] By: autrijus                              on 2003/03/18  18:44:10
+        Log: * clears broken pre-0.63 dll files in TEMP instead
+             of reusing it accidentally.
+	   ! PAR/Heavy.pm
+____________________________________________________________________________
+[  4776] By: autrijus                              on 2003/03/18  18:25:54
+        Log: * update the diff in preperation to 0.66.
+	   ! patches/shlib.diff
+____________________________________________________________________________
+[  4775] By: autrijus                              on 2003/03/18  18:17:25
+        Log: * switch _Autrijus to 'private'.
+	   + inc/Module/Install/private.pm
+	   + inc/Module/Install/private/PAR.pm
+	   - inc/Module/Install/_Autrijus.pm
+	   - inc/Module/Install/_Autrijus/PAR.pm
+	   ! MANIFEST
+____________________________________________________________________________
+[  4764] By: autrijus                              on 2003/03/18  10:13:48
+        Log: * Ask Bjoern Hansen reports that File::Temp dep is missing.
+	   ! AUTHORS Makefile.PL
+____________________________________________________________________________
+[  4752] By: autrijus                              on 2003/03/17  01:54:41
+        Log: * shlib.diff seems to be working now.
+             * detect for symlinks in addition to dirs.
+	   ! patches/shlib.diff
+____________________________________________________________________________
+[  4751] By: autrijus                              on 2003/03/17  01:14:21
+        Log: * bump the version in anticipation of 0.66.
+	   ! PAR.pm
+____________________________________________________________________________
+[  4750] By: autrijus                              on 2003/03/17  01:08:51
+        Log: * Germain Garand points out that pp includes
+             the wrong interpreter on multiperl sites.
+	   ! script/pp
+____________________________________________________________________________
+[  4749] By: autrijus                              on 2003/03/17  01:06:47
+        Log: * default to !$quiet at pack time.
+	   ! script/par.pl
+____________________________________________________________________________
+[  4748] By: autrijus                              on 2003/03/17  01:01:28
+        Log: * supress messages unless $ENV{PAR_DEBUG} is set.
+	   ! script/par.pl
+____________________________________________________________________________
+[  4746] By: autrijus                              on 2003/03/17  00:50:57
+        Log: * move around things a bit for better snapshotting.
+	  +> patches/shlib.diff
+	   - shlib.diff
+	   ! MANIFEST SIGNATURE t/0-signature.t
+____________________________________________________________________________
+[  4745] By: autrijus                              on 2003/03/17  00:45:19
+        Log: * check in inc/ to p4 so snapshots can run.
+	   + inc/ExtUtils/AutoInstall.pm
+	   + inc/Module/Install.pm
+	   + inc/Module/Install/AutoInstall.pm
+	   + inc/Module/Install/Base.pm
+	   + inc/Module/Install/Can.pm
+	   + inc/Module/Install/Fetch.pm
+	   + inc/Module/Install/Include.pm
+	   + inc/Module/Install/Makefile.pm
+	   + inc/Module/Install/Metadata.pm
+	   + inc/Module/Install/PAR.pm
+	   + inc/Module/Install/Win32.pm
+	   + inc/Module/Install/_Autrijus.pm
+	   + inc/Module/Install/_Autrijus/PAR.pm
+____________________________________________________________________________
+[  4744] By: autrijus                              on 2003/03/17  00:32:14
+        Log: * update manifest.
+	   ! MANIFEST
+____________________________________________________________________________
+[  4742] By: autrijus                              on 2003/03/17  00:25:54
+        Log: * retab; better Tk::Widget overriding.
+	   ! script/pp
+____________________________________________________________________________
+[  4741] By: autrijus                              on 2003/03/17  00:25:28
+        Log: * retab.
+	   ! myldr/main.c script/par.pl
+____________________________________________________________________________
+[  4740] By: autrijus                              on 2003/03/17  00:24:47
+        Log: * now strips the loader if there's gcc in disguise as cc.
+	   ! myldr/Makefile.PL
+____________________________________________________________________________
+[  4739] By: autrijus                              on 2003/03/17  00:24:11
+        Log: * reflect last change in PAR::Intro.
+             * retab.
+	   ! PAR.pm PAR/Intro.pod
+____________________________________________________________________________
+[  4738] By: autrijus                              on 2003/03/17  00:22:59
+        Log: * search script/modules in '/' LAST instead of first now.
+	   ! PAR.pm
+____________________________________________________________________________
+[  4736] By: autrijus                              on 2003/03/15  21:25:02
+        Log: * H. Wade Minter reported that Tk::Widget autoloading
+             failes with PAR.  let's workaround it for now.
+	   ! AUTHORS script/pp
+____________________________________________________________________________
+[  4734] By: autrijus                              on 2003/03/15  06:46:18
+        Log: * update AUTHORS.
+             * remove spurious comment in myldr.
+             * Tina Mueller reported that CSH stuff doesn't work
+             on 5.6 perl.
+	   ! AUTHORS myldr/main.c
+____________________________________________________________________________
+[  4733] By: autrijus                              on 2003/03/15  06:35:49
+        Log: * MERGE: 3.0.0rc1
+	   ! AUTHORS myldr/main.c
+____________________________________________________________________________
+[  4723] By: autrijus                              on 2003/03/13  20:22:14
+        Log: * Barry Jaspan metioned that darwin perl seems not liking
+	       this.
+	   ! script/pp
+____________________________________________________________________________
+[  4713] By: autrijus                              on 2003/03/12  14:57:33
+        Log: * merge par.pl doc changes to parl.pod.
+	  !> script/parl.pod
+____________________________________________________________________________
+[  4712] By: autrijus                              on 2003/03/12  14:52:13
+        Log: * bump year.
+             * clean wordings.
+	   ! script/par.pl
+____________________________________________________________________________
+[  4711] By: autrijus                              on 2003/03/12  14:35:07
+        Log: * Germain Garand pointed out that -I should unshift, not
+             push, into the @INC array.
+	   ! AUTHORS script/pp
+____________________________________________________________________________
+[  4688] By: autrijus                              on 2003/03/10  15:55:11
+        Log: * DM reported that pp'ing C:\* breaks.	this is also
+             reported by "luke".
+	   ! script/pp
+____________________________________________________________________________
+[  4685] By: autrijus                              on 2003/03/10  10:54:41
+        Log: * merge PAR::Intro.
+	   + PAR/Intro.pod
+	   ! MANIFEST PAR.pm README
+____________________________________________________________________________
+[  4677] By: autrijus                              on 2003/03/09  14:33:27
+        Log: * switch to M::I-generated MANIFEST and sign again.
+	   ! MANIFEST SIGNATURE
+____________________________________________________________________________
+[  4675] By: autrijus                              on 2003/03/09  13:37:46
+        Log: * changes and signatures.
+	   ! Changes SIGNATURE
+____________________________________________________________________________
 [  4674] By: autrijus                              on 2003/03/09  13:35:34
         Log: * This be PAR 0.65, the "binary install, pod-stripping,
 	       5.6-reclaimed" edition.

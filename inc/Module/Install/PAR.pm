@@ -1,22 +1,26 @@
 # $File: //depot/cpan/Module-Install/lib/Module/Install/PAR.pm $ $Author: autrijus $
-# $Revision: #15 $ $Change: 1337 $ $DateTime: 2003/03/09 06:07:19 $ vim: expandtab shiftwidth=4
+# $Revision: #20 $ $Change: 1376 $ $DateTime: 2003/03/19 04:49:04 $ vim: expandtab shiftwidth=4
 
 package Module::Install::PAR;
-use base 'Module::Install::Base';
+use Module::Install::Base; @ISA = qw(Module::Install::Base);
 
 sub par_base {
     my ($self, $base, $file) = @_;
-    my $class = join('::', @{$self->_top}{qw(prefix name)});
+    my $class = ref($self);
+    my $inc_class = join('::', @{$self->_top}{qw(prefix name)});
+    my $ftp_base;
 
     if (defined $base and length $base) {
         if ($base =~ m!^(([A-Z])[A-Z])[-_A-Z]+\Z!) {
             $self->{mailto} = "$base\@cpan.org";
-            $base = "ftp://ftp.cpan.org/pub/CPAN/authors/id/$2/$1/$base";
+            $ftp_base = "ftp://ftp.cpan.org/pub/CPAN/authors/id/$2/$1/$base";
+            $base = "http://www.cpan.org/authors/id/$2/$1/$base";
         }
         elsif ($base !~ m!^(\w+)://!) {
             die "Cannot recognize path '$base'; please specify an URL or CPAN ID";
         }
         $base .= '/' unless $base =~ m!/\Z!;
+        $ftp_base .= '/' unless $ftp_base =~ m!/\Z!;
     }
 
     require Config;
@@ -25,18 +29,23 @@ sub par_base {
     unless ($file ||= $self->{file}) {
         my $name    = $self->name or return;
         my $version = $self->version or return;
+        $name =~ s!::!-!g;
         $self->{file} = $file = "$name-$version-$suffix";
     }
 
     $self->preamble(<<"END") if $base;
+# --- $class section:
+
 all ::
-\t\@$^X -M$class -e \"extract_par(q($file))\"
+\t\@$^X -M$inc_class -e \"extract_par(q($file))\"
 
 END
 
     $self->postamble(<<"END");
+# --- $class section:
+
 $file: all test
-\t\@\$(PERL) -M$class -e \"make_par(q($file))\"
+\t\@\$(PERL) -M$inc_class -e \"make_par(q($file))\"
 
 par :: $file
 \t\@\$(NOOP)
@@ -47,15 +56,22 @@ par-upload :: $file
 END
 
     $self->{url} = $base;
+    $self->{ftp_url} = $ftp_base;
     $self->{suffix} = $suffix;
+
+    return $self;
 }
 
 sub fetch_par {
     my ($self, $url, $file, $quiet) = @_;
-    $url = $self->{url} || $self->par_base($url);
+    $url = $self->{url} || $self->par_base($url)->{url};
+    $ftp_url = $self->{ftp_url};
     $file ||= $self->{file};
 
-    return $file if -f $file or $self->get_file( url => "$url$file" );
+    return $file if -f $file or $self->get_file(
+        url     => "$url$file",
+        ftp_url => "$ftp_url$file"
+    );
 
     require Config;
     print << "END" if $self->{mailto} and !$quiet;
@@ -96,6 +112,7 @@ sub make_par {
         $zip->writeToFileNamed( $file ) == AZ_OK or die $!;
     }
     elsif ($self->can_run('zip')) {
+        mkdir('blib');
         chdir('blib');
         system(qw(zip -r), "../$file", '.') and die $!;
         chdir('..');

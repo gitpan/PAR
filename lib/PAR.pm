@@ -1,8 +1,8 @@
-# $File: //member/autrijus/PAR/PAR.pm $ $Author: autrijus $
-# $Revision: #63 $ $Change: 4674 $ $DateTime: 2003/03/09 13:35:34 $
+# $File: //member/autrijus/PAR/lib/PAR.pm $ $Author: autrijus $
+# $Revision: #1 $ $Change: 4802 $ $DateTime: 2003/03/19 13:33:53 $ vim: expandtab shiftwidth=4
 
 package PAR;
-$PAR::VERSION = '0.65';
+$PAR::VERSION = '0.66';
 
 use 5.006;
 use strict;
@@ -15,7 +15,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.65 of PAR, released March 9, 2003.
+This document describes version 0.66 of PAR, released March 19, 2003.
 
 =head1 SYNOPSIS
 
@@ -28,30 +28,30 @@ compressed tar (F<*.tgz>/F<*.tbz2>) format is under consideration.
 To use F<Hello.pm> from F<./foo.par>:
 
     % perl -MPAR=./foo.par -MHello
-    % perl -MPAR=./foo -MHello		# the .par part is optional
+    % perl -MPAR=./foo -MHello          # the .par part is optional
 
 Same thing, but search F<foo.par> in the C<@INC>;
 
     % perl -MPAR -Ifoo.par -MHello
-    % perl -MPAR -Ifoo -MHello		# ditto
+    % perl -MPAR -Ifoo -MHello          # ditto
 
 Following paths inside the PAR file are searched:
 
-    /
     /lib/
     /arch/
-    /i386-freebsd/		# i.e. $Config{archname}
-    /5.8.0/			# i.e. $Config{version}
-    /5.8.0/i386-freebsd/	# both of the above
+    /i386-freebsd/              # i.e. $Config{archname}
+    /5.8.0/                     # i.e. $Config{version}
+    /5.8.0/i386-freebsd/        # both of the above
+    /
 
-Run F<test.pl> or F<script/test.pl> from F<foo.par>:
+Run F<script/test.pl> or F<test.pl> from F<foo.par>:
 
-    % perl -MPAR foo.par test.pl	# only when $0 ends in '.par'
+    % perl -MPAR foo.par test.pl        # only when $0 ends in '.par'
 
-However, if the F<.par> archive contains either F<main.pl> or
-F<script/main.pl>, then it is used instead:
+However, if the F<.par> archive contains either F<script/main.pl> or
+F<main.pl>, then it is used instead:
 
-    % perl -MPAR foo.par test.pl	# runs main.pl, with 'test.pl' as @ARGV
+    % perl -MPAR foo.par test.pl        # runs main.pl, with 'test.pl' as @ARGV
 
 Use in a program:
 
@@ -95,9 +95,9 @@ machines without PAR.pm installed.
 Note that self-containing scripts and executables created with F<par.pl>
 and F<pp> may also be used as F<.par> archives:
 
-    % pp -o packed.exe source.pl	# generate packed.exe
-    % perl -MPAR=packed.exe other.pl	# this also works
-    % perl -MPAR -Ipacked.exe other.pl	# ditto
+    % pp -o packed.exe source.pl        # generate packed.exe
+    % perl -MPAR=packed.exe other.pl    # this also works
+    % perl -MPAR -Ipacked.exe other.pl  # ditto
 
 Please see L</SYNOPSIS> for most typical use cases.
 
@@ -117,29 +117,29 @@ Currently, F<pp>-generated PAR files will attach four such PAR-specific
 attributes in F<META.yml>:
 
     par:
-      cleartemp: 0	# default value of PAR_CLEARTEMP
-      signature: ''	# key ID of the SIGNATURE file
-      verbatim: 0	# were packed prerequisite's PODs preserved?
-      version: x.xx	# PAR.pm version that generated this PAR
+      cleartemp: 0      # default value of PAR_CLEARTEMP
+      signature: ''     # key ID of the SIGNATURE file
+      verbatim: 0       # were packed prerequisite's PODs preserved?
+      version: x.xx     # PAR.pm version that generated this PAR
 
 Additional attributes, like C<cipher> and C<decrypt_key>, are being
 discussed on the mailing list.  Join us if you have an idea or two!
 
 =cut
 
-use vars qw(@PAR_INC);			# explicitly stated PAR library files
-use vars qw(@LibCache %LibCache);	# I really miss pseudohash.
+use vars qw(@PAR_INC);                  # explicitly stated PAR library files
+use vars qw(@LibCache %LibCache);       # I really miss pseudohash.
 
-my $ver	 = $Config::Config{version};
+my $ver  = $Config::Config{version};
 my $arch = $Config::Config{archname};
 
-my $_reentrant;				# flag to avoid recursive import
+my $_reentrant;                         # flag to avoid recursive import
 sub import {
     my $class = shift;
     return if !@_ and $_reentrant++;
 
     foreach my $par (@_) {
-	push @PAR_INC, $par if unpar($par, undef, undef, 1);
+        push @PAR_INC, $par if unpar($par, undef, undef, 1);
     }
 
     push @INC, \&find_par unless grep { $_ eq \&find_par } @INC;
@@ -148,27 +148,27 @@ sub import {
     PAR::Heavy::_init_dynaloader();
 
     if (unpar($0)) {
-	$PAR::__reading = 1;
-	push @PAR_INC, $0;
+        $PAR::__reading = 1;
+        push @PAR_INC, $0;
 
-	my $zip = $LibCache{$0};
-	my $member = $zip->memberNamed("main.pl")
-		  || $zip->memberNamed("script/main.pl");
+        my $zip = $LibCache{$0};
+        my $member = $zip->memberNamed("script/main.pl")
+                  || $zip->memberNamed("main.pl");
 
-	# finally take $ARGV[0] as the hint for file to run
-	if (defined $ARGV[0] and !$member) {
-	    $member  = $zip->memberNamed($ARGV[0])
-		    || $zip->memberNamed("$ARGV[0].pl")
-		    || $zip->memberNamed("script/$ARGV[0]")
-		    || $zip->memberNamed("script/$ARGV[0].pl")
-		or die qq(Can't open perl script "$ARGV[0]": No such file or directory);
-	    shift @ARGV;
-	}
-	elsif (!$member) {
-	    die "Usage: $0 script_file_name.\n";
-	}
+        # finally take $ARGV[0] as the hint for file to run
+        if (defined $ARGV[0] and !$member) {
+            $member  = $zip->memberNamed("script/$ARGV[0]")
+                    || $zip->memberNamed("script/$ARGV[0].pl")
+                    || $zip->memberNamed("$ARGV[0]")
+                    || $zip->memberNamed("$ARGV[0].pl")
+                or die qq(Can't open perl script "$ARGV[0]": No such file or directory);
+            shift @ARGV;
+        }
+        elsif (!$member) {
+            die "Usage: $0 script_file_name.\n";
+        }
 
-	_run_member($member);
+        _run_member($member);
     }
 
     $_reentrant-- if !@_;
@@ -179,10 +179,10 @@ sub _run_member {
     my ($fh, $is_new) = _tmpfile($member->crc32String . ".pl");
 
     if ($is_new) {
-	my $file = $member->fileName;
-	print $fh "package main; shift \@INC;\n#line 1 \"$file\"\n";
-	$member->extractToFileHandle($fh);
-	seek ($fh, 0, 0);
+        my $file = $member->fileName;
+        print $fh "package main; shift \@INC;\n#line 1 \"$file\"\n";
+        $member->extractToFileHandle($fh);
+        seek ($fh, 0, 0);
     }
 
     unshift @INC, sub { $fh };
@@ -195,8 +195,8 @@ sub find_par {
     my ($self, $file, $member_only) = @_;
 
     foreach my $path (@PAR_INC ? @PAR_INC : @INC) {
-	my $rv = unpar($path, $file, $member_only, 1);
-	return $rv if defined($rv);
+        my $rv = unpar($path, $file, $member_only, 1);
+        return $rv if defined($rv);
     }
 
     return;
@@ -206,8 +206,8 @@ sub read_file {
     my $file = pop;
 
     foreach my $zip (@LibCache) {
-	my $member = $zip->memberNamed($file) or next;
-	return scalar $member->contents;
+        my $member = $zip->memberNamed($file) or next;
+        return scalar $member->contents;
     }
 
     return;
@@ -225,29 +225,29 @@ sub unpar {
     local $PAR::__reading = 1;
 
     unless ($zip) {
-	unless (($allow_other_ext or $par =~ /\.par\z/i) and -f $par) {
-	    $par .= ".par";
-	    return unless -f $par;
-	}
+        unless (($allow_other_ext or $par =~ /\.par\z/i) and -f $par) {
+            $par .= ".par";
+            return unless -f $par;
+        }
 
-	require Compress::Zlib;
-	require Archive::Zip;
+        require Compress::Zlib;
+        require Archive::Zip;
 
-	$zip = Archive::Zip->new;
-	return unless $zip->read($par) == Archive::Zip::AZ_OK();
+        $zip = Archive::Zip->new;
+        return unless $zip->read($par) == Archive::Zip::AZ_OK();
 
-	push @LibCache, $zip;
-	$LibCache{$par} = $zip;
+        push @LibCache, $zip;
+        $LibCache{$par} = $zip;
     }
 
     return 1 unless defined $file;
 
-    my $member = $zip->memberNamed($file)
-	      || $zip->memberNamed("lib/$file")
-	      || $zip->memberNamed("arch/$file")
-	      || $zip->memberNamed("$arch/$file")
-	      || $zip->memberNamed("$ver/$file")
-	      || $zip->memberNamed("$ver/$arch/$file") or return;
+    my $member = $zip->memberNamed("lib/$file")
+              || $zip->memberNamed("arch/$file")
+              || $zip->memberNamed("$arch/$file")
+              || $zip->memberNamed("$ver/$file")
+              || $zip->memberNamed("$ver/$arch/$file")
+              || $zip->memberNamed($file) or return;
 
     return $member if $member_only;
 
@@ -255,8 +255,8 @@ sub unpar {
     die "Bad Things Happened..." unless $fh;
 
     if ($is_new) {
-	$member->extractToFileHandle($fh);
-	seek ($fh, 0, 0);
+        $member->extractToFileHandle($fh);
+        seek ($fh, 0, 0);
     }
 
     return $fh;
@@ -273,26 +273,26 @@ sub _tmpfile {
     # and Win32 can't delete opened files...
     #
     if ($ENV{PAR_CLEARTEMP}) {
-	my $fh = IO::File->new_tmpfile;
-	unless( $fh ) {
-	    require File::Temp;
+        my $fh = IO::File->new_tmpfile;
+        unless( $fh ) {
+            require File::Temp;
 
-	    # under Win32, the file is created with O_TEMPORARY,
-	    # and will be deleted by the C runtime; having File::Temp
-	    # delete it has the only effect of giving an ugly warnings
-	    $fh = File::Temp::tempfile( UNLINK => ($^O ne 'MSWin32') )
-		or die "Cannot create temporary file: $!";
-	}
-	binmode($fh);
-	return ($fh, 1);
+            # under Win32, the file is created with O_TEMPORARY,
+            # and will be deleted by the C runtime; having File::Temp
+            # delete it has the only effect of giving an ugly warnings
+            $fh = File::Temp::tempfile( UNLINK => ($^O ne 'MSWin32') )
+                or die "Cannot create temporary file: $!";
+        }
+        binmode($fh);
+        return ($fh, 1);
     }
 
     require File::Spec;
     my $filename = File::Spec->catfile( File::Spec->tmpdir, $_[0] );
     if (-r $filename) {
-	open my $fh, '<', $filename or die $!;
-	binmode($fh);
-	return ($fh, 0);
+        open my $fh, '<', $filename or die $!;
+        binmode($fh);
+        return ($fh, 0);
     }
 
     open my $fh, '+>', $filename or die $!;
@@ -304,9 +304,7 @@ sub _tmpfile {
 
 =head1 SEE ALSO
 
-My presentation, "Introduction to Perl Archive Toolkit":
-L<http://www.autrijus.org/par-intro/> and its Chinese
-version: L<http://www.autrijus.org/par-intro.zh/>
+L<PAR::Intro>
 
 L<par.pl>, L<parl>, L<pp>
 

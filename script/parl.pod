@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/script/parl.pod $ $Author: autrijus $
-# $Revision: #4 $ $Change: 4445 $ $DateTime: 2003/02/27 12:09:56 $
+# $Revision: #5 $ $Change: 4713 $ $DateTime: 2003/03/12 14:57:33 $
 
 =head1 NAME
 
@@ -62,14 +62,14 @@ F<script/main.pl>, it is used instead:
 
     % parl myapp.par run.pl	# runs main.pl, with 'run.pl' as @ARGV
 
-Finally, as an alternative to C<Perl2exe> or C<PerlApp>, the C<-O>
-option makes a stand-alone binary from a PAR file:
+Finally, the C<-O> option makes a stand-alone binary executable from a
+PAR file:
 
     % parl -B -Omyapp myapp.par
     % ./myapp			# run it anywhere without perl binaries
 
 With the C<--par-options> flag, generated binaries can act as C<parl>
-to generate new binaries: 
+to pack new binaries: 
 
     % ./myapp --par-options -Omyap2 myapp.par	# identical to ./myapp
     % ./myapp --par-options -Omyap3 myap3.par	# now with different PAR
@@ -92,7 +92,7 @@ Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2002, 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

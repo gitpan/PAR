@@ -1,5 +1,5 @@
-# $File: //member/autrijus/PAR/PAR/Heavy.pm $ $Author: autrijus $
-# $Revision: #11 $ $Change: 4656 $ $DateTime: 2003/03/08 19:16:37 $
+# $File: //member/autrijus/PAR/lib/PAR/Heavy.pm $ $Author: autrijus $
+# $Revision: #1 $ $Change: 4802 $ $DateTime: 2003/03/19 13:33:53 $
 
 package PAR::Heavy;
 $PAR::Heavy::VERSION = '0.05';
@@ -88,7 +88,8 @@ sub _bootstrap {
 		    $member->crc32String . ".$dl_dlext"
 		);
 
-		open $fh, '>', $filename or die $! unless -r $filename;
+		open $fh, '>', $filename or die $!
+		    unless -r $filename and -s $file == $member->uncompressedSize;
 	    }
 
 	    if ($fh) {

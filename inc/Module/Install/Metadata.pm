@@ -1,8 +1,8 @@
 # $File: //depot/cpan/Module-Install/lib/Module/Install/Metadata.pm $ $Author: autrijus $
-# $Revision: #14 $ $Change: 1315 $ $DateTime: 2003/03/08 02:43:21 $ vim: expandtab shiftwidth=4
+# $Revision: #16 $ $Change: 1375 $ $DateTime: 2003/03/18 12:29:32 $ vim: expandtab shiftwidth=4
 
 package Module::Install::Metadata;
-use base 'Module::Install::Base';
+use Module::Install::Base; @ISA = qw(Module::Install::Base);
 
 $VERSION = '0.01';
 
@@ -12,7 +12,7 @@ use vars qw($VERSION);
 sub Meta { shift }
 
 my @scalar_keys = qw(name version abstract author license distribution_type);
-my @tuple_keys  = qw(build_requires requires recommends);
+my @tuple_keys  = qw(build_requires requires recommends bundles);
 
 foreach my $key (@scalar_keys) {
     *$key = sub {

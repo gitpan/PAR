@@ -1,14 +1,15 @@
 # $File: //depot/cpan/Module-Install/lib/Module/Install/Include.pm $ $Author: autrijus $
-# $Revision: #5 $ $Change: 1284 $ $DateTime: 2003/03/06 19:51:49 $ vim: expandtab shiftwidth=4
+# $Revision: #7 $ $Change: 1375 $ $DateTime: 2003/03/18 12:29:32 $ vim: expandtab shiftwidth=4
 
 package Module::Install::Include;
-use base 'Module::Install::Base';
+use Module::Install::Base; @ISA = qw(Module::Install::Base);
 
 sub include {
-    my ($self, $pkg) = @_;
+    my ($self, $pattern) = @_;
 
-    my $file = $self->admin->find_in_inc($pkg) or return;
-    $self->admin->copy_package($pkg, $file);
+    foreach my $rv ( $self->admin->glob_in_inc($pattern) ) {
+        $self->admin->copy_package(@$rv);
+    }
     return $file;
 }
 

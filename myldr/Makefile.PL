@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # $File: //member/autrijus/PAR/myldr/Makefile.PL $ $Author: autrijus $
-# $Revision: #15 $ $Change: 4673 $ $DateTime: 2003/03/09 12:59:32 $
+# $Revision: #17 $ $Change: 4798 $ $DateTime: 2003/03/19 13:01:31 $
 #
 # Copyright (c) 2002 Mattia Barbon.
 # Copyright (c) 2002 Autrijus Tang.
@@ -18,6 +18,7 @@ my $debug = 0;
 
 my $exe = $Config{_exe};
 my $o = $Config{obj_ext};
+my $gccversion = $Config{gccversion};
 my $pccflags = ccopts;
 my $pldflags = ldopts;
 my $ld = $Config{ld};
@@ -36,13 +37,13 @@ open OUT, "> Makefile" or die "open 'Makefile': $!";
 
 my( $out, $ccdebug, $lddebug, $warn, $rm, $mv );
 
-if( $cc =~ m/^cl/ ) {
+if( $cc =~ m/^cl\b/ ) {
     $out = '-out:';
     $ccdebug = $debug ? '-Zi ' : '';
     $lddebug = $debug ? '-debug ' : '-release ';
     $warn = $debug ? '-W3' : '';
-} elsif ($cc =~ m/^gcc/) {
-    $out = '-o ';
+} elsif ($cc =~ m/^gcc\b/ or ($cc =~ m/^cc\b/ and $gccversion)) {
+    $out = '--output ';
     $ccdebug = $debug ? '-g ' : '';
     $lddebug = $debug ? '' : '-s ';
     $warn = $debug ? '-Wall -Wno-comments ' : '';

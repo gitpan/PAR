@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/pp $ $Author: autrijus $
-# $Revision: #27 $ $Change: 4674 $ $DateTime: 2003/03/09 13:35:34 $
+# $Revision: #34 $ $Change: 4773 $ $DateTime: 2003/03/18 18:10:55 $ vim: expandtab shiftwidth=4
 
 use 5.006;
 use strict;
@@ -72,25 +72,26 @@ sub compile_par {
     vprint 1, "Writing PAR on $par_file";
 
     my @modules = map {
-	s/::/\//g; "$_.pm"
+        if (/^[\w:]+$/) { s/::/\//g; $_ = "$_.pm" }
+        $_
     } @{opt(M) || []};
 
     my %map;
-    push @INC, @{opt(I) || []};
+    unshift @INC, @{opt(I) || []};
 
     Module::ScanDeps::scan_deps(
-	rv	=> \%map,
-	files	=> [
-	    (map Module::ScanDeps::_find_in_inc($_), @modules),
-	    (@Input ? @Input : ()),
-	],
-	recurse	=> 1,
-	skip	=> { map { ($_ => 1) } @{opt(X) || []} }
+        rv      => \%map,
+        files   => [
+            (map Module::ScanDeps::_find_in_inc($_), @modules),
+            (@Input ? @Input : ()),
+        ],
+        recurse => 1,
+        skip    => { map { ($_ => 1) } @{opt(X) || []} }
     );
     Module::ScanDeps::add_deps(
-	rv	=> \%map,
-	modules	=> \@modules,
-	skip	=> { map { ($_ => 1) } @{opt(X) || []} }
+        rv      => \%map,
+        modules => \@modules,
+        skip    => { map { ($_ => 1) } @{opt(X) || []} }
     );
 
     my %text;
@@ -101,56 +102,71 @@ sub compile_par {
     my $size = 0;
     my $zip = Archive::Zip->new;
     my %zip_args = (
-	desiredCompressionMethod
-	    => Archive::Zip::COMPRESSION_DEFLATED(),
-	desiredCompressionLevel
-	    => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
+        'desiredCompressionMethod'
+            => Archive::Zip::COMPRESSION_DEFLATED(),
+        'desiredCompressionLevel'
+            => Archive::Zip::COMPRESSION_LEVEL_BEST_COMPRESSION(),
     );
 
     my $verbatim = ($ENV{PAR_VERBATIM} || 0);
-    foreach (sort grep length $map{$_}, keys %map) {
-	next if !opt(B) and ($map{$_} eq "$Config::Config{privlib}/$_"
-			  or $map{$_} eq "$Config::Config{archlib}/$_");
+    foreach my $pfile (sort grep length $map{$_}, keys %map) {
+        next if !opt(B) and ($map{$pfile} eq "$Config::Config{privlib}/$pfile"
+                          or $map{$pfile} eq "$Config::Config{archlib}/$pfile");
 
-	vprint 2, "... adding $map{$_}";
-	next unless $zip;
+        next unless $zip;
+        vprint 2, "... adding $map{$pfile} as lib/$pfile";
 
-	if ($text{$_}) {
-	    local $/;
-	    open my $file, '<', $map{$_} or die $!;
-	    binmode($file);
-	    my $content = <$file>;
-	    $content =~ s/
-		^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
-		^=cut\s*$
-		\n*
-	    //smgx unless $verbatim;
-	    $size += length($content);
-	    $zip->addString( \$content => "lib/$_", %zip_args );
-	}
-	else {
-	    $zip->addFile($map{$_} => "lib/$_");
-	    $size += -s $map{$_};
-	}
+        if ($text{$pfile}) {
+            local $/;
+            open my $file, '<', $map{$pfile} or die $!;
+            binmode($file);
+            my $content = <$file>;
+            $content =~ s/
+                ^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
+                ^=cut\s*$
+                \n*
+            //smgx unless $verbatim;
 
-	push @manifest, "lib/$_";
+            if ($map{$pfile} =~ /\bTk\b.*\bWidget\.pm/i) {
+                my $from = << '.';
+  if (defined($name=$INC{"$pkg.pm"}))
+   {
+    $name =~ s#^(.*)$pkg\.pm$#$1auto/$pkg/$func.al#;
+   }
+  else
+.
+                my $to = << '.';
+  unless (defined($name=$INC{"$pkg.pm"}) and
+    $name =~ s#^(.*)$pkg\.pm$#$1auto/$pkg/$func.al#)
+.
+                $content =~ s/\Q$from\E/$to/;
+            }
+
+            $size += length($content);
+            $zip->addString( \$content => "lib/$pfile", %zip_args );
+        }
+        else {
+            $zip->addFile($map{$pfile} => "lib/$pfile");
+            $size += -s $map{$pfile};
+        }
+
+        push @manifest, "lib/$pfile";
     }
 
     @Input = grep !/\.pm\z/i, @Input;
 
     foreach my $input (@Input) {
-	my $name = $input;
-	$size += -s $input;
+        my $name = basename($input);
+        $size += -s $input;
 
-	$zip->addFile($input => "script/$input");
-	push @manifest, "script/$input";
-
+        $zip->addFile($input => "script/$name");
+        push @manifest, "script/$name";
     }
 
     $zip->addString(
-	((@Input == 1)
-	    ? _main_pl_single("script/$Input[0]")
-	    : _main_pl_multi()) => "script/main.pl", %zip_args
+        ((@Input == 1)
+            ? _main_pl_single("script/" . basename($Input[0]))
+            : _main_pl_multi()) => "script/main.pl", %zip_args
     );
 
     push @manifest, "script/main.pl";
@@ -174,14 +190,14 @@ YAML
     $size += length($_) for ($manifest, $meta_yaml);
     vprint 2, "... making $_" for qw(MANIFEST META.yml);
 
-    $zip->addString($manifest	=> 'MANIFEST', %zip_args);
-    $zip->addString($meta_yaml	=> 'META.yml', %zip_args);
+    $zip->addString($manifest   => 'MANIFEST', %zip_args);
+    $zip->addString($meta_yaml  => 'META.yml', %zip_args);
     $zip->writeToFileNamed($par_file);
 
     my $newsize = -s $par_file;
     vprint 2, sprintf(
-	"*** %s: %d bytes read, %d compressed, %2.2d%% saved.\n",
-	$par_file, $size, $newsize, (100 - ($newsize / $size * 100))
+        "*** %s: %d bytes read, %d compressed, %2.2d%% saved.\n",
+        $par_file, $size, $newsize, (100 - ($newsize / $size * 100))
     );
 
     par_to_exe() unless opt(p);
@@ -217,8 +233,8 @@ sub vprint ($@) {
     my $msg = "@_";
     $msg .= "\n" unless substr($msg, -1) eq "\n";
     if (opt(v) > $level) {
-         print        "$0: $msg" if !opt('log');
-	 print $logfh "$0: $msg" if  opt('log');
+        print        "$0: $msg" if !opt('log');
+        print $logfh "$0: $msg" if  opt('log');
     }
 }
 
@@ -242,8 +258,8 @@ sub parse_argv {
         'h',            # Help me
         'S',            # Dump PAR files
         'B',            # Bundle core modules
-	'r',            # run the resulting executable
-	'log:s',        # where to log packaging process information
+        'r',            # run the resulting executable
+        'log:s',        # where to log packaging process information
     );
 
     $Options->{v} += 0;
@@ -257,14 +273,14 @@ sub parse_argv {
     if (opt(e)) {
         warn "$0: using -e 'code' as input file, ignoring @ARGV\n" if @ARGV and !opt(r);
         my ($fh, $fake_input) = tempfile("ppXXXXX", SUFFIX => ".pl", UNLINK => 1); 
-	print $fh $Options->{e};
-	close $fh;
-	@Input = $fake_input;
+        print $fh $Options->{e};
+        close $fh;
+        @Input = $fake_input;
     }
     else {
         @Input = shift @ARGV if @ARGV;
         _usage_and_die("$0: No input file specified\n") unless @Input or opt(M);
-	push @Input, @ARGV if @ARGV and !opt(r);
+        push @Input, @ARGV if @ARGV and !opt(r);
         check_read(@Input) if @Input;
         check_perl(@Input) if @Input;
         sanity_check();
@@ -292,32 +308,32 @@ sub sanity_check {
 
 sub check_read { 
     foreach my $file (@_) {
-	unless (-r $file) {
-	    _die("$0: Input file $file is a directory, not a file\n") if -d _;
-	    unless (-e _) {
-		_die("$0: Input file $file was not found\n");
-	    } else {
-		_die("$0: Cannot read input file $file: $!\n");
-	    }
-	}
-	unless (-f _) {
-	    # XXX: die?  don't try this on /dev/tty
-	    warn "$0: WARNING: input $file is not a plain file\n";
-	} 
+        unless (-r $file) {
+            _die("$0: Input file $file is a directory, not a file\n") if -d _;
+            unless (-e _) {
+                _die("$0: Input file $file was not found\n");
+            } else {
+                _die("$0: Cannot read input file $file: $!\n");
+            }
+        }
+        unless (-f _) {
+            # XXX: die?  don't try this on /dev/tty
+            warn "$0: WARNING: input $file is not a plain file\n";
+        } 
     }
 }
 
 sub check_write {
     foreach my $file (@_) {
-	if (-d $file) {
-	    _die("$0: Cannot write on $file, is a directory\n");
-	}
-	if (-e _) {
-	    _die("$0: Cannot write on $file: $!\n") unless -w _;
-	} 
-	unless (-w cwd()) { 
-	    _die("$0: Cannot write in this directory: $!\n");
-	}
+        if (-d $file) {
+            _die("$0: Cannot write on $file, is a directory\n");
+        }
+        if (-e _) {
+            _die("$0: Cannot write on $file: $!\n") unless -w _;
+        } 
+        unless (-w cwd()) { 
+            _die("$0: Cannot write in this directory: $!\n");
+        }
     }
 }
 
@@ -325,10 +341,10 @@ sub check_perl {
     my $file = shift;
     unless (-T $file) {
         warn "$0: Binary `$file' sure doesn't smell like perl source!\n";
-	if (my $file_checker = _can_run("file")) {
-	    print "Checking file type... ";
-	    system($file_checker, $file);
-	}
+        if (my $file_checker = _can_run("file")) {
+            print "Checking file type... ";
+            system($file_checker, $file);
+        }
         _die("Please try a perlier file!\n");
     } 
 
@@ -343,10 +359,10 @@ sub check_perl {
 sub helpme {
     print "Perl Packager, version $VERSION\n\n";
     {
-	no warnings;
-	exec "pod2usage $0";
-	exec "perldoc $0";
-	exec "pod2text $0";
+        no warnings;
+        exec "pod2usage $0";
+        exec "perldoc $0";
+        exec "pod2text $0";
     }
 }
 
@@ -369,7 +385,10 @@ sub _can_run {
 
     my $command = shift;
 
-    for my $dir (split(/$Config{path_sep}/, $ENV{PATH}), File::Basename::dirname($0)) {
+    for my $dir (
+        File::Basename::dirname($0),
+        split(/$Config{path_sep}/, $ENV{PATH})
+    ) {
         my $abs = File::Spec->catfile($dir, $command);
         return $abs if $abs = MM->maybe_command($abs);
     }
@@ -385,9 +404,9 @@ my $zip = $PAR::LibCache{$0};
 $file =~ s/^.*[\/\\]//;
 $file =~ s/\.[^.]*$//i ;
 my $member  = $zip->memberNamed($file)
-	|| $zip->memberNamed("$file.pl")
-	|| $zip->memberNamed("script/$file")
-	|| $zip->memberNamed("script/$file.pl")
+        || $zip->memberNamed("$file.pl")
+        || $zip->memberNamed("script/$file")
+        || $zip->memberNamed("script/$file.pl")
     or die qq(Can't open perl script "$file": No such file or directory);
 PAR::_run_member($member);
 
@@ -418,34 +437,35 @@ pp - Perl Packager
 
 =head1 SYNOPSIS
 
-    % pp hello			# Pack 'hello' into executable 'a.out'
-    % pp -o hello hello.pl	# Pack 'hello.pl' into executable 'hello'
+    % pp hello                  # Pack 'hello' into executable 'a.out'
+    % pp -o hello hello.pl      # Pack 'hello.pl' into executable 'hello'
 
-    % pp -o foo foo.pl bar.pl	# Pack 'foo.pl' and 'bar.pl' into 'foo'
-    % ./foo			# Run 'foo.pl' inside 'foo'
-    % mv foo bar; ./bar		# Run 'bar.pl' inside 'foo'
-    % mv bar baz; ./baz		# Error: Can't open perl script "baz"
+    % pp -o foo foo.pl bar.pl   # Pack 'foo.pl' and 'bar.pl' into 'foo'
+    % ./foo                     # Run 'foo.pl' inside 'foo'
+    % mv foo bar; ./bar         # Run 'bar.pl' inside 'foo'
+    % mv bar baz; ./baz         # Error: Can't open perl script "baz"
 
-    % pp -p file		# Creates a PAR file, 'file.par'
-    % pp -S -o hello file	# Creates a PAR file, 'file.par',
-				# then packages it to executable 'hello'
-    % pp -p -o out.par file	# Creates 'out.par' from 'file'
-    % pp -B -p -o out.par file	# same as above, but bundles core modules
-				# (-B is assumed when making executables)
+    % pp -p file                # Creates a PAR file, 'file.par'
+    % pp -S -o hello file       # Creates a PAR file, 'file.par',
+                                # then packages it to executable 'hello'
+    % pp -p -o out.par file     # Creates 'out.par' from 'file'
+    % pp -B -p -o out.par file  # same as above, but bundles core modules
+                                # (-B is assumed when making executables)
 
-    % pp -e 'print q//'		# Pack a one-liner into 'a.out'
-    % pp -c -e 'print q//'	# Creates a PAR file 'a.out.par'
+    % pp -e 'print q//'         # Pack a one-liner into 'a.out'
+    % pp -c -e 'print q//'      # Creates a PAR file 'a.out.par'
 
-    % pp -I /foo hello		# Extra paths (notice space after -I)
-    % pp -M Foo::Bar hello	# Extra modules (notice space after -M)
-    % pp -X Foo::Bar hello	# Exclude modules (notice space after -X)
+    % pp -I /foo hello          # Extra paths (notice space after -I)
+    % pp -M Foo::Bar hello      # Extra modules (notice space after -M)
+    % pp -M abbrev.pl hello     # Extra files under @INC
+    % pp -X Foo::Bar hello      # Exclude modules (notice space after -X)
 
-    % pp -r hello		# Pack 'hello' into 'a.out', runs 'a.out'
-    % pp -r hello a b c		# Pack 'hello' into 'a.out', runs 'a.out'
-				# with arguments 'a b c' 
+    % pp -r hello               # Pack 'hello' into 'a.out', runs 'a.out'
+    % pp -r hello a b c         # Pack 'hello' into 'a.out', runs 'a.out'
+                                # with arguments 'a b c' 
 
-    % pp hello -log c		# Pack 'hello' into 'a.out', logs
-				# messages into 'c'
+    % pp hello -log c           # Pack 'hello' into 'a.out', logs
+                                # messages into 'c'
 
 =head1 DESCRIPTION
 
@@ -474,10 +494,12 @@ as the default executable name.
 
 =over 4
 
-=item -M I<module names>
+=item -M I<module or file names>
 
 Adds the given modules to the dependency search patch and to the
-binary.
+binary.  Also accepts filenames relative to the C<@INC> path;
+that is, C<-M Module::ScanDeps> may also be written as C<-M
+Module/ScanDeps.pm>.
 
 =item -X I<module names>
 
@@ -539,23 +561,23 @@ different expected settings:
 
 =item Stand-alone setup
 
-    % pp -o packed.exe source.pl	# makes packed.exe
+    % pp -o packed.exe source.pl        # makes packed.exe
     # Now, deploy 'packed.exe' to target machine...
-    $ packed.exe			# run it
+    $ packed.exe                        # run it
 
 =item Perl interpreter only, without core modules:
 
-    % pp -B -p source.pl		# makes source.par
+    % pp -B -p source.pl                # makes source.par
     % par.pl -B -Opacked.pl source.par  # makes packed.pl
     # Now, deploy 'packed.pl' to target machine...
-    $ perl packed.pl			# run it
+    $ perl packed.pl                    # run it
 
 =item Perl with core module installed:
 
-    % pp -p source.pl			# makes source.par
-    % par.pl -b -Opacked.pl source.par	# makes packed.pl
+    % pp -p source.pl                   # makes source.par
+    % par.pl -b -Opacked.pl source.par  # makes packed.pl
     # Now, deploy 'packed.pl' to target machine...
-    $ perl packed.pl			# run it
+    $ perl packed.pl                    # run it
 
 =item Perl with PAR.pm and its dependencies installed:
 

@@ -1,5 +1,5 @@
 # $File: //member/autrijus/PAR/README $ $Author: autrijus $
-# $Revision: #17 $ $Change: 4650 $ $DateTime: 2003/03/08 16:07:09 $
+# $Revision: #21 $ $Change: 4818 $ $DateTime: 2003/03/19 15:30:30 $
 
 This is the README file for PAR, a toolkit to use perl scripts and
 modules stored inside compressed .par files.
@@ -12,11 +12,11 @@ For bundling prerequisite modules of scripts into a PAR file (ala
 PerlApp, Perl2exe, or 'perlcc that works'), see "perldoc pp".
 
 For running ".par" files directly, see "perldoc parl".
+
 To generate/execute self-contained perl scripts, see "perldoc par.pl".
 
-There is also a presentation "Introduction to PAR", available as
-<http://www.autrijus.org/par-intro/>; a Chinese version is at
-<http://www.autrijus.org/par-intro.zh/>.
+There is also a presentation "Introduction to PAR" included as part
+of installation; see "perldoc PAR::Intro".
 
 * Installation
 
@@ -44,7 +44,7 @@ actions are required on your part.
 However, if nobody has generated such a package for your architecture,
 you will see a short messages like this:
 
-    Fetching 'PAR-0.64-i386-freebsd-5.8.0.par' from ftp.cpan.org...
+    Fetching 'PAR-0.66-i386-freebsd-5.8.0.par' from www.cpan.org...
     *** No installation package available for your architecture.
     However, you may wish to generate one with 'make par' and send
     it to <AUTRIJUS@cpan.org>, so other people on the same platform
@@ -53,7 +53,8 @@ you will see a short messages like this:
 
 If you are on a platform where normal users do not have a C compiler
 installed (MSWin32, darwin, etc.), please follow the instruction above
-to mail the generated PAR package to me.  Thanks!
+and mail the generated PAR package (or more preferably, a URL to download
+that package) to me.  Thanks!
 
 * Notes for Windows users
 
@@ -124,11 +125,25 @@ of libperl with the executable are most welcome.
 
 Please consult the documentation of 'pp' for more information.
 
+* Snapshots
+
+The in-development, updated-every-minute snapshot of PAR is available
+via rsync and http:
+
+    rsync -avuz rsync://p4.elixus.org/member/autrijus/PAR .
+    http://p4.elixus.org/snap/PAR.tar.gz
+
+Change history, opened files and other information are also available
+from the P4Web interface:
+
+    http://p4.elixus.org/member/autrijus/PAR/
+
 * Contact
 
 PAR has a mailing list, <par@perl.org>, that you can write to;
 send an empty mail to <par-subscribe@perl.org> to join the list
-and participate in the discussion.
+and participate in the discussion.  For web-accessible archives,
+see <http://nntp.x.perl.org/group/perl.par/>.
 
 Please send bug reports to <bug-par@rt.cpan.org>.
 

@@ -1,15 +1,15 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/script/par.pl $ $Author: autrijus $
-# $Revision: #43 $ $Change: 4674 $ $DateTime: 2003/03/09 13:35:34 $
+# $Revision: #47 $ $Change: 4749 $ $DateTime: 2003/03/17 01:06:47 $ vim: expandtab shiftwidth=4
 
 package __par_pl;
 
-# --- This script cannot use any modules at compile time ---
+# --- This script must not use any modules at compile time ---
 #use strict;
 
 =head1 NAME
 
-par.pl - Make and Run Perl Archives
+par.pl - Make and run Perl Archives
 
 =head1 SYNOPSIS
 
@@ -19,34 +19,34 @@ executables, scripts or PAR archives from perl programs.)
 To use F<Hello.pm> from F<./foo.par>:
 
     % par.pl -A./foo.par -MHello 
-    % par.pl -A./foo -MHello	# the .par part is optional
+    % par.pl -A./foo -MHello    # the .par part is optional
 
 Same thing, but search F<foo.par> in the F<@INC>;
 
     % par.pl -Ifoo.par -MHello 
-    % par.pl -Ifoo -MHello 	# ditto
+    % par.pl -Ifoo -MHello      # ditto
 
 Run F<test.pl> or F<script/test.pl> from F<foo.par>:
 
-    % par.pl foo.par test.pl	# looks for 'main.pl' by default,
-				# otherwise run 'test.pl' 
+    % par.pl foo.par test.pl    # looks for 'main.pl' by default,
+                                # otherwise run 'test.pl' 
 
 To make a self-containing script containing a PAR file :
 
     % par.pl -O./foo.pl foo.par
-    % ./foo.pl test.pl		# same as above
+    % ./foo.pl test.pl          # same as above
 
 To embed the necessary non-core modules and shared objects for PAR's
 execution (like C<Zlib>, C<IO>, C<Cwd>, etc), use the B<-b> flag:
 
     % par.pl -b -O./foo.pl foo.par
-    % ./foo.pl test.pl		# runs anywhere with core modules installed
+    % ./foo.pl test.pl          # runs anywhere with core modules installed
 
 If you also wish to embed I<core> modules along, use the B<-B> flag
 instead:
 
     % par.pl -B -O./foo.pl foo.par
-    % ./foo.pl test.pl		# runs anywhere with the perl interpreter
+    % ./foo.pl test.pl          # runs anywhere with the perl interpreter
 
 This is particularly useful when making stand-alone binary
 executables; see L<pp> for details.
@@ -59,29 +59,30 @@ C<-Afoo.par> instead of C<-MPAR=foo.par>.
 
 =head2 Binary PAR loader (L<parl>)
 
-If you have a C compiler, a binary version of B<par.pl> will also be
+If you have a C compiler, or a pre-built binary package of B<PAR> is
+available for your platform, a binary version of B<par.pl> will also be
 automatically installed as B<parl>.  You can use it to run F<.par> files:
 
     # runs script/run.pl in archive, uses its lib/* as libraries
-    % parl myapp.par run.pl	# runs run.pl or script/run.pl in myapp.par
-    % parl otherapp.pl		# also runs normal perl scripts
+    % parl myapp.par run.pl     # runs run.pl or script/run.pl in myapp.par
+    % parl otherapp.pl          # also runs normal perl scripts
 
 However, if the F<.par> archive contains either F<main.pl> or
 F<script/main.pl>, it is used instead:
 
-    % parl myapp.par run.pl	# runs main.pl, with 'run.pl' as @ARGV
+    % parl myapp.par run.pl     # runs main.pl, with 'run.pl' as @ARGV
 
-Finally, as an alternative to C<Perl2exe> or C<PerlApp>, the C<-O>
-option makes a stand-alone binary from a PAR file:
+Finally, the C<-O> option makes a stand-alone binary executable from a
+PAR file:
 
     % parl -B -Omyapp myapp.par
-    % ./myapp			# run it anywhere without perl binaries
+    % ./myapp                   # run it anywhere without perl binaries
 
 With the C<--par-options> flag, generated binaries can act as C<parl>
-to generate new binaries: 
+to pack new binaries: 
 
-    % ./myapp --par-options -Omyap2 myapp.par	# identical to ./myapp
-    % ./myapp --par-options -Omyap3 myap3.par	# now with different PAR
+    % ./myapp --par-options -Omyap2 myapp.par   # identical to ./myapp
+    % ./myapp --par-options -Omyap3 myap3.par   # now with different PAR
 
 =head2 Stand-alone executable format
 
@@ -131,6 +132,8 @@ followed by a 8-bytes magic string: "C<\012PAR.pm\012>".
 
 =cut
 
+my $quiet = !$ENV{PAR_DEBUG};
+
 # fix $0 if invoked from PATH
 unless (-f $0) {
     my %Config;
@@ -143,12 +146,12 @@ unless (-f $0) {
     }
     else {
         foreach my $dir (split /$Config{path_sep}/, $ENV{PATH}) {
-	    $dir =~ s/\Q$Config{_delim}\E$//;
-	    (($0 = "$dir$Config{_delim}$0$Config{_exe}"), last)
-		if -f "$dir$Config{_delim}$0$Config{_exe}";
-	    (($0 = "$dir$Config{_delim}$0"), last)
-		if -f "$dir$Config{_delim}$0";
-	}
+            $dir =~ s/\Q$Config{_delim}\E$//;
+            (($0 = "$dir$Config{_delim}$0$Config{_exe}"), last)
+                if -f "$dir$Config{_delim}$0$Config{_exe}";
+            (($0 = "$dir$Config{_delim}$0"), last)
+                if -f "$dir$Config{_delim}$0";
+        }
     }
 }
 
@@ -175,71 +178,72 @@ my ($start_pos, $data_pos);
     # Extracting each file into memory {{{
     my %require_list;
     while ($buf eq "FILE") {
-	read _FH, $buf, 4;
-	read _FH, $buf, unpack("N", $buf);
+        read _FH, $buf, 4;
+        read _FH, $buf, unpack("N", $buf);
 
-	my $fullname = $buf;
-	my $crc = ( $fullname =~ s|^([a-f\d]{8})/|| ) ? $1 : undef;
-	my ($basename, $ext) = ($buf =~ m|(?:.*/)?(.*)(\..*)|);
+        my $fullname = $buf;
+        outs(qq(Unpacking file "$fullname"...));
+        my $crc = ( $fullname =~ s|^([a-f\d]{8})/|| ) ? $1 : undef;
+        my ($basename, $ext) = ($buf =~ m|(?:.*/)?(.*)(\..*)|);
 
-	read _FH, $buf, 4;
-	read _FH, $buf, unpack("N", $buf);
+        read _FH, $buf, 4;
+        read _FH, $buf, unpack("N", $buf);
 
-	if (defined($ext) and $ext !~ /\.(?:pm|ix|al)$/i) {
-	    my ($out, $filename) = _tempfile($ext, $crc);
-	    if ($out) {
-		binmode($out);
-		print $out $buf;
-		close $out;
-	    }
-	    $PAR::Heavy::DLCache{$filename}++;
-	    $PAR::Heavy::DLCache{$basename}   =
-	    $PAR::Heavy::FullCache{$fullname} = $filename;
-	    $PAR::Heavy::FullCache{$filename} = $fullname;
-	}
-	else {
-	    $require_list{$fullname} = \"$buf";
-	}
-	read _FH, $buf, 4;
+        if (defined($ext) and $ext !~ /\.(?:pm|ix|al)$/i) {
+            my ($out, $filename) = _tempfile($ext, $crc);
+            if ($out) {
+                binmode($out);
+                print $out $buf;
+                close $out;
+            }
+            $PAR::Heavy::DLCache{$filename}++;
+            $PAR::Heavy::DLCache{$basename}   =
+            $PAR::Heavy::FullCache{$fullname} = $filename;
+            $PAR::Heavy::FullCache{$filename} = $fullname;
+        }
+        else {
+            $require_list{$fullname} = \"$buf";
+        }
+        read _FH, $buf, 4;
     }
     # }}}
 
     local @INC = (sub {
-	my ($self, $module) = @_;
+        my ($self, $module) = @_;
 
-	return if ref $module or !$module;
+        return if ref $module or !$module;
 
-	my $filename = delete $require_list{$module} || do {
-	    my $key;
-	    foreach (keys %require_list) {
-		next unless /\Q$module\E$/;
-		$key = $_; last;
-	    }
-	    delete $require_list{$key};
-	} or return;
+        my $filename = delete $require_list{$module} || do {
+            my $key;
+            foreach (keys %require_list) {
+                next unless /\Q$module\E$/;
+                $key = $_; last;
+            }
+            delete $require_list{$key};
+        } or return;
 
-	$INC{$module} = "/loader/$filename/$module";
+        $INC{$module} = "/loader/$filename/$module";
 
-	if (defined(&IO::File::new)) {
-	    my $fh = IO::File->new_tmpfile or die $!;
-	    binmode($fh);
-	    print $fh $$filename;
-	    seek($fh, 0, 0);
-	    return $fh;
-	}
-	else {
-	    my ($out, $name) = _tempfile('.pm');
-	    if ($out) {
-		binmode($out);
-		print $out $$filename;
-		close $out;
-	    }
-	    open my $fh, $name or die $!;
-	    binmode($fh);
-	    return $fh;
-	}
+        if (defined(&IO::File::new)) {
+            my $fh = IO::File->new_tmpfile or die $!;
+            binmode($fh);
+            print $fh $$filename;
+            seek($fh, 0, 0);
+            return $fh;
+        }
+        else {
+            my ($out, $name) = _tempfile('.pm');
+            if ($out) {
+                binmode($out);
+                print $out $$filename;
+                close $out;
+            }
+            open my $fh, $name or die $!;
+            binmode($fh);
+            return $fh;
+        }
 
-	die "Bootstrapping failed: cannot find $module!\n";
+        die "Bootstrapping failed: cannot find $module!\n";
     }, @INC);
     # }}}
 
@@ -257,8 +261,8 @@ my ($start_pos, $data_pos);
 
     # load rest of the group in
     while (my $filename = (sort keys %require_list)[0]) {
-	require $filename unless $INC{$filename} or $filename =~ /BSDPAN/;
-	delete $require_list{$filename};
+        require $filename unless $INC{$filename} or $filename =~ /BSDPAN/;
+        delete $require_list{$filename};
     }
 
     # }}}
@@ -270,36 +274,38 @@ my ($start_pos, $data_pos);
 
 # Argument processing {{{
 my @par_args;
-my ($out, $bundle, $quiet);
+my ($out, $bundle);
+
+$quiet = 0 unless $ENV{PAR_DEBUG};
 
 # Don't swallow arguments for compiled executables without --par-options
 if (!$start_pos or ($ARGV[0] eq '--par-options' && shift)) {
     while (@ARGV) {
-	$ARGV[0] =~ /^-([AIMOBbq])(.*)/ or last;
+        $ARGV[0] =~ /^-([AIMOBbq])(.*)/ or last;
 
-	if ($1 eq 'I') {
-	    push @INC, $2;
-	}
-	elsif ($1 eq 'M') {
-	    eval "use $2";
-	}
-	elsif ($1 eq 'A') {
-	    push @par_args, $2;
-	}
-	elsif ($1 eq 'O') {
-	    $out = $2;
-	}
-	elsif ($1 eq 'b') {
-	    $bundle = 'site';
-	}
-	elsif ($1 eq 'B') {
-	    $bundle = 'all';
-	}
-	elsif ($1 eq 'q') {
-	    $quiet = 1;
-	}
+        if ($1 eq 'I') {
+            push @INC, $2;
+        }
+        elsif ($1 eq 'M') {
+            eval "use $2";
+        }
+        elsif ($1 eq 'A') {
+            push @par_args, $2;
+        }
+        elsif ($1 eq 'O') {
+            $out = $2;
+        }
+        elsif ($1 eq 'b') {
+            $bundle = 'site';
+        }
+        elsif ($1 eq 'B') {
+            $bundle = 'all';
+        }
+        elsif ($1 eq 'q') {
+            $quiet = 1;
+        }
 
-	shift(@ARGV);
+        shift(@ARGV);
     }
 }
 
@@ -313,9 +319,9 @@ if ($out) {
     local $/ = \4;
 
     if (defined $par) {
-	open PAR, '<', $par or die "$!: $par";
-	binmode(PAR);
-	die "$par is not a PAR file" unless <PAR> eq "PK\003\004";
+        open PAR, '<', $par or die "$!: $par";
+        binmode(PAR);
+        die "$par is not a PAR file" unless <PAR> eq "PK\003\004";
     }
 
     open OUT, '>', $out or die $!;
@@ -325,9 +331,9 @@ if ($out) {
     seek _FH, 0, 0;
     my $loader = scalar <_FH>;
     $loader =~ s/
-	^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
-	^=cut\s*$
-	\n*
+        ^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
+        ^=cut\s*$
+        \n*
     //smgx if !$ENV{PAR_VERBATIM} and $loader =~ /^(?:#!|\@rem)/;
     print OUT $loader;
     $/ = undef;
@@ -336,76 +342,80 @@ if ($out) {
     # Write bundled modules {{{
     my $data_len = 0;
     if ($bundle) {
-	require PAR::Heavy;
-	PAR::Heavy::_init_dynaloader();
-	require_modules();
+        require PAR::Heavy;
+        PAR::Heavy::_init_dynaloader();
+        require_modules();
 
-	my @inc = sort {
-	    length($b) <=> length($a)
-	} grep {
-	    !/BSDPAN/
-	} grep {
-	    ($bundle ne 'site') or 
-	    ($_ ne $Config::Config{archlibexp} and
-	     $_ ne $Config::Config{privlibexp});
-	} @INC;
+        my @inc = sort {
+            length($b) <=> length($a)
+        } grep {
+            !/BSDPAN/
+        } grep {
+            ($bundle ne 'site') or 
+            ($_ ne $Config::Config{archlibexp} and
+             $_ ne $Config::Config{privlibexp});
+        } @INC;
 
-	my %files;
-	/^_<(.+)$/ and $files{$1}++ for keys %::;
-	$files{$_}++ for values %INC;
+        my %files;
+        /^_<(.+)$/ and $files{$1}++ for keys %::;
+        $files{$_}++ for values %INC;
 
-	foreach (sort keys %files) {
-	    my ($name, $file);
+        my $lib_ext = $Config::Config{lib_ext};
 
-	    foreach my $dir (@inc) {
-		if ($name = $PAR::Heavy::FullCache{$_}) {
-		    $file = $_;
-		    last;
-		}
-		elsif (/^(\Q$dir\E\/(.*[^Cc]))\Z/) {
-		    ($file, $name) = ($1, $2);
-		    last;
-		}
-		elsif (m!^/loader/[^/]+/(.*[^Cc])\Z! and -f "$dir/$1") {
-		    ($file, $name) = ("$dir/$1", $1);
-		    last;
-		}
-	    }
+        foreach (sort keys %files) {
+            my ($name, $file);
 
-	    next unless defined $name;
-	    print "$file\n" unless $quiet;
+            foreach my $dir (@inc) {
+                if ($name = $PAR::Heavy::FullCache{$_}) {
+                    $file = $_;
+                    last;
+                }
+                elsif (/^(\Q$dir\E\/(.*[^Cc]))\Z/) {
+                    ($file, $name) = ($1, $2);
+                    last;
+                }
+                elsif (m!^/loader/[^/]+/(.*[^Cc])\Z! and -f "$dir/$1") {
+                    ($file, $name) = ("$dir/$1", $1);
+                    last;
+                }
+            }
 
-	    open FILE, "$file" or die "Can't open $file: $!";
-	    binmode(FILE);
-	    my $content = <FILE>;
-	    $content =~ s/
-		^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
-		^=cut\s*$
-		\n*
-	    //smgx if !$ENV{PAR_VERBATIM} and lc($name) =~ /\.(?:pm|ix|al)$/i;
-	    close FILE;
+            next unless defined $name;
+            next if ( $file =~ /\.\Q$lib_ext\E$/ );
+            outs("Writing $file");
 
-	    print OUT "FILE";
-	    print OUT pack('N', length($name) + 9);
-	    print OUT sprintf(
-		"%08x/%s", Archive::Zip::computeCRC32($content), $name
-	    );
-	    print OUT pack('N', length($content));
-	    print OUT $content;
+            open FILE, "$file" or die "Can't open $file: $!";
+            binmode(FILE);
+            my $content = <FILE>;
+            $content =~ s/
+                ^=(?:head\d|pod|begin|item|over|for|back|end)\b.*?
+                ^=cut\s*$
+                \n*
+            //smgx if !$ENV{PAR_VERBATIM} and lc($name) =~ /\.(?:pm|ix|al)$/i;
+            close FILE;
 
-	    $data_len += 12 + length($name) + 9 + length($content);
-	}
+            outs(qq(Packing file "$name"...));
+            print OUT "FILE";
+            print OUT pack('N', length($name) + 9);
+            print OUT sprintf(
+                "%08x/%s", Archive::Zip::computeCRC32($content), $name
+            );
+            print OUT pack('N', length($content));
+            print OUT $content;
+
+            $data_len += 12 + length($name) + 9 + length($content);
+        }
     }
     # }}}
 
     # Now write out the PAR and magic strings {{{
     if (defined($par)) {
-	print OUT "PK\003\004";
-	print OUT <PAR>;
-	print OUT pack('N', $data_len + (stat($par))[7]);
+        print OUT "PK\003\004";
+        print OUT <PAR>;
+        print OUT pack('N', $data_len + (stat($par))[7]);
     }
     else {
-	print OUT pack('N', $data_len);
+        print OUT pack('N', $data_len);
     }
 
     print OUT "\nPAR.pm\n";
@@ -428,14 +438,14 @@ if ($out) {
     my $tell_ref  = $fh->can('tell');
 
     *{'IO::File::seek'} = sub {
-	return $seek_ref->(@_) unless $PAR::__reading;
-	my ($fh, $pos, $whence) = @_;
-	$pos += $start_pos if $whence == 0;
-	$seek_ref->($fh, $pos, $whence);
+        return $seek_ref->(@_) unless $PAR::__reading;
+        my ($fh, $pos, $whence) = @_;
+        $pos += $start_pos if $whence == 0;
+        $seek_ref->($fh, $pos, $whence);
     };
     *{'IO::File::tell'} = sub {
-	return $tell_ref->(@_) unless $PAR::__reading;
-	return $tell_ref->(@_) - $start_pos;
+        return $tell_ref->(@_) unless $PAR::__reading;
+        return $tell_ref->(@_) - $start_pos;
     };
     # }}}
 
@@ -513,32 +523,34 @@ sub _tempfile {
     my ($fh, $filename);
     
     if (defined $crc and !$ENV{PAR_CLEARTEMP}) {
-	$filename = tmpdir() . "/$crc$ext";
-	return (undef, $filename) if (-r $filename);
+        $filename = tmpdir() . "/$crc$ext";
+        return (undef, $filename) if (-r $filename);
 
-	open $fh, '>', $filename or die $!;
+        open $fh, '>', $filename or die $!;
     }
     elsif (defined &File::Temp::tempfile) {
-	# under Win32, the file is created with O_TEMPORARY,
-	# and will be deleted by the C runtime; having File::Temp
-	# delete it has the only effect of giving an ugly warnings
-	($fh, $filename) = File::Temp::tempfile(
-	    SUFFIX	=> $ext,
-	    UNLINK	=> ($^O ne 'MSWin32'),
-	) or die $!;
+        # under Win32, the file is created with O_TEMPORARY,
+        # and will be deleted by the C runtime; having File::Temp
+        # delete it has the only effect of giving an ugly warnings
+        ($fh, $filename) = File::Temp::tempfile(
+            SUFFIX      => $ext,
+            UNLINK      => ($^O ne 'MSWin32'),
+        ) or die $!;
     }
     else {
-	my $tmpdir = tmpdir();
-	$tmpfile ||= ($$ . '0000');
-	do { $tmpfile++ } while -e ($filename = "$tmpdir/$tmpfile$ext");
-	push @tmpfiles, $filename;
-	open $fh, ">", $filename or die $!;
+        my $tmpdir = tmpdir();
+        $tmpfile ||= ($$ . '0000');
+        do { $tmpfile++ } while -e ($filename = "$tmpdir/$tmpfile$ext");
+        push @tmpfiles, $filename;
+        open $fh, ">", $filename or die $!;
     }
 
     binmode($fh);
     return ($fh, $filename);
 }
 END { unlink @tmpfiles if @tmpfiles }
+
+sub outs { warn("@_\n") unless $quiet }
 
 ########################################################################
 # The main package for script execution
@@ -572,7 +584,7 @@ Please send bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2002 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2002, 2003 by Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -1,8 +1,8 @@
 # $File: //member/autrijus/ExtUtils-AutoInstall/AutoInstall.pm $ 
-# $Revision: #33 $ $Change: 4671 $ $DateTime: 2003/03/09 12:46:30 $
+# $Revision: #39 $ $Change: 4805 $ $DateTime: 2003/03/19 13:41:43 $
 
 package ExtUtils::AutoInstall;
-$ExtUtils::AutoInstall::VERSION = '0.46';
+$ExtUtils::AutoInstall::VERSION = '0.48';
 
 use strict;
 
@@ -171,8 +171,12 @@ sub import {
 
     _check_lock(); # check for $UnderCPAN
 
-    print "*** Dependencies will be installed the next time you type 'make'.\n"
-	if (@Missing and not ($CheckOnly or $UnderCPAN));
+    if (@Missing and not ($CheckOnly or $UnderCPAN)) {
+	require Config;
+	print "*** Dependencies will be installed the next time you type '$Config::Config{make}'.\n";
+	# make an educated guess of whether we'll need root permission.
+	print "    (You may need to do that as the 'root' user.)\n" if eval '$>';
+    }
     print "*** $class configuration finished.\n";
 
     chdir $cwd;
@@ -583,12 +587,13 @@ sub postamble {
     return << ".";
 
 config :: installdeps
+\t\@\$(NOOP)
 
 checkdeps ::
-	\$(PERL) $0 --checkdeps
+\t\$(PERL) $0 --checkdeps
 
 installdeps ::
-	$PostambleActions
+\t$PostambleActions
 
 .
 

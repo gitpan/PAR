@@ -1,8 +1,8 @@
 # $File: //depot/cpan/Module-Install/lib/Module/Install/Makefile.pm $ $Author: autrijus $
-# $Revision: #33 $ $Change: 1333 $ $DateTime: 2003/03/09 04:34:29 $ vim: expandtab shiftwidth=4
+# $Revision: #36 $ $Change: 1375 $ $DateTime: 2003/03/18 12:29:32 $ vim: expandtab shiftwidth=4
 
 package Module::Install::Makefile;
-use base 'Module::Install::Base';
+use Module::Install::Base; @ISA = qw(Module::Install::Base);
 
 $VERSION = '0.01';
 
@@ -32,7 +32,7 @@ sub clean_files {
 
 sub write {
     my $self = shift;
-    die "makefile()->write() takes no arguments\n" if @_;
+    die "&Makefile->write() takes no arguments\n" if @_;
 
     my $args = $self->makemaker_args;
 
@@ -44,10 +44,15 @@ sub write {
 	$args->{AUTHOR} = $self->author;
     }
 
-    my $requires = $self->requires;
-    if (defined($requires)) {
-        $args->{PREREQ_PM} = { map @$_, @$requires };
-    }
+    # merge both kinds of requires into prereq_pm
+    my $prereq = ($args->{PREREQ_PM} ||= {});
+    %$prereq = ( %$prereq, map @$_, @{$self->$_} )
+        for grep $self->$_, qw(requires build_requires);
+
+    # merge both kinds of requires into prereq_pm
+    my $dir = ($args->{DIR} ||= []);
+    push @$dir, map "$self->{prefix}/$self->{bundle}/$_->[1]", @{$self->bundles}
+        if $self->bundles;
 
     $self->admin->update_manifest;
 
@@ -59,6 +64,8 @@ sub write {
 
 sub fix_up_makefile {
     my $self = shift;
+    my $top_class = ref($self->_top);
+    my $top_version = $self->_top->VERSION;
 
     local *MAKEFILE;
 
@@ -67,13 +74,13 @@ sub fix_up_makefile {
         my $makefile = do { local $/; <MAKEFILE> };
         close MAKEFILE;
         open MAKEFILE, '> Makefile' or die $!;
-        print MAKEFILE $self->preamble . $makefile;
+        print MAKEFILE "# Preamble by $top_class $top_version\n", $self->preamble;
+        print MAKEFILE $makefile;
         close MAKEFILE;
     }
 
-    open MAKEFILE, '>> Makefile'
-        or die "WriteMakefile can't append to Makefile:\n$!";
-    print MAKEFILE "# Added by " . __PACKAGE__ . " $VERSION\n", $self->postamble;
+    open MAKEFILE, '>> Makefile' or die $!;
+    print MAKEFILE "# Postamble by $top_class $top_version\n", $self->postamble;
     close MAKEFILE;
 }
 
@@ -85,22 +92,26 @@ sub preamble {
 
 sub postamble {
     my ($self, $text) = @_;
-    my $class = join('::', @{$self->_top}{qw(name dispatch)});
+    my $class = ref($self);
+    my $top_class = ref($self->_top);
+    my $admin_class = join('::', @{$self->_top}{qw(name dispatch)});
 
     $self->{postamble} ||= << "END";
+# --- $class section:
+
 realclean purge ::
 \t\$(RM_F) \$(DISTVNAME).tar\$(SUFFIX)
 
 reset :: purge
 \t\$(RM_RF) inc
-\t\$(PERL) -M$class -e \"reset_manifest()\"
-\t\$(PERL) -M$class -e \"remove_meta()\"
+\t\$(PERL) -M$admin_class -e \"reset_manifest()\"
+\t\$(PERL) -M$admin_class -e \"remove_meta()\"
 
 upload :: test dist
 \tcpan-upload -verbose \$(DISTVNAME).tar\$(SUFFIX)
 
 grok ::
-\tperldoc Module::Install
+\tperldoc $top_class
 
 distsign ::
 \tcpansign -s
@@ -108,26 +119,6 @@ distsign ::
 END
     $self->{postamble} .= $text if defined $text;
     $self->{postamble};
-}
-
-sub find_files {
-    my ($self, $file, $path) = @_;
-    $path = '' if not defined $path;
-    $file = "$path/$file" if length($path);
-    if (-f $file) {
-        return ($file);
-    }
-    elsif (-d $file) {
-        my @files = ();
-        local *DIR;
-        opendir(DIR, $file) or die "Can't opendir $file";
-        while (my $new_file = readdir(DIR)) {
-            next if $new_file =~ /^(\.|\.\.)$/;
-            push @files, $self->find_files($new_file, $file);
-        }
-        return @files;
-    }
-    return ();
 }
 
 1;

@@ -1,12 +1,15 @@
 #!/usr/bin/perl
 # $File: //member/autrijus/PAR/t/0-signature.t $ $Author: autrijus $
-# $Revision: #5 $ $Change: 4115 $ $DateTime: 2003/02/06 23:43:38 $
+# $Revision: #6 $ $Change: 4746 $ $DateTime: 2003/03/17 00:50:57 $
 
 use strict;
 print "1..1\n";
 
-if (!eval { require Socket; Socket::inet_aton('pgp.mit.edu') }) {
-    print "ok 1 # skip - Cannot connect to the keyserver";
+if (!-s 'SIGNATURE') {
+    print "ok 1 # skip - No signature file found\n";
+}
+elsif (!eval { require Socket; Socket::inet_aton('pgp.mit.edu') }) {
+    print "ok 1 # skip - Cannot connect to the keyserver\n";
 }
 elsif (!eval { require Module::Signature; 1 }) {
     warn "# Next time around, consider install Module::Signature,\n".

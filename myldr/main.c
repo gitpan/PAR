@@ -1,5 +1,7 @@
 /* $File: //member/autrijus/PAR/myldr/main.c $ $Author: autrijus $
-   $Revision: #10 $ $Change: 4549 $ $DateTime: 2003/03/03 15:41:21 $ */
+   $Revision: #13 $ $Change: 4741 $ $DateTime: 2003/03/17 00:25:28 $
+   vim: expandtab shiftwidth=4
+*/
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -59,8 +61,6 @@ int main( int argc, char **argv, char **env )
     GV* tmpgv;
     int options_count;
 
-/*    setenv("LD_LIBRARY_PATH", "/tmp", 1); */
-
 #if (defined(USE_5005THREADS) || defined(USE_ITHREADS)) && defined(HAS_PTHREAD_ATFORK)
     /* XXX Ideally, this should really be happening in perl_alloc() or
      * perl_construct() to keep libperl.a transparently fork()-safe.
@@ -87,7 +87,7 @@ int main( int argc, char **argv, char **env )
     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 #endif /* PERL_EXIT_DESTRUCT_END */
 
-#ifdef CSH
+#if (defined(CSH) && defined(PL_cshname))
     if (!PL_cshlen)
       PL_cshlen = strlen(PL_cshname);
 #endif
@@ -117,7 +117,7 @@ int main( int argc, char **argv, char **env )
                             fakeargv, (char **)NULL);
 
     if (exitstatus) {
-	perl_destruct(my_perl);
+        perl_destruct(my_perl);
         perl_free(my_perl);
         PERL_SYS_TERM();
         exit( exitstatus );
