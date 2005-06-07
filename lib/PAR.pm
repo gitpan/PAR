@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.87';
+$PAR::VERSION = '0.88';
 
 use 5.006;
 use strict;
@@ -12,7 +12,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.87 of PAR, released January 31, 2005.
+This document describes version 0.88 of PAR, released June 7, 2005.
 
 =head1 SYNOPSIS
 
@@ -257,7 +257,11 @@ sub _run_member {
     unshift @INC, sub { $fh };
 
     $ENV{PAR_0} = $filename; # for Pod::Usage
-    { do 'main'; die $@ if $@; exit }
+    { do 'main';
+      CORE::exit($1) if ($@ =~/^_TK_EXIT_\((\d+)\)/);
+      die $@ if $@;
+      exit;
+    }
 }
 
 sub _extract_inc {
@@ -501,6 +505,7 @@ sub _set_par_temp {
 }
 
 sub _tempfile {
+    my ($fh, $filename);
     if ($ENV{PAR_CLEAN} or !@_) {
         require File::Temp;
 
@@ -508,7 +513,7 @@ sub _tempfile {
             # under Win32, the file is created with O_TEMPORARY,
             # and will be deleted by the C runtime; having File::Temp
             # delete it has the only effect of giving ugly warnings
-            my ($fh, $filename) = File::Temp::tempfile(
+            ($fh, $filename) = File::Temp::tempfile(
                 DIR     => $par_temp,
                 UNLINK  => ($^O ne 'MSWin32'),
             ) or die "Cannot create temporary file: $!";
@@ -518,14 +523,18 @@ sub _tempfile {
     }
 
     require File::Spec;
-    my $filename = File::Spec->catfile( $par_temp, $_[0] );
+
+    # untainting tempfile path
+    local $_ = File::Spec->catfile( $par_temp, $_[0] );
+    /^(.+)$/ and $filename = $1;
+
     if (-r $filename) {
-        open my $fh, '<', $filename or die $!;
+        open $fh, '<', $filename or die $!;
         binmode($fh);
         return ($fh, 0, $filename);
     }
 
-    open my $fh, '+>', $filename or die $!;
+    open $fh, '+>', $filename or die $!;
     binmode($fh);
     return ($fh, 1, $filename);
 }

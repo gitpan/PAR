@@ -930,17 +930,17 @@ sub _add_pack_manifest {
     my $root        = $self->{pack_attrib}{root};
     my $shared_libs = $self->{pack_attrib}{shared_libs};
 
-    $zip->addDirectory('', substr($root, 0, -1))
+    $zip->addDirectory('', substr($root, 0, -1))->unixFileAttributes(0755)
       if ($root and %$map and $] >= 5.008);
-    $zip->addDirectory('', $root . 'lib') if (%$map and $] >= 5.008);
+    $zip->addDirectory('', $root . 'lib')->unixFileAttributes(0755) if (%$map and $] >= 5.008);
 
     my $shlib = "shlib/$Config{archname}";
-    $zip->addDirectory('', $shlib) if (@$shared_libs and $] >= 5.008);
+    $zip->addDirectory('', $shlib)->unixFileAttributes(0755) if (@$shared_libs and $] >= 5.008);
 
     my @tmp_input = @$input;
     @tmp_input = grep !/\.pm\z/i, @tmp_input;
 
-    $zip->addDirectory('', 'script') if (@tmp_input and $] >= 5.008);
+    $zip->addDirectory('', 'script')->unixFileAttributes(0755) if (@tmp_input and $] >= 5.008);
 
     my $in;
     foreach $in (sort keys(%$pack_manifest)) {
@@ -1016,7 +1016,7 @@ sub _add_file {
         $oldsize += length($str);
 
         $self->_vprint(1, "... adding <string> as $in");
-        $zip->addString($str => $in);
+        $zip->addString($str => $in)->unixFileAttributes(0644);
         $zip->memberNamed($in)->desiredCompressionMethod($method);
         $zip->memberNamed($in)->desiredCompressionLevel($level);
     }

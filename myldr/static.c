@@ -50,6 +50,14 @@ int main ( int argc, char **argv, char **env )
     int i;
     char *stmpdir;
     char *buf = (char *)malloc(MAXPATHLEN);
+#ifdef WIN32
+typedef BOOL (WINAPI *pALLOW)(DWORD);
+    HINSTANCE hinstLib;
+    pALLOW ProcAdd;
+#ifndef ASFW_ANY
+#define ASFW_ANY -1
+#endif
+#endif
 
     par_init_env();
     par_mktmpdir( argv );
@@ -88,6 +96,15 @@ int main ( int argc, char **argv, char **env )
     }
 
 #ifdef WIN32
+    hinstLib = LoadLibrary("user32");
+    if (hinstLib != NULL) {
+        ProcAdd = (pALLOW) GetProcAddress(hinstLib, "AllowSetForegroundWindow");
+        if (ProcAdd != NULL)
+        {
+            (ProcAdd)(ASFW_ANY);
+        }
+    }
+
     par_setenv("PAR_SPAWNED", "1");
     i = spawnvpe(P_WAIT, my_file, (const char* const*)argv, (const char* const*)environ);
 #else

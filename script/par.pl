@@ -159,7 +159,7 @@ END { if ($ENV{PAR_CLEAN}) {
 BEGIN {
     Internals::PAR::BOOT() if defined &Internals::PAR::BOOT;
 
-    do {
+    eval {
 
 _par_init_env();
 
@@ -221,7 +221,7 @@ my ($start_pos, $data_pos);
         read _FH, $buf, 4;
         read _FH, $buf, unpack("N", $buf);
 
-        if (defined($ext) and $ext !~ /\.(?:pm|ix|al)$/i) {
+        if (defined($ext) and $ext !~ /\.(?:pm|pl|ix|al)$/i) {
             my ($out, $filename) = _tempfile($ext, $crc);
             if ($out) {
                 binmode($out);
@@ -393,7 +393,7 @@ if ($out) {
     my $par = shift(@ARGV);
     my $zip;
 
-    
+
     if (defined $par) {
         open my $fh, '<', $par or die "Cannot find '$par': $!";
         binmode($fh);
@@ -766,6 +766,8 @@ sub _fix_progname {
 
     # XXX - hack to make PWD work
     my $pwd = (defined &Win32::GetCwd) ? Win32::GetCwd() : $ENV{PWD};
+    $pwd = `pwd` if !defined $pwd;
+    chomp($pwd);
     $progname =~ s/^(?=\.\.?\Q$Config{_delim}\E)/$pwd$Config{_delim}/;
 
     $ENV{PAR_PROGNAME} = $progname;
@@ -827,6 +829,7 @@ die qq(Can't open perl script "$progname": No such file or directory\n)
     unless -e $progname;
 
 do $progname;
+CORE::exit($1) if ($@ =~/^_TK_EXIT_\((\d+)\)/);
 die $@ if $@;
 
 };
@@ -834,10 +837,7 @@ die $@ if $@;
 $::__ERROR = $@ if $@;
 }
 
-if ($::__ERROR =~/^_TK_EXIT_\((\d+)\)/) {
-    CORE::exit($1);
-}
-
+CORE::exit($1) if ($::__ERROR =~/^_TK_EXIT_\((\d+)\)/);
 die $::__ERROR if $::__ERROR;
 
 1;

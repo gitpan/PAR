@@ -7,6 +7,24 @@ use FindBin;
 use File::Spec;
 use ExtUtils::MakeMaker;
 
+sub samefiles {
+    my ($f1, $f2) = @_;
+    $f1 eq $f2 and return 1;
+    -e $f1 && -e $f2 or return 0;
+    -s $f1 == -s $f2 or return 0;
+    local $/ = \32768;
+    open my $fh1, $f1
+	and open my $fh2, $f2
+	or return 0;
+    while (1) {
+	my $c1 = <$fh1>;
+	my $c2 = <$fh2>;
+	last if !defined $c1 or !defined $c2;
+	return 0 if $c1 ne $c2;
+    }
+    return 1;
+}
+
 chdir File::Spec->catdir($FindBin::Bin, File::Spec->updir);
 
 my $cwd = getcwd();
@@ -20,18 +38,15 @@ my $orig_X = $^X;
 my $orig_startperl = $startperl;
 
 if (!-e $parl) {
-    print "1..1\n";
-    print "ok 1 # skip 'parl' not found\n";
+    print "1..0 # Skip 'parl' not found\n";
     exit;
 }
 elsif (!($^X = main->can_run($^X))) {
-    print "1..1\n";
-    print "ok 1 # skip '$orig_X' not found\n";
+    print "1..0 # Skip '$orig_X' not found\n";
     exit;
 }
 elsif (!($startperl = main->can_run($startperl))) {
-    print "1..1\n";
-    print "ok 1 # skip '$orig_startperl' not found\n";
+    print "1..0 # Skip '$orig_startperl' not found\n";
     exit;
 }
 
@@ -40,9 +55,8 @@ if (defined &Win32::GetShortPathName) {
     $startperl = lc(Win32::GetShortPathName($startperl));
 }
 
-if ($startperl ne $^X) {
-    print "1..1\n";
-    print "ok 1 # skip '$^X' is not the same as '$startperl'\n";
+if (!samefiles($startperl, $^X)) {
+    print "1..0 # Skip '$^X' is not the same as '$startperl'\n";
     exit;
 }
 
