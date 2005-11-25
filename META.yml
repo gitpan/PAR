@@ -1,5 +1,5 @@
 name: PAR
-version: 0.89
+version: 0.90
 abstract: Perl Archive Tookit
 author: Autrijus Tang (autrijus@autrijus.org)
 license: perl
@@ -18,4 +18,4 @@ no_index:
   directory:
     - contrib
     - inc
-generated_by: Module::Install version 0.36
+generated_by: Module::Install version 0.39

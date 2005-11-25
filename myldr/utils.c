@@ -29,6 +29,10 @@ char *par_findprog(char *prog, char *path) {
     int proglen, plen;
     char *par_temp = par_getenv("PAR_TEMP");
 
+#ifndef PL_statbuf
+struct stat PL_statbuf;
+#endif
+
 #ifdef WIN32
     if ( GetModuleFileName(0, filename, MAXPATHLEN) ) {
         par_setenv("PAR_PROGNAME", filename);

@@ -58,6 +58,10 @@ char *par_mktmpdir ( char **argv ) {
     unsigned char buf[32768];
     unsigned char sha_data[20];
 
+#ifndef PL_statbuf
+struct stat PL_statbuf;
+#endif
+
     if ( (val = (char *)par_getenv(PAR_TEMP)) && strlen(val) ) {
         par_setup_libpath(val);
         return strdup(val);
@@ -116,7 +120,7 @@ char *par_mktmpdir ( char **argv ) {
         strlen(subdirbuf_suffix) + 1024
     );
     sprintf(stmpdir, "%s%s%s%s", tmpdir, dir_sep, subdirbuf_prefix, username);
-    mkdir(stmpdir, 0755);
+    my_mkdir(stmpdir, 0755);
 
     /* Doesn't really work - XXX */
     progname = par_findprog(argv[0], strdup(val));
