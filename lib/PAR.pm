@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.90';
+$PAR::VERSION = '0.91';
 
 use 5.006;
 use strict;
@@ -12,7 +12,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.90 of PAR, released November 25, 2005.
+This document describes version 0.91 of PAR, released January 28, 2006.
 
 =head1 SYNOPSIS
 
@@ -150,6 +150,10 @@ as the I<PAR_GLOBAL_TEMP>, reusing any existing files inside.  I<MTIME>
 is the last-modified timestamp of the program.
 
 =back
+
+By default, PAR strips POD sections from bundled modules. In case
+that causes trouble, you can turn this off by setting the
+environment variable C<PAR_VERBATIM> to C<1>.
 
 =cut
 
@@ -597,7 +601,7 @@ have sent helpful patches, ideas or comments.
 
 =head1 AUTHORS
 
-Autrijus Tang E<lt>autrijus@autrijus.orgE<gt>
+Audrey Tang E<lt>autrijus@autrijus.orgE<gt>
 
 L<http://par.perl.org/> is the official PAR website.  You can write
 to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
@@ -607,7 +611,7 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2002, 2003, 2004, 2005 by Autrijus Tang
+Copyright 2002, 2003, 2004, 2005, 2006 by Audrey Tang
 E<lt>autrijus@autrijus.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it

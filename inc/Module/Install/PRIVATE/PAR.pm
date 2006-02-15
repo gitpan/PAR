@@ -1,7 +1,3 @@
-#line 1 "inc/Module/Install/PRIVATE/PAR.pm - /usr/local/lib/perl5/site_perl/5.8.6/Module/Install/PRIVATE/PAR.pm"
-# $File: //member/autrijus/Module-Install-PRIVATE/lib/Module/Install/PRIVATE/PAR.pm $ $Author: autrijus $
-# $Revision: #14 $ $Change: 10724 $ $DateTime: 2004/06/02 11:57:09 $ vim: expandtab shiftwidth=4
-
 package Module::Install::PRIVATE::PAR;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
 
@@ -11,7 +7,7 @@ use Config ();
 
 my %no_parl  = ();
 
-sub Autrijus_PAR {
+sub par_prehook {
     my $self = shift;
     my $bork = $no_parl{$^O};
     my $cc   = $self->can_cc unless $bork;
@@ -82,7 +78,7 @@ sub Autrijus_PAR {
     );
 }
 
-sub Autrijus_PAR_fix {
+sub par_posthook {
     my $self = shift;
 
     my $exe = $Config::Config{_exe};
