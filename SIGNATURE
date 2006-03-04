@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.50.
+signed via the Module::Signature module, version 0.53.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -15,11 +15,11 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 ca0d1987d33d411791e84da4fda08f4d28782e67 AUTHORS
-SHA1 26860440b8f524bc163dec15d27c0233ddb24ae1 ChangeLog
+SHA1 638b4df452433c5e2f3aa52361f59585a2cf814f ChangeLog
 SHA1 c4b7c4cc9f8bd8ebf18b1667fb5f0b6b6fa4e22b MANIFEST
 SHA1 a425969945e62fcc7783784916d552d370b94951 MANIFEST.SKIP
 SHA1 293754d868d3d6e00f1ac17b7f0444d31fa1f936 META.yml
-SHA1 513adf01cd6f3a7a18d2b42017deb6947fe42b4b Makefile.PL
+SHA1 967ac9cede156687b2e94ffd33981e5719b41e25 Makefile.PL
 SHA1 dbdaa94bca1479b760a92436b002ee8228834861 README
 SHA1 aa8cd09fa1945de92b01d77b979b4c8769f148c2 TODO
 SHA1 5b59e5c9ef0fc0773ba431c3c171722cb677eda9 contrib/automated_pp_test/automated_pp_test.pl
@@ -38,23 +38,24 @@ SHA1 0d80cbbe5457a5a2db9c3cf7115c828d46ad1fe4 contrib/pare/pare_readme.txt
 SHA1 35cdb91b6b5de606e239e6c77f52a5a057dbbb7f contrib/procedural_pp/pp_old
 SHA1 eff2e79f0964da302217673f16abea9424a2bbdd contrib/stdio/Stdio.pm
 SHA1 e44e340a0a4b63c57a81173f3592c6f9c21c0d4d contrib/stdio/Stdio_readme.txt
-SHA1 7c4c900481d5d3d8c979999d11be84f8ade56cdb inc/Module/AutoInstall.pm
-SHA1 88be41f6df2e4ae2f7c52cc6fcda0646b8923df1 inc/Module/Install.pm
-SHA1 b43b16d0562926a60ebe71e72d6d23da94c1d011 inc/Module/Install/AutoInstall.pm
-SHA1 08705de1d92096e40b815fbe103f5ef820d98202 inc/Module/Install/Base.pm
-SHA1 852bba01c964cf2501d15577ffc0678501d10760 inc/Module/Install/Can.pm
-SHA1 57d3ef2e95eb21b4426e54fcefd6ea3d34d16b35 inc/Module/Install/Fetch.pm
-SHA1 144e5bfc69327edd6a3cdddd12ea9baf8258c9ca inc/Module/Install/Include.pm
-SHA1 31707ee5cb077d316361604e30d4eeb527a49e26 inc/Module/Install/Makefile.pm
-SHA1 9baeb2f4f4c92f67f1e0d7be4e370af5019d9bb5 inc/Module/Install/Metadata.pm
-SHA1 b5db06e6242c35a5cd04c3868855a24326e2ca28 inc/Module/Install/PAR.pm
-SHA1 07940a52a61b1456023751be6bffa012fe1186ab inc/Module/Install/Win32.pm
-SHA1 9aeb39d66698a45e1f997e1536bda96183a4ba3d inc/Module/Install/WriteAll.pm
-SHA1 765717a59f1392106e08d3db1a16fb8ccb0a581b inc/Test/Builder.pm
-SHA1 b11f1d529c0e00f6c371372bbe32436448c17213 inc/Test/Builder/Module.pm
-SHA1 f6dac45b1c075831ee11bc9556f1363cf7557b7f inc/Test/More.pm
+SHA1 b9dda6b60f562040f2255c6d173a1ac90064125f inc/Module/AutoInstall.pm
+SHA1 3126b1095b567abbb8c87d4760e65b62e04ea242 inc/Module/Install.pm
+SHA1 e5ab295fd8b71c09331b674b668b5d6fbf1a1726 inc/Module/Install/AutoInstall.pm
+SHA1 726a6420b06d98e409bc105cc22f632855bbe3ed inc/Module/Install/Base.pm
+SHA1 f4171c353bef786e91a7e918eaea388306c9be42 inc/Module/Install/Can.pm
+SHA1 d097dedadac0edcafbee3a14c262e24089f5795e inc/Module/Install/Fetch.pm
+SHA1 08bfc9e53d1e15f5556c9d282a7db70a68b9ff06 inc/Module/Install/Include.pm
+SHA1 4f7d0880122aa5d9ddf37577b434af09d5d8628f inc/Module/Install/Makefile.pm
+SHA1 f5e5d508da03f2fb4de988b26858094b25690de4 inc/Module/Install/Metadata.pm
+SHA1 c658c36dd5ad01202224a867a3c88cb2a98821ed inc/Module/Install/PAR.pm
+SHA1 d9fd567484d3e41a5bfae83c8e2c7a2fa546481f inc/Module/Install/PRIVATE/PAR.pm
+SHA1 8ee248d67d4c61a4f01e6a96c41afbd93be4c9ef inc/Module/Install/Win32.pm
+SHA1 bbdf00f8ca9d2ddaebd2dd6eb47d442fbc6fac05 inc/Module/Install/WriteAll.pm
+SHA1 d1902fb469cb7152151d43935a65a6794b5a84a1 inc/Test/Builder.pm
+SHA1 4e768c8b073c735864f2edf348cd6a1680037205 inc/Test/Builder/Module.pm
+SHA1 e7af6efa2813de38c4d938cfe53104e6831c3f26 inc/Test/More.pm
 SHA1 f2e051c0866a1e186ef57fe4360651fac64d858d lib/App/Packer/PAR.pm
-SHA1 4af87e745060073dcee067c3583e059df2374815 lib/PAR.pm
+SHA1 4be15beb50e76e7cce50a7049b3a8ce7fdc2c23c lib/PAR.pm
 SHA1 273a2088dc4e30b8a0b98a9de579e9298e130e17 lib/PAR/FAQ.pod
 SHA1 22b4c1b619c620ecd89d93629e3daed86625d8cf lib/PAR/Filter.pm
 SHA1 63768c965b809100bc1120a440f8c32907e897c6 lib/PAR/Filter/Bleach.pm
@@ -90,7 +91,7 @@ SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.0 (GNU/Linux)
 
-iD8DBQFD8JCeZCuimE51gxcRApefAJ9m78BHwLCGS/RVmAUrCHN8cXnnJwCfcDMA
-WsPeC7E9E6PYKcZMa/55RiY=
-=RFzu
+iD8DBQFD/JTKZCuimE51gxcRAs1xAJ0edhXETThyNrMiGdZVHjm6FSsk+gCeP2Kc
+VKrUXwngEVirscJxtbTVI30=
+=JnDt
 -----END PGP SIGNATURE-----
