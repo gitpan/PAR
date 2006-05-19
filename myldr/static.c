@@ -14,7 +14,8 @@ extern char load_me_0[];
 extern char load_me_1[];
 */
 
-char *my_file;
+char *my_file = NULL;
+int  my_size = 0;
 
 int my_mkfile (char* argv0, char* stmpdir, const char* name, unsigned long size) {
     int i;
@@ -22,7 +23,8 @@ int my_mkfile (char* argv0, char* stmpdir, const char* name, unsigned long size)
     struct stat PL_statbuf;
 #endif
 
-    my_file = (char *)malloc(strlen(stmpdir) + strlen(name) + 5);
+    my_size = strlen(stmpdir) + strlen(name) + 5;
+    my_file = (char *)malloc( my_size );
     sprintf(my_file, "%s/%s", stmpdir, name);
 
     if ( par_lstat(my_file, &PL_statbuf) == 0 ) {

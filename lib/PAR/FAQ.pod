@@ -195,6 +195,67 @@ looking for F<Perms.dll> in the table of dlls which contains only F<Perms.DLL>.
 And so the solution is just rename F<Perms.DLL> to F<Perms.dll> and do
 C<pp -o my.exe my.pl> again... and everything goes right!
 
+=head2 Problems with chdir() and relative @INC paths
+
+If a perl program's C<@INC> list contains relative paths and that
+program calls chdir before loading a module via C<require>, its
+behavior can be different from a PAR-packed executable based on that
+program.  This is because C<pp> typically gleans the module loads
+without executing code, so it doesn't see the C<chdir>.  Note that
+this primarily affects developers who routinely use C<-Mblib> or C<-I
+inc> etc.
+
+Here's a simple workaround to turn your relative C<@INC> paths into
+absolute paths before C<chdir>.
+
+    require File::Spec;
+    for (@INC) {
+        if (! ref $_ && -d $_ && !File::Spec->file_name_is_absolute($_)) {
+            $_ = File::Spec->rel2abs($_);
+        }
+    }
+
+Source: L<http://www.nntp.perl.org/group/perl.par/2281>
+
+
+=head2 My PAR executable needs some dynamic libraries
+
+If you use a Perl module that is tied to a dynamic library (that is,
+a C<.dll>, C<.so> or C<.dylib>) via XS then PAR will not
+automatically detect and include that dependency.  This omission can cause
+problems when the PAR package is executed on a machine that lacks the
+library.  The symptom can look something like this error message:
+
+  Can't load '/tmp/par-dave/cache-f5cc9fa27d926a299b2883dcef7dbc7aed777aff/2cffd144.bundle'
+  for module Image::Imlib2:
+  dlopen(/tmp/par-dave/cache-f5cc9fa27d926a299b2883dcef7dbc7aed777aff/2cffd144.bundle, 1):
+  Library not loaded: /sw/lib/libImlib2.1.dylib
+
+The key is the last line.  This can be solved by adding a C<-l> flag to C<pp> like so:
+
+  % pp -l /sw/lib/libImlib2.1.dylib -o foo foo.pl
+
+However, this will go badly if that path is actually a symlink,
+because PAR mistakenly includes the wrong filename.  On my computer I
+see that this is the case:
+
+  % ls -l /sw/lib/libImlib2*
+  -rwxr-xr-x    1 root     admin      797472 Feb 19 14:49 /sw/lib/libImlib2.1.2.1.dylib
+  lrwxr-xr-x    1 root     admin          21 Feb 27 08:34 /sw/lib/libImlib2.1.dylib -> libImlib2.1.2.1.dylib
+  -rw-r--r--    1 root     admin      916400 Feb 19 14:49 /sw/lib/libImlib2.a
+  lrwxr-xr-x    1 root     admin          21 Feb 27 08:34 /sw/lib/libImlib2.dylib -> libImlib2.1.2.1.dylib
+  -rwxr-xr-x    1 root     admin         941 Feb 19 14:49 /sw/lib/libImlib2.la
+
+A workaround is to make a copy of the library before running C<pp>.
+This resolves the symlink and creates a real file that C<pp> can
+injest:
+
+  % cp /sw/lib/libImlib2.1.dylib .
+  % pp -l libImlib2.1.dylib -o foo foo.pl
+
+[Note: Imlib2 posed particular problems due to hard-coded paths.
+Email cdolan at cpan.org for some nasty hacks if you need to bundle
+Imlib2]
 
 =head1 SEE ALSO
 
@@ -202,7 +263,7 @@ L<PAR>, L<PAR::Tutorial>
 
 =head1 AUTHORS
 
-Audrey Tang E<lt>autrijus@autrijus.orgE<gt>
+Audrey Tang E<lt>cpan@audreyt.orgE<gt>
 
 L<http://par.perl.org/> is the official PAR website.  You can write
 to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
@@ -212,7 +273,7 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2003, 2004, 2005, 2006 by Audrey Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2003, 2004, 2005, 2006 by Audrey Tang E<lt>cpan@audreyt.orgE<gt>.
 
 This document is free documentation; you can redistribute it and/or
 modify it under the same terms as Perl itself.

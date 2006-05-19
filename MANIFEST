@@ -26,7 +26,6 @@ inc/Module/Install/Include.pm
 inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
 inc/Module/Install/PAR.pm
-inc/Module/Install/PRIVATE/PAR.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 inc/Test/Builder.pm
@@ -72,4 +71,6 @@ SIGNATURE
 t/1-basic.t
 t/2-pp.t
 t/hello.par
+t/test-proc
+t/30-current_exec.t
 TODO

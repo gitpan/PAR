@@ -16,7 +16,7 @@ void par_setup_libpath( const char * stmpdir )
       "LD_LIBRARY_PATH", "LIBPATH", "LIBRARY_PATH",
       "PATH", "DYLD_LIBRARY_PATH", ""
    };
-    char *ld_path_env;
+   char *ld_path_env = NULL;
     for ( i = 0 ; strlen(key = ld_path_keys[i]) > 0 ; i++ ) {
         if ( ((val = (char *)par_getenv(key)) == NULL) || (strlen(val) == 0) ) {
             par_setenv(key, stmpdir);
@@ -29,7 +29,7 @@ void par_setup_libpath( const char * stmpdir )
             );
             sprintf(
                 ld_path_env,
-                "%s%s%s",
+				"%s%s%s",
                 stmpdir, path_sep, val
             );
             par_setenv(key, ld_path_env);
@@ -44,15 +44,15 @@ char *par_mktmpdir ( char **argv ) {
     const char *key = NULL , *val = NULL;
 
     const char *temp_dirs[4] = { "C:\\TEMP", "/tmp", ".", "" };
-    const char *temp_keys[4] = { "TMPDIR", "TEMP", "TMP", "" };
+    const char *temp_keys[5] = { "PAR_TMPDIR", "TMPDIR", "TEMP", "TMP", "" };
     const char *user_keys[3] = { "USER", "USERNAME", "" };
 
     const char *subdirbuf_prefix = "par-";
     const char *subdirbuf_suffix = "";
 
     char *progname = NULL, *username = NULL;
-    char *stmpdir;
-    int f, j, k;
+    char *stmpdir = NULL;
+    int f, j, k, stmp_len = 0;
     char sha1[41];
     SHA_INFO sha_info;
     unsigned char buf[32768];
@@ -113,16 +113,22 @@ struct stat PL_statbuf;
     }
 
     /* "$TEMP/par-$USER" */
-    stmpdir = malloc(
+    stmp_len = 
         strlen(tmpdir) +
         strlen(subdirbuf_prefix) +
         strlen(username) +
-        strlen(subdirbuf_suffix) + 1024
-    );
+        strlen(subdirbuf_suffix) + 1024;
+
+    /* stmpdir is what we are going to return 
+       stmpdir2 is the top $TEMP/par-$USER, needed to build stmpdir.  We
+       need 2 buffers because snprintf() can't write to a buffer it's
+       reading from. */
+    stmpdir = malloc( stmp_len );
     sprintf(stmpdir, "%s%s%s%s", tmpdir, dir_sep, subdirbuf_prefix, username);
     my_mkdir(stmpdir, 0755);
 
     /* Doesn't really work - XXX */
+    val = (char *)par_getenv( "PATH" );
     progname = par_findprog(argv[0], strdup(val));
     if (progname == NULL) progname = argv[0];
 
@@ -153,6 +159,7 @@ struct stat PL_statbuf;
             {
                 sprintf( sha1+k*2, "%02x", sha_data[k] );
             }
+            sha1[40] = '\0';
             sprintf(
                 stmpdir,
                 "%s%scache-%s%s",
@@ -183,7 +190,8 @@ struct stat PL_statbuf;
 #ifdef WIN32
 void par_rmtmpdir ( char *stmpdir, int recurse ) {
     struct _finddata_t cur_file;
-    char *subsubdir = malloc(strlen(stmpdir) + 258);
+    int subsub_len;
+    char *subsubdir;
     char *slashdot;
     long hFile;
 	int tries = 0;
@@ -191,7 +199,11 @@ void par_rmtmpdir ( char *stmpdir, int recurse ) {
 
     if ((stmpdir == NULL) || !strlen(stmpdir)) return;
 
+    subsub_len = strlen(stmpdir) + 258;
+    subsubdir = malloc( subsub_len );
+
     sprintf(subsubdir, "%s\\*.*", stmpdir);
+    
     hFile = _findfirst( subsubdir, &cur_file );
     if ( hFile == -1 ) return;
 
@@ -246,7 +258,8 @@ void par_rmtmpdir ( char *stmpdir, int recurse ) {
 void par_rmtmpdir ( char *stmpdir, int recurse ) {
     DIR *partmp_dirp;
     Direntry_t *dp;
-    char *subsubdir;
+    char *subsubdir = NULL;
+    int  subsub_len;
     struct stat stbuf;
 
     /* remove temporary PAR directory */
@@ -258,7 +271,8 @@ void par_rmtmpdir ( char *stmpdir, int recurse ) {
     while ( ( dp = readdir(partmp_dirp) ) != NULL ) {
         if ( strcmp (dp->d_name, ".") != 0 && strcmp (dp->d_name, "..") != 0 )
         {
-            subsubdir = malloc(strlen(stmpdir) + strlen(dp->d_name) + 2);
+            subsub_len = strlen(stmpdir) + strlen(dp->d_name) + 2;
+            subsubdir = malloc( subsub_len);
             sprintf(subsubdir, "%s/%s", stmpdir, dp->d_name);
             if (stat(subsubdir, &stbuf) != -1 && S_ISDIR(stbuf.st_mode) && recurse) {
                 par_rmtmpdir(subsubdir, 1);

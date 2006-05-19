@@ -1416,7 +1416,7 @@ my $member = eval { $zip->memberNamed($file) }
                 || $zip->memberNamed("$file.pl")
                 || $zip->memberNamed("script/$file")
                 || $zip->memberNamed("script/$file.pl")
-        or die qq(Can't open perl script "$file": No such file or directory);
+        or die qq(mail.pl: Can't open perl script "$file": No such file or directory);
 PAR::_run_member($member, 1);
 
 __MAIN__
@@ -1439,7 +1439,7 @@ sub _main_pl_single {
     return << "__MAIN__";
 my \$zip = \$PAR::LibCache{\$ENV{PAR_PROGNAME}} || Archive::Zip->new(__FILE__);
 my \$member = eval { \$zip->memberNamed('$file') }
-        or die qq(Can't open perl script "$file": No such file or directory (\$zip));
+        or die qq(main.pl: Can't open perl script "$file": No such file or directory (\$zip));
 PAR::_run_member(\$member, 1);
 
 __MAIN__
@@ -1470,7 +1470,7 @@ the work that eventually became this module.
 
 =head1 AUTHORS
 
-Audrey Tang E<lt>autrijus@autrijus.orgE<gt>
+Audrey Tang E<lt>cpan@audreyt.orgE<gt>
 
 L<http://par.perl.org/> is the official PAR website.  You can write
 to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
@@ -1480,7 +1480,7 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2004, 2005, 2006 by Audrey Tang E<lt>autrijus@autrijus.orgE<gt>.
+Copyright 2004, 2005, 2006 by Audrey Tang E<lt>cpan@audreyt.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

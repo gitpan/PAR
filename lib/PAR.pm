@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.92';
+$PAR::VERSION = '0.93';
 
 use 5.006;
 use strict;
@@ -12,7 +12,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.91 of PAR, released January 28, 2006.
+This document describes version 0.93 of PAR, released Mai 11, 2006.
 
 =head1 SYNOPSIS
 
@@ -140,14 +140,43 @@ extracted libraries, and do not clean it up after execution.
 =item *
 
 If I<PAR_GLOBAL_TEMP> is not set, but I<PAR_CLEAN> is specified, set
-I<PAR_GLOBAL_TEMP> to C<I<TEMP>\par-I<USER>\temp-I<PID>\>, cleaning it
+I<PAR_GLOBAL_TEMP> to C<I<TEMP>/par-I<USER>/temp-I<PID>/>, cleaning it
 after execution.
 
 =item *
 
-If both are not set, use C<I<TEMP>\par-I<USER>\temp-I<MTIME>\>
-as the I<PAR_GLOBAL_TEMP>, reusing any existing files inside.  I<MTIME>
-is the last-modified timestamp of the program.
+If both are not set,  use C<I<TEMP>/par-I<USER>/cache-I<HASH>/> as the
+I<PAR_GLOBAL_TEMP>, reusing any existing files inside.
+
+=back
+
+Here is a description of the variables the previous paths.
+
+=over 4
+
+=item *
+
+I<TEMP> is a temporary directory, which can be set via 
+C<$ENV{PAR_GLOBAL_TMPDIR}>,
+C<$ENV{TMPDIR}>, C<$ENV{TEMP}> or C<$ENV{TMP}>, in that order of priority.
+If none of those are set, I<C:\TEMP>, I</tmp> are checked.  If neither
+of them exists, I<.> is used.
+
+=item *
+
+I<USER> is the user name, or SYSTEM if none can be found.  On Win32, 
+this is C<$Win32::LoginName>.  On Unix, this is C<$ENV{USERNAME>> or 
+C<$ENV{USER}>.
+
+=item *
+
+I<PID> is the process ID.  Forked children use the parent's PID.
+
+=item *
+
+I<HASH> is a crypto-hash of the entire par file or executable,
+calculated at creation time.  This value can be overloaded with C<pp>'s
+--tempdir parameter.
 
 =back
 
@@ -220,7 +249,7 @@ sub import {
                 "script/$ARGV[0].pl",
                 $ARGV[0],
                 "$ARGV[0].pl",
-            ) or die qq(Can't open perl script "$ARGV[0]": No such file or directory);
+            ) or die qq(PAR.pm: Can't open perl script "$ARGV[0]": No such file or directory);
             shift @ARGV;
         }
         elsif (!$member) {
@@ -354,6 +383,7 @@ sub par_handle {
 my %escapes;
 sub unpar {
     my ($par, $file, $member_only, $allow_other_ext) = @_;
+	return if not defined $par;
     my $zip = $LibCache{$par};
     my @rv = $par;
 
@@ -468,7 +498,7 @@ sub _set_par_temp {
     require File::Spec;
 
     foreach my $path (
-        (map $ENV{$_}, qw( TMPDIR TEMP TMP )),
+        (map $ENV{$_}, qw( PAR_TMPDIR TMPDIR TEMP TMP )),
         qw( C:\\TEMP /tmp . )
     ) {
         next unless $path and -d $path and -w $path;
@@ -601,18 +631,20 @@ have sent helpful patches, ideas or comments.
 
 =head1 AUTHORS
 
-Audrey Tang E<lt>autrijus@autrijus.orgE<gt>
+Audrey Tang E<lt>cpan@audreyt.orgE<gt>
 
 L<http://par.perl.org/> is the official PAR website.  You can write
 to the mailing list at E<lt>par@perl.orgE<gt>, or send an empty mail to
 E<lt>par-subscribe@perl.orgE<gt> to participate in the discussion.
 
-Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
+Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>. If you need
+support, however, joining the E<lt>par@perl.orgE<gt> mailing list is
+preferred.
 
 =head1 COPYRIGHT
 
 Copyright 2002, 2003, 2004, 2005, 2006 by Audrey Tang
-E<lt>autrijus@autrijus.orgE<gt>.
+E<lt>cpan@audreyt.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -1,4 +1,34 @@
 
+[Changes for 0.93 - May 19, 2006]
+
+* New Features
+
+    - Added support for PAR_TMPDIR (PAR_GLOBAL_TMPDIR) so that the
+      temp directory can be controlled for just the PAR file bits.
+      (Leolo)
+    - Added par_current_exec_proc() which finds the file of the current
+      executable in /proc, if possible. (Leolo)
+    - Added par_current_exec() which finds he file of the current
+      executable, if possible on this OS. (Leolo)
+    - par_findprog() now uses par_current_exec() if possible.
+
+* Bug Fixes, etc.
+
+    - Upgraded to Module::Install 0.62+ (Audrey Tang, Steffen Mueller)
+    - Document a strange interaction with chdir() and relative
+      paths. (Chris Dolan)
+    - Documented the bits that make up PAR_TEMP. (Leolo)
+    - Fixed the call to par_findprog. path (aka val) was set to
+      tmpdir. (Leolo)
+    - Documented the CACHE name at the end of a self-executing
+      PAR. (Leolo)
+    - myldr/Makefile.PL now generates some dependencies for
+      main.c (Leolo)
+    - Applied patch from RT ticket. (tsee)
+      https://rt.cpan.org/Ticket/Display.html?id=13959
+    - Applied Ivan Kudryavtsev's patch that fixes a couple of calls
+      to PAR subroutines in PatchContent filtered code. (tsee)
+
 [Changes for 0.92 - February 22, 2006]
 
 * Bug Fixes
