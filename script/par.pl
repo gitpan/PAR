@@ -1,4 +1,7 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
+
+eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
 
 package __par_pl;
 
@@ -427,6 +430,8 @@ if ($out) {
         die "$par is not a PAR file" unless <PAR> eq "PK\003\004";
     }
 
+    CreatePath($out) ;
+    
     my $fh = IO::File->new(
         $out,
         IO::File::O_CREAT() | IO::File::O_WRONLY() | IO::File::O_TRUNC(),
@@ -550,10 +555,17 @@ if ($out) {
             || eval { require Digest::SHA1; Digest::SHA1->new }
             || eval { require Digest::MD5; Digest::MD5->new };
 
-        if ($ctx and open(my $fh, "<", $out)) {
-            binmode($fh);
-            $ctx->addfile($fh);
-            close($fh);
+        # Workaround for bug in Digest::SHA 5.38 and 5.39
+        my $sha_version = eval { $Digest::SHA::VERSION } || 0;
+        if ($sha_version eq '5.38' or $sha_version eq '5.39') {
+            $ctx->addfile($progname, "b") if ($ctx);
+        }
+        else {
+            if ($ctx and open(my $fh, "<$progname")) {
+                binmode($fh);
+                $ctx->addfile($fh);
+                close($fh);
+            }
         }
 
         $cache_name = $ctx ? $ctx->hexdigest : $mtime;
@@ -628,6 +640,17 @@ Usage: $0 [ -Alib.par ] [ -Idir ] [ -Mmodule ] [ src.par ] [ program.pl ]
 }
 # }}}
 
+sub CreatePath {
+    my ($name) = @_;
+    
+    require File::Basename;
+    my ($basename, $path, $ext) = File::Basename::fileparse($name, ('\..*'));
+    
+    require File::Path;
+    
+	File::Path::mkpath($path) unless(-e $path); # mkpath dies with error
+}
+
 sub require_modules {
     #local $INC{'Cwd.pm'} = __FILE__ if $^O ne 'MSWin32';
 
@@ -691,10 +714,17 @@ sub _set_par_temp {
                     || eval { require Digest::SHA1; Digest::SHA1->new }
                     || eval { require Digest::MD5; Digest::MD5->new };
 
-                if ($ctx and open(my $fh, "<", $progname)) {
-                    binmode($fh);
-                    $ctx->addfile($fh);
-                    close($fh);
+                # Workaround for bug in Digest::SHA 5.38 and 5.39
+                my $sha_version = eval { $Digest::SHA::VERSION } || 0;
+                if ($sha_version eq '5.38' or $sha_version eq '5.39') {
+                    $ctx->addfile($progname, "b") if ($ctx);
+                }
+                else {
+                    if ($ctx and open(my $fh, "<$progname")) {
+                        binmode($fh);
+                        $ctx->addfile($fh);
+                        close($fh);
+                    }
                 }
 
                 $stmpdir .= "$Config{_delim}cache-" . ( $ctx ? $ctx->hexdigest : $mtime );

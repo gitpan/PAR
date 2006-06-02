@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.93';
+$PAR::VERSION = '0.94';
 
 use 5.006;
 use strict;
@@ -508,16 +508,24 @@ sub _set_par_temp {
         $username =~ s/\W/_/g;
 
         my $stmpdir = File::Spec->catdir($path, "par-$username");
+        $stmpdir = $stmpdir =~ /^(.*)$/s;
         mkdir $stmpdir, 0755;
         if (!$ENV{PAR_CLEAN} and my $mtime = (stat($progname))[9]) {
             my $ctx = eval { require Digest::SHA; Digest::SHA->new(1) }
                    || eval { require Digest::SHA1; Digest::SHA1->new }
                    || eval { require Digest::MD5; Digest::MD5->new };
 
-            if ($ctx and open(my $fh, "<$progname")) {
-                binmode($fh);
-                $ctx->addfile($fh);
-                close($fh);
+            # Workaround for bug in Digest::SHA 5.38 and 5.39
+            my $sha_version = eval { $Digest::SHA::VERSION } || 0;
+            if ($sha_version eq '5.38' or $sha_version eq '5.39') {
+                $ctx->addfile($progname, "b") if ($ctx);
+            }
+            else {
+                if ($ctx and open(my $fh, "<$progname")) {
+                    binmode($fh);
+                    $ctx->addfile($fh);
+                    close($fh);
+                }
             }
 
             $stmpdir = File::Spec->catdir(
