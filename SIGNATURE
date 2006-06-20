@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.53.
+signed via the Module::Signature module, version 0.54.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,8 +14,8 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 ede400bfe0f648531df6cbfd9276639b9215c31c AUTHORS
-SHA1 7100aff65a2a7e4258ab8192f4cf5351699beead ChangeLog
+SHA1 5e4dcc7292860e3e2077bfce25626b46f967ff3b AUTHORS
+SHA1 6b6db1574cd5d7855de9769330bd7601c5d1d07f ChangeLog
 SHA1 6f2c475ec862243133e3d8dcc67db0290d0d6c2b MANIFEST
 SHA1 a425969945e62fcc7783784916d552d370b94951 MANIFEST.SKIP
 SHA1 032c78f3bc5ea42b592ec2773645e9620414da69 META.yml
@@ -54,7 +54,7 @@ SHA1 f0ebc594cf8ba858ee9a840c344d9b7ea2c3c6f4 inc/Test/Builder.pm
 SHA1 a9037004a2c3096d77169a16da95743eeb813539 inc/Test/Builder/Module.pm
 SHA1 07c750f370de7a44ee7b0ed9ec30a7e89c24c9b9 inc/Test/More.pm
 SHA1 f2e051c0866a1e186ef57fe4360651fac64d858d lib/App/Packer/PAR.pm
-SHA1 9a4f51b0d304dfbd70ca75aef3ca4537e068e5c6 lib/PAR.pm
+SHA1 ab1e3f5926e0efcee2fabe4881a97cc4ec426b26 lib/PAR.pm
 SHA1 3670831693b92311c425039cbacffe829fbb887e lib/PAR/FAQ.pod
 SHA1 b236006a3343ad736a4d5352dc1e017627c6f8b8 lib/PAR/Filter.pm
 SHA1 caeff2887611bb028f49ecc16f91be3e2005f952 lib/PAR/Filter/Bleach.pm
@@ -63,7 +63,7 @@ SHA1 3d05249a79d9534ea8565b984ea9dd23a86f7d2e lib/PAR/Filter/Obfuscate.pm
 SHA1 c350c392dbe3ed8f311eb5159bef2f991013a8d3 lib/PAR/Filter/PatchContent.pm
 SHA1 8a40b2673f73887cd05f2c66e08f01919f81db38 lib/PAR/Filter/PodStrip.pm
 SHA1 1ca28809a4d6863f8999ebb7527d48da8255b41e lib/PAR/Heavy.pm
-SHA1 16f0de2db5758a696268ea8b633877746f6cb990 lib/PAR/Packer.pm
+SHA1 fb179fa02b0cd0def2e1c8d50b557dcfa8c7a6ea lib/PAR/Packer.pm
 SHA1 44d0f288e8c9a7362697b5d64c4272da16cfe0c9 lib/PAR/Tutorial.pod
 SHA1 5db6a8ce4db737a5873290321f5324994e53fd45 myldr/Makefile.PL
 SHA1 4cb31931bfa898bba56d645b574983930492ab18 myldr/env.c
@@ -80,7 +80,7 @@ SHA1 7b3e5be07f3db44c7f1a37ece3feea173e39fa9d myldr/win32.coff
 SHA1 32d843a5700babb314f255c171c4852637d66b1f myldr/win32.obj
 SHA1 fa6066c09715081d4d3f36685852207ff70caf9e myldr/win32.res
 SHA1 c2186f98dd13bc70c29beeede8d4a0fc598791a3 package/parl.nsi
-SHA1 451fe1db1ccf618c4615a0a44aea1bdffedde0f1 script/par.pl
+SHA1 380c2a4bde5d469c321a570100e55b304edb615d script/par.pl
 SHA1 8ec91bc589fc78cf9d4d8f0ee6bc0a62eebfae3b script/parl.pod
 SHA1 d0a5f84629075daadaf650491c0a1c5b7e333053 script/pp
 SHA1 8fa71d5726e8c6c0e484d6ccb20cc0bd83b669b6 script/tkpp
@@ -90,9 +90,9 @@ SHA1 d2f72a5665ecac6b5fce3bbacca86a2a65040e24 t/30-current_exec.t
 SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
 SHA1 0146f0bd0bac69300c4317accbe2d9c69e18fef7 t/test-proc
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.0 (GNU/Linux)
+Version: GnuPG v1.4.2.2 (GNU/Linux)
 
-iD8DBQFEgBFXZCuimE51gxcRAiyuAKCvSH0XHQMlx2o9tLibDcbDC0WmvwCeKTbI
-aY55/uPIdbzdIgvM87VLBEw=
-=Sttn
+iD8DBQFEmF25ZCuimE51gxcRAseZAJ9/JmNKjDfq6nXDheYzu+zmuowlxQCdGXtO
+ygg6aAVCkHVsc2HGoGD/MUI=
+=AS0N
 -----END PGP SIGNATURE-----
