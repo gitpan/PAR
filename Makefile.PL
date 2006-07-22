@@ -10,8 +10,8 @@ all_from    'lib/PAR.pm';
 requires    'File::Temp'        => 0.05;
 requires    'Compress::Zlib'    => ($^O eq 'MSWin32') ? 1.16 : 1.30;
 requires    'Archive::Zip'      => 1.00;
-requires    'Module::ScanDeps'  => 0.60;
-requires    'PAR::Dist'         => 0.08;
+requires    'Module::ScanDeps'  => 0.62;
+requires    'PAR::Dist'         => 0.13;
 requires    'Getopt::ArgvFile'  => 1.07;
 
 if ($^O eq 'MSWin32') {
@@ -49,10 +49,13 @@ par_posthook();
 
 my %no_parl  = ();
 
+use strict; use warnings;
 sub par_prehook {
     my $bork = $no_parl{$^O};
-    my $cc   = can_cc unless $bork;
-    my $par  = fetch_par('', '', !$cc) unless $cc or $bork;
+    my $cc;
+    $cc = can_cc unless $bork;
+    my $par;
+    $par = fetch_par('', '', !$cc) unless ($cc or $bork);
     my $exe  = $Config::Config{_exe};
     my $dynperl = $Config::Config{useshrplib} && ($Config::Config{useshrplib} ne 'false');
 
