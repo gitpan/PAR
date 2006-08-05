@@ -1,10 +1,11 @@
 package PAR;
-$PAR::VERSION = '0.942';
+$PAR::VERSION = '0.949_01';
 
 use 5.006;
 use strict;
 use warnings;
 use Config '%Config';
+use Carp qw/croak/;
 
 =head1 NAME
 
@@ -12,7 +13,10 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.942 of PAR, released July 22, 2006.
+This document describes version 0.949_01 of PAR, released August 5, 2006.
+
+This is a developer release. It contains many new changes and might
+introduce new bugs. It is intended for testing purposes.
 
 =head1 SYNOPSIS
 
@@ -74,6 +78,38 @@ Use in a program:
 You can also use wildcard characters:
 
     use PAR '/home/foo/*.par';  # loads all PAR files in that directory
+
+Since version 0.950, you can also use a different syntax for loading
+F<.par> archives:
+
+    use PAR { file => 'foo.par' }, { file => 'otherfile.par' };
+
+Why? Because you can also do this:
+
+    use PAR { file => 'foo.par, fallback => 1 };
+    use Foo::Bar;
+
+Foo::Bar will be searched in the system libs first and loaded from F<foo.par>
+if it wasn't found!
+
+    use PAR { file => 'foo.par', run => 'myscript' };
+
+This will load F<foo.par> as usual and then execute the F<script/myscript>
+file from the archive. Note that your program will not regain control. When
+F<script/myscript> exits, so does your main program. To make this more useful,
+you can defer this to runtime: (otherwise equivalent)
+
+    require PAR;
+    PAR->import( { file => 'foo.par', run => 'myscript' };
+
+If you have L<PAR::Repository::Client> installed, you can do this:
+
+    use PAR { repository => 'http://foo/bar/' };
+    use Module; # not locally installed!
+
+And PAR will fetch any modules you don't have from the specified PAR
+repository. For details on how this works, have a look at the SEE ALSO
+section below.
 
 =head1 DESCRIPTION
 
@@ -165,7 +201,7 @@ of them exists, I<.> is used.
 =item *
 
 I<USER> is the user name, or SYSTEM if none can be found.  On Win32, 
-this is C<$Win32::LoginName>.  On Unix, this is C<$ENV{USERNAME>> or 
+this is C<$Win32::LoginName>.  On Unix, this is C<$ENV{USERNAME}> or 
 C<$ENV{USER}>.
 
 =item *
@@ -186,10 +222,13 @@ environment variable C<PAR_VERBATIM> to C<1>.
 
 =cut
 
-use vars qw(@PAR_INC);  # explicitly stated PAR library files
-use vars qw(%PAR_INC);  # sets {$par}{$file} for require'd modules
-use vars qw(@LibCache %LibCache);       # I really miss pseudohash.
+use vars qw(@PAR_INC);              # explicitly stated PAR library files (prefered)
+use vars qw(@PAR_INC_LAST);         # explicitly stated PAR library files (fallback)
+use vars qw(%PAR_INC);              # sets {$par}{$file} for require'd modules
+use vars qw(@LibCache %LibCache);   # I really miss pseudohash.
 use vars qw($LastAccessedPAR $LastTempFile);
+use vars qw(@RepositoryObjects);    # If we have PAR::Repository::Client support, we
+                                    # put the ::Client objects in here.
 
 my $ver  = $Config{version};
 my $arch = $Config{archname};
@@ -201,6 +240,8 @@ my $is_insensitive_fs = (
 );
 my $par_temp;
 
+
+# called on "use PAR"
 sub import {
     my $class = shift;
 
@@ -210,26 +251,40 @@ sub import {
     $progname = $ENV{PAR_PROGNAME} ||= $0;
     $is_insensitive_fs = (-s $progname and (-s lc($progname) || -1) == (-s uc($progname) || -1));
 
-    foreach my $par (@_) {
-        if ($par =~ /[?*{}\[\]]/) {
-            require File::Glob;
-            foreach my $matched (File::Glob::glob($par)) {
-                push @PAR_INC, unpar($matched, undef, undef, 1);
-            }
-            next;
+    my @args = @_;
+    
+    # process args to use PAR 'foo.par', { opts }, ...;
+    foreach my $par (@args) {
+        if (ref($par) eq 'HASH') {
+            # we have been passed a hash reference
+            _import_hash_ref($par);
         }
-
-        push @PAR_INC, unpar($par, undef, undef, 1);
+        elsif ($par =~ /[?*{}\[\]]/) {
+           # implement globbing for PAR archives
+           require File::Glob;
+           foreach my $matched (File::Glob::glob($par)) {
+               push @PAR_INC, unpar($matched, undef, undef, 1);
+           }
+        }
+        else {
+            # ordinary string argument => file
+            push @PAR_INC, unpar($par, undef, undef, 1);
+        }
     }
 
     return if $PAR::__import;
     local $PAR::__import = 1;
 
-    unshift @INC, \&find_par unless grep { $_ eq \&find_par } @INC;
+    # Insert PAR hook in @INC.
+    unshift @INC, \&find_par   unless grep { $_ eq \&find_par }      @INC;
+    push @INC, \&find_par_last unless grep { $_ eq \&find_par_last } @INC;
 
     require PAR::Heavy;
     PAR::Heavy::_init_dynaloader();
 
+    # The following code is executed for the case where the
+    # running program is itself a PAR archive.
+    # ==> run script/main.pl
     if (unpar($progname)) {
         # XXX - handle META.yml here!
         push @PAR_INC, unpar($progname, undef, undef, 1);
@@ -260,10 +315,97 @@ sub import {
     }
 }
 
+
+# import() helper for the "use PAR {...};" syntax.
+sub _import_hash_ref {
+    my $opt = shift;
+    # check for incompatible options:
+    if ( exists $opt->{repository} and exists $opt->{file} ) {
+        croak("Invalid PAR loading options. Cannot have a 'repository' and 'file' option at the same time.");
+    }
+    elsif (
+        exists $opt->{file}
+        and (exists $opt->{install} or exists $opt->{upgrade})
+    ) {
+        my $e = exists($opt->{install}) ? 'install' : 'upgrade';
+        croak("Invalid PAR loading options. Cannot combine 'file' and '$e' options.");
+    }
+    elsif ( not exists $opt->{repository} and not exists $opt->{file} ) {
+        croak("Invalid PAR loading options. Need at least one of 'file' or 'repository' options.");
+    }
+
+    # load from file
+    if (exists $opt->{file}) {
+        croak("Cannot load undefined PAR archive")
+          if not defined $opt->{file};
+
+        # for files, we default to loading from PAR archive first
+        my $fallback = $opt->{fallback};
+        $fallback = 0 if not defined $fallback;
+        
+        if (not $fallback) {
+            # load from this PAR arch preferably
+            push @PAR_INC, unpar($opt->{file}, undef, undef, 1);
+        }
+        else {
+            # load from this PAR arch as fallback
+            push @PAR_INC_LAST, unpar($opt->{file}, undef, undef, 1);
+        }
+        
+    }
+    else {
+        # Deal with repositories elsewhere
+        return(_import_repository($opt));
+    }
+
+    # run was specified
+    # run the specified script from inside the PAR file.
+    if (exists $opt->{run} and defined $opt->{run}) {
+        my $script = $opt->{run};
+        require PAR::Heavy;
+        PAR::Heavy::_init_dynaloader();
+        
+        # XXX - handle META.yml here!
+        _extract_inc($opt->{file}) unless $ENV{PAR_CLEAN};
+        
+        my $zip = $LibCache{$opt->{file}};
+        my $member = _first_member( $zip,
+            (($script !~ /^script\//) ? ("script/$script", "script/$script.pl") : ()),
+            $script,
+            "$script.pl",
+        );
+        
+        if (not defined $member) {
+            croak("Cannot run script '$script' from PAR file '$opt->{file}'. Script couldn't be found in PAR file.");
+        }
+        
+        _run_member($member);
+    }
+
+    return();
+}
+
+
+# This sub is invoked by _import_hash_ref if a {repository}
+# option is found
+sub _import_repository {
+    my $opt = shift;
+    my $url = $opt->{repository};
+
+    eval "require PAR::Repository::Client; 1;";
+    if ($@) {
+        croak "In order to use the 'use PAR { repository => 'url' };' syntax, you need to install the PAR::Repository::Client module from CPAN. This module does not seem to be installed as indicated by the following error message: $@";
+    }
+    my $obj = PAR::Repository::Client->new(uri => $url);
+    push @RepositoryObjects, $obj;
+    return 1;
+}
+
 sub _first_member {
     my $zip = shift;
     my %names = map { ( $_->fileName => $_ ) } $zip->members;
-    my %lc_names = map { ( lc($_->fileName) => $_ ) } $zip->members;
+    my %lc_names;
+    %lc_names = map { ( lc($_->fileName) => $_ ) } $zip->members if $is_insensitive_fs;
     foreach my $name (@_) {
         return $names{$name} if $names{$name};
         return $lc_names{lc($name)} if $is_insensitive_fs and $lc_names{lc($name)};
@@ -328,15 +470,60 @@ sub _extract_inc {
         [ 'lib' ], [ 'arch' ], [ $arch ], [ $ver ], [ $ver, $arch ], [];
 }
 
+
+# This is the hook placed in @INC for loading PAR's
+# before any other stuff in @INC
 sub find_par {
-    my ($self, $file, $member_only) = @_;
+    return _find_par_internals(\@PAR_INC, @_);
+}
+
+# This is the hook placed in @INC for loading PAR's
+# AFTER any other stuff in @INC
+# It also deals with loading from repositories as a
+# fallback-fallback ;)
+sub find_par_last {
+    my @args = @_;
+    # Try the local PAR files first
+    my $rv = _find_par_internals(\@PAR_INC_LAST, @args);
+    return $rv if defined $rv;
+
+    # No repositories => return
+    return $rv if not @RepositoryObjects;
+
+    my $module = $args[1];
+    $module =~ s/\.pm$//;
+    $module =~ s/\//::/g;
+    foreach my $client (@RepositoryObjects) {
+        my $local_file = $client->get_module($module, 1);
+        if ($local_file) {
+            return _find_par_internals([$PAR_INC_LAST[-1]], @args);
+        }
+    }
+    return $rv;
+}
+
+
+# This is a conjunction of the early find_par and the late
+# find_par_last. It's called by PAR::Heavy for Dynaloader stuff.
+sub _find_par_any {
+    return _find_par_internals([@PAR_INC, @PAR_INC_LAST], @_);
+}
+
+
+
+# This routine implements loading modules from PARs
+# both for loading PARs preferably or as fallback.
+# To distinguish the cases, the first parameter should
+# be a reference to the corresponding @PAR_INC* array.
+sub _find_par_internals {
+    my ($INC_ARY, $self, $file, $member_only) = @_;
 
     my $scheme;
-    foreach (@PAR_INC ? @PAR_INC : @INC) {
+    foreach (@$INC_ARY ? @$INC_ARY : @INC) {
         my $path = $_;
         if ($[ < 5.008001) {
             # reassemble from "perl -Ischeme://path" autosplitting
-            $path = "$scheme:$path" if !@PAR_INC
+            $path = "$scheme:$path" if !@$INC_ARY
                 and $path and $path =~ m!//!
                 and $scheme and $scheme =~ /^\w+$/;
             $scheme = $path;
@@ -432,9 +619,9 @@ sub unpar {
         require Archive::Zip;
         $zip = Archive::Zip->new;
 
-	my @file;
+    	my @file;
         if (!ref $par) {
-	    @file = $par;
+	        @file = $par;
 
             open my $fh, '<', $par;
             binmode($fh);
@@ -608,13 +795,22 @@ sub _set_progname {
     }
 }
 
+
 1;
 
 =head1 SEE ALSO
 
-L<PAR::Tutorial>, L<PAR::FAQ>
+The PAR homepage at L<http://par.perl.org>.
+
+L<PAR::Tutorial>, L<PAR::FAQ> (For a more
+current FAQ, refer to the homepage.)
 
 L<par.pl>, L<parl>, L<pp>
+
+L<PAR::Dist> for details on PAR distributions.
+
+L<PAR::Repository::Client> for details on accessing PAR repositories.
+L<PAR::Repository> for details on how to set up such a repository.
 
 L<Archive::Zip>, L<perlfunc/require>
 

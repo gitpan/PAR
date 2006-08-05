@@ -1,7 +1,7 @@
 abstract: Perl Archive Tookit
 author: Audrey Tang <cpan@audreyt.org>
 distribution_type: module
-generated_by: Module::Install version 0.63
+generated_by: Module::Install version 0.630
 license: perl
 name: PAR
 no_index: 
@@ -9,6 +9,32 @@ no_index:
     - contrib
     - inc
     - t
+provides: 
+  App::Packer::PAR: 
+    file: lib/App/Packer/PAR.pm
+    version: 0.91
+  PAR: 
+    file: lib/PAR.pm
+    version: 0.950
+  PAR::Filter: 
+    file: lib/PAR/Filter.pm
+    version: 0.02
+  PAR::Filter::Bleach: 
+    file: lib/PAR/Filter/Bleach.pm
+  PAR::Filter::Bytecode: 
+    file: lib/PAR/Filter/Bytecode.pm
+  PAR::Filter::Obfuscate: 
+    file: lib/PAR/Filter/Obfuscate.pm
+  PAR::Filter::PatchContent: 
+    file: lib/PAR/Filter/PatchContent.pm
+  PAR::Filter::PodStrip: 
+    file: lib/PAR/Filter/PodStrip.pm
+  PAR::Heavy: 
+    file: lib/PAR/Heavy.pm
+    version: 0.09
+  PAR::Packer: 
+    file: lib/PAR/Packer.pm
+    version: 0.12
 recommends: 
   Digest: Module::Signature
 requires: 
@@ -17,6 +43,6 @@ requires:
   File::Temp: 0.05
   Getopt::ArgvFile: 1.07
   Module::ScanDeps: 0.62
-  PAR::Dist: 0.13
+  PAR::Dist: 0.15
   perl: 5.6.0
-version: 0.942
+version: 0.950
