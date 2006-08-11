@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.949_01';
+$PAR::VERSION = '0.950';
 
 use 5.006;
 use strict;
@@ -13,10 +13,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.949_01 of PAR, released August 5, 2006.
-
-This is a developer release. It contains many new changes and might
-introduce new bugs. It is intended for testing purposes.
+This document describes version 0.950 of PAR, released August 1, 2006.
 
 =head1 SYNOPSIS
 
@@ -488,7 +485,7 @@ sub find_par_last {
     return $rv if defined $rv;
 
     # No repositories => return
-    return $rv if not @RepositoryObjects;
+    return() if not @RepositoryObjects;
 
     my $module = $args[1];
     $module =~ s/\.pm$//;
@@ -499,16 +496,8 @@ sub find_par_last {
             return _find_par_internals([$PAR_INC_LAST[-1]], @args);
         }
     }
-    return $rv;
+    return();
 }
-
-
-# This is a conjunction of the early find_par and the late
-# find_par_last. It's called by PAR::Heavy for Dynaloader stuff.
-sub _find_par_any {
-    return _find_par_internals([@PAR_INC, @PAR_INC_LAST], @_);
-}
-
 
 
 # This routine implements loading modules from PARs
