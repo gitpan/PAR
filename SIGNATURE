@@ -15,14 +15,14 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 5e4dcc7292860e3e2077bfce25626b46f967ff3b AUTHORS
-SHA1 949205543cea5f06836687d1c833a84b5d053fae ChangeLog
-SHA1 a3784f71d22ef40bc72b0076a5d12f2adabcb9fb MANIFEST
-SHA1 a425969945e62fcc7783784916d552d370b94951 MANIFEST.SKIP
-SHA1 d690e8d6046c27dd9c97f4fa366fe89a16828b01 META.yml
+SHA1 2699e3b71b33bb8b56e7c73a29d63f9d729b574c ChangeLog
+SHA1 ad3d5106a343f3c823e651a92e33438dc24174ec MANIFEST
+SHA1 53fd3487a9020e8df59375f2f2a4d0c81863ecb5 MANIFEST.SKIP
+SHA1 2835be4eb393ce4237d55dc3a8a05fa5fee9ffdf META.yml
 SHA1 8ecd7e3250c0f24fd2669161b3f464716e9ee996 Makefile.PL
 SHA1 44d54db39e89f38c714e334a3174d51d4a12b6d9 README
 SHA1 aa8cd09fa1945de92b01d77b979b4c8769f148c2 TODO
-SHA1 5b59e5c9ef0fc0773ba431c3c171722cb677eda9 contrib/automated_pp_test/automated_pp_test.pl
+SHA1 c54088610c2ba86d1c6f1e538a0e643dbe62e571 contrib/automated_pp_test/automated_pp_test.pl
 SHA1 31c0a2375a9f05052499fce55574b0411786f372 contrib/automated_pp_test/hello_tk.pl
 SHA1 3a32ffa47e874433d554b80633a3e125901d1bcf contrib/automated_pp_test/hi.ico
 SHA1 d5d0c6cc0d13ed428ce51d99387e366471f1ac70 contrib/automated_pp_test/pipe_a_command.pm
@@ -38,12 +38,6 @@ SHA1 0d80cbbe5457a5a2db9c3cf7115c828d46ad1fe4 contrib/pare/pare_readme.txt
 SHA1 f1a564c8a7cf5ed4cbb893f2f9277527661fc44b contrib/procedural_pp/pp_old
 SHA1 eff2e79f0964da302217673f16abea9424a2bbdd contrib/stdio/Stdio.pm
 SHA1 e44e340a0a4b63c57a81173f3592c6f9c21c0d4d contrib/stdio/Stdio_readme.txt
-SHA1 680854431c1dc4a13f8209575acdb8f228a77e6e debian/changelog
-SHA1 9c6b057a2b9d96a4067a749ee3b3b0158d390cf1 debian/compat
-SHA1 ade07ca4f970972233e12636b0f0094f82c800c0 debian/control
-SHA1 27b149a1ab592d10342eaf32cac293d8fa194ec5 debian/copyright
-SHA1 789591b9d5d99f36b10a2ff262a391c7bee43e9a debian/rules
-SHA1 177126c5ad6892220218efd3c6d02337b136041b debian/watch
 SHA1 603bb9de29fb8cba7f13409c546750972eff645d inc/Module/AutoInstall.pm
 SHA1 9b2f9d83bcf77860f53a0c07c90a4a59ad9f5df1 inc/Module/Install.pm
 SHA1 ad955f51ad2c40d4ba35395c27f5ed899a80bf7a inc/Module/Install/AutoInstall.pm
@@ -60,7 +54,7 @@ SHA1 f0ebc594cf8ba858ee9a840c344d9b7ea2c3c6f4 inc/Test/Builder.pm
 SHA1 a9037004a2c3096d77169a16da95743eeb813539 inc/Test/Builder/Module.pm
 SHA1 07c750f370de7a44ee7b0ed9ec30a7e89c24c9b9 inc/Test/More.pm
 SHA1 f2e051c0866a1e186ef57fe4360651fac64d858d lib/App/Packer/PAR.pm
-SHA1 180c556994956cc0a633df4eadd0117e4678d9be lib/PAR.pm
+SHA1 e7cfe17b1a0c4b27231eacf814b2d6be0ed8ec45 lib/PAR.pm
 SHA1 3670831693b92311c425039cbacffe829fbb887e lib/PAR/FAQ.pod
 SHA1 b236006a3343ad736a4d5352dc1e017627c6f8b8 lib/PAR/Filter.pm
 SHA1 caeff2887611bb028f49ecc16f91be3e2005f952 lib/PAR/Filter/Bleach.pm
@@ -69,7 +63,7 @@ SHA1 3d05249a79d9534ea8565b984ea9dd23a86f7d2e lib/PAR/Filter/Obfuscate.pm
 SHA1 650fa094245de4f5b9ed03ae5257fb9b3d8ddba6 lib/PAR/Filter/PatchContent.pm
 SHA1 8a40b2673f73887cd05f2c66e08f01919f81db38 lib/PAR/Filter/PodStrip.pm
 SHA1 e153f2a9808b2d1c78af6d4f065209b52be502ff lib/PAR/Heavy.pm
-SHA1 4753c89f9b9702cf26d00acaf1ea1cc06dbdca10 lib/PAR/Packer.pm
+SHA1 fd493e601854fe69ac5267d926f22feb7a085fe9 lib/PAR/Packer.pm
 SHA1 44d0f288e8c9a7362697b5d64c4272da16cfe0c9 lib/PAR/Tutorial.pod
 SHA1 5db6a8ce4db737a5873290321f5324994e53fd45 myldr/Makefile.PL
 SHA1 4cb31931bfa898bba56d645b574983930492ab18 myldr/env.c
@@ -92,7 +86,7 @@ SHA1 8fa71d5726e8c6c0e484d6ccb20cc0bd83b669b6 script/tkpp
 SHA1 3467e6bd4b5227f8e1e21f45832b279c2e8c5b7f t/00-pod.t
 SHA1 dc1c8eb9ff09172ea1df02257b68032695673e2e t/01-basic.t
 SHA1 3b8ab1207b358709716fc05aa5da339f630d44b6 t/02-pp.t
-SHA1 85d81927e4fa5621581c20c2481235a4f67343b7 t/30-current_exec.t
+SHA1 00e6bafec09e62af47d0bb44feaeabdb3b0db5b6 t/30-current_exec.t
 SHA1 82548e8de5a8d7a451d33cfcdece13f613d0efc2 t/40-par-hashref.t
 SHA1 0ebe6181affc8afe78fad4446075d8f0ee420cfd t/Hello.pm
 SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
@@ -100,7 +94,7 @@ SHA1 0146f0bd0bac69300c4317accbe2d9c69e18fef7 t/test-proc
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.2.2 (GNU/Linux)
 
-iD8DBQFFGYqZZCuimE51gxcRAndCAKCWQc6kyPv1eWIvB2stpfOguEjs8QCfZUlQ
-HqWQ+mqS/ncHLqI7iK6g7ec=
-=+1Tb
+iD8DBQFFIlgLZCuimE51gxcRApLqAKCt+pMgPuSB+o0oBbPH8EAyolKKSwCgkvSi
+oaMDa2k7HDbYV5IW66MdMVk=
+=AGxY
 -----END PGP SIGNATURE-----

@@ -16,12 +16,6 @@ contrib/pare/pare_readme.txt
 contrib/procedural_pp/pp_old
 contrib/stdio/Stdio.pm
 contrib/stdio/Stdio_readme.txt
-debian/changelog
-debian/compat
-debian/control
-debian/copyright
-debian/rules
-debian/watch
 inc/Module/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
