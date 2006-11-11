@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.957';
+$PAR::VERSION = '0.958';
 
 use 5.006;
 use strict;
@@ -13,7 +13,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.957 of PAR, released October 24, 2006.
+This document describes version 0.958 of PAR, released October 25, 2006.
 
 =head1 SYNOPSIS
 
@@ -106,7 +106,9 @@ If you have L<PAR::Repository::Client> installed, you can do this:
 
 And PAR will fetch any modules you don't have from the specified PAR
 repository. For details on how this works, have a look at the SEE ALSO
-section below. If you specify the C<install =E<gt> 1> option in the C<use PAR>
+section below. Instead of an URL or local path, you can construct an
+L<PAR::Repository::Client> object manually and pass that to PAR.
+If you specify the C<install =E<gt> 1> option in the C<use PAR>
 line above, the distribution containing C<Module> will be permanently
 installed on your system. (C<use PAR { repository =E<gt> 'http://foo/bar', install =E<gt> 1 };>)
 
@@ -200,7 +202,8 @@ Here is a description of the variables the previous paths.
 
 I<TEMP> is a temporary directory, which can be set via 
 C<$ENV{PAR_GLOBAL_TMPDIR}>,
-C<$ENV{TMPDIR}>, C<$ENV{TEMP}> or C<$ENV{TMP}>, in that order of priority.
+C<$ENV{PAR_TMPDIR}>, C<$ENV{TMPDIR}>, C<$ENV{TEMPDIR}>, C<$ENV{TEMP}>
+or C<$ENV{TMP}>, in that order of priority.
 If none of those are set, I<C:\TEMP>, I</tmp> are checked.  If neither
 of them exists, I<.> is used.
 
@@ -427,10 +430,19 @@ sub _import_repository {
     if ($@ or not PAR::Repository::Client->VERSION >= 0.04) {
         croak "In order to use the 'use PAR { repository => 'url' };' syntax, you need to install the PAR::Repository::Client module (version 0.04 or later) from CPAN. This module does not seem to be installed as indicated by the following error message: $@";
     }
-    my $obj = PAR::Repository::Client->new(
-        uri => $url,
-        auto_install => $opt->{install},
-    );
+
+    my $obj;
+
+    # Support existing clients passed in as objects.
+    if (ref($url) and UNIVERSAL::isa($obj, 'PAR::Repository::Client')) {
+        $obj = $url;
+    }
+    else {
+        $obj = PAR::Repository::Client->new(
+            uri => $url,
+            auto_install => $opt->{install},
+        );
+    }
 
     push @RepositoryObjects, $obj;
     return $obj;
@@ -764,7 +776,7 @@ sub _set_par_temp {
     require File::Spec;
 
     foreach my $path (
-        (map $ENV{$_}, qw( PAR_TMPDIR TMPDIR TEMP TMP )),
+        (map $ENV{$_}, qw( PAR_TMPDIR TMPDIR TEMPDIR TEMP TMP )),
         qw( C:\\TEMP /tmp . )
     ) {
         next unless $path and -d $path and -w $path;

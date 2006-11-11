@@ -1,5 +1,5 @@
 package PAR::Packer;
-$PAR::Packer::VERSION = '0.15';
+$PAR::Packer::VERSION = '0.17';
 
 use 5.006;
 use strict;
@@ -82,7 +82,14 @@ sub new {
     # exit gracefully and clean up after ourselves.
     # note.. in constructor because of conflict.
 
-    $ENV{PAR_RUN} = 1;
+    # Up to PAR 0.957, we set the following ENV variable, but
+    # it is never, ever used anywhere in the rest of the
+    # PAR or M::SD sources, so in order to remove clutter, we
+    # comment it out. This notice and the following commented
+    # out line should be removed in a future version if no
+    # breakage occurred.
+
+    # $ENV{PAR_RUN} = 1;
     my $self = bless {}, $class;
 
     $self->set_args($args)      if ($args);
@@ -98,8 +105,9 @@ sub set_options {
     $self->{options} = \%opt;
     $self->_translate_options($self->{options});
 
-    $self->{parl} ||= $self->_can_run("parl$Config{_exe}")
-      or die("Can't find par loader");
+#    $self->{parl} ||= $self->_extract_parl('PAR::StrippedPARL::Static')
+#      or die("Can't find par loader");
+#   $self->{parl_is_temporary} = 1;
     $self->{dynperl} ||=
       $Config{useshrplib} && ($Config{useshrplib} ne 'false');
     $self->{script_name} = $opt{script_name} || $0;
@@ -675,8 +683,32 @@ sub pack_manifest_hash {
     else {
         %skip = (%skip, map { $_, 1 } @SharedLibs);
     }
-    my @files = (map (&$inc_find($_), @modules), @$input);
 
+    my $add_deps = $self->_obj_function($fe, 'add_deps');
+
+    my @files; # files to scan
+    # Apply %Preload to the -M'd modules and add them to the list of
+    # files to scan
+    foreach my $module (@modules) {
+        my $file = &$inc_find($module);
+        push @files, $file;
+        
+        my $preload = Module::ScanDeps::_get_preload($module) or next;
+        
+        $add_deps->(
+            used_by => $file,
+            rv      => \%map,
+            modules => $preload,
+            skip    => \%skip,
+#            warn_missing => $args->{warn_missing},
+        );
+        push @files, map {&$inc_find($_)} @$preload;
+    }
+    push @files, @$input;
+
+    # Search for scannable code in all -I'd paths
+    push @Module::ScanDeps::IncludeLibs, @{$opt->{I}} if $opt->{I};
+    
     my $scan_dispatch =
       $opt->{n}
       ? $self->_obj_function($fe, 'scan_deps_runtime')
@@ -696,8 +728,6 @@ sub pack_manifest_hash {
 
     %skip = map { $_, 1 } map &$inc_find($_), @exclude;
     %skip = (%skip, map { $_, 1 } @SharedLibs);
-
-    my $add_deps = $self->_obj_function($fe, 'add_deps');
 
     &$add_deps(
         rv      => \%map,
@@ -733,12 +763,8 @@ sub pack_manifest_hash {
         $self->{pack_attrib}{old_member} = $old_member;
     }
 
-    my $verbatim = ($ENV{PAR_VERBATIM} || 0);
-
-    my $mod_filter =
-      PAR::Filter->new('PatchContent',
-        @{ $opt->{F} || ($verbatim ? [] : ['PodStrip']) },
-      );
+    # generate a selective set of filters from the options passed in via -F
+    my $mod_filter = _generate_filter($opt, 'F');
 
     (my $privlib = $Config{privlib}) =~ s{\\}{/}g;
     (my $archlib = $Config{archlib}) =~ s{\\}{/}g;
@@ -751,7 +777,7 @@ sub pack_manifest_hash {
         $self->_vprint(2, "... adding $map{$pfile} as ${root}lib/$pfile");
 
         if ($text{$pfile} or $pfile =~ /utf8_heavy\.pl$/i) {
-            my $content_ref = $mod_filter->apply($map{$pfile}, $pfile);
+            my $content_ref = $mod_filter->($map{$pfile}, $pfile);
 
             $full_manifest->{ $root . "lib/$pfile" } =
               [ string => $content_ref ];
@@ -781,7 +807,8 @@ sub pack_manifest_hash {
         }
     }
 
-    my $script_filter;
+    # For -f, we just accept normal filters - no selection of files.
+    my $script_filter = _generate_filter($opt, 'f');
     $script_filter = PAR::Filter->new(@{ $opt->{f} }) if ($opt->{f});
 
     my $in;
@@ -836,6 +863,52 @@ sub pack_manifest_hash {
     $dep_manifest->{'META.yml'} = [ string => "<<placeholder>>" ];
 
     return ($dep_manifest);
+}
+
+
+sub _generate_filter {
+    my $opt = shift; # options hash
+    my $key = shift; # F or f? modules or script?
+
+    my $verbatim = ($ENV{PAR_VERBATIM} || 0);
+
+    # List of filters. If the regex is undefined or matches the 
+    # file name (e.g. Foo/Bar.pm), apply filter to this module.
+    my @filters = (
+        { regex => undef, filter => PAR::Filter->new('PatchContent') },
+    );
+
+    foreach my $option (@{ $opt->{$key} }) {
+        my ($filter, $regex) = split /=/, $option, 2;
+        push @filters, {
+            regex => (defined $regex ? qr/$regex/ : $regex),
+            filter => PAR::Filter->new($filter)
+        };
+    }
+    my $podstrip = PAR::Filter->new('PodStrip');
+
+    my $filtersub = sub {
+        my $ref = shift;
+        my $name = shift;
+        my $filtered = 0;
+        foreach my $filterspec (@filters) {
+            if (
+                not defined $filterspec->{regex}
+                or $name =~ $filterspec->{regex}
+            ) {
+                $filtered++;
+                $ref = $filterspec->{filter}->apply($ref, $name);
+            }
+        }
+
+        # PodStrip by default, overridden by -F or $ENV{PAR_VERBATIM}
+        if ($filtered == 1 and not $verbatim) {
+            $ref = $podstrip->apply($ref, $name);
+        }
+        return $ref;
+    };
+
+    return $filtersub;
 }
 
 sub full_manifest_hash {
@@ -1120,15 +1193,34 @@ sub _par_to_exe {
     my $dynperl  = $self->{dynperl};
     my $par_file = $self->{par_file};
 
-    my $parl = 'parl';
-    my $buf;
+    require PAR::StrippedPARL::Static;
+    require PAR::StrippedPARL::Dynamic;
 
-    $parl = 'parldyn' if ($opt->{d} and $dynperl);
+    my $parlclass = 'PAR::StrippedPARL::Static';
+    my $buf;
+    my $parl = 'parl';
+
+    if ($opt->{d} and $dynperl) {
+        $parlclass = 'PAR::StrippedPARL::Dynamic';
+        $parl = 'parldyn';
+    }
     $parl .= $Config{_exe};
 
-    $parl = 'par.pl' if ($opt->{P});
-    $self->{parl} = $self->_can_run($parl, $opt->{P})
-      or $self->_die("Can't find par loader");
+    if ($opt->{P}) {
+        # write as script
+        $parl = 'par.pl';
+        unless ( $parl = $self->_can_run($parl, $opt->{P}) ) {
+            $self->_die("par.pl not found");
+        }
+        $self->{parl} = $parl;
+    }
+    else {
+        # binary, either static or dynamic
+        $parl = $self->_extract_parl($parlclass)
+          or $self->_die("Can't find par loader");
+        $self->{parl_is_temporary} = 1;
+        $self->{parl} = $parl;
+    }
 
     if ($^O ne 'MSWin32' or $opt->{p} or $opt->{P}) {
         $self->_generate_output();
@@ -1138,18 +1230,18 @@ sub _par_to_exe {
         $self->_fix_console() if $opt->{g};
     }
     elsif (eval { require Win32::Exe; 1 }) {
-	$self->_move_parl();
-	Win32::Exe->new($self->{parl})->update(
-	    icon => $opt->{i},
-	    info => $opt->{N},
-	);
+        $self->_move_parl();
+        Win32::Exe->new($self->{parl})->update(
+            icon => $opt->{i},
+            info => $opt->{N},
+        );
 
-	$self->_append_parl();
+        $self->_append_parl();
         $self->_generate_output();
 
         Win32::Exe->new($output)->update(
-	    icon => $opt->{i},
-	    info => $opt->{N},
+            icon => $opt->{i},
+            info => $opt->{N},
         );
 
         $self->_fix_console();
@@ -1158,9 +1250,40 @@ sub _par_to_exe {
         return;
     }
     else {
-	$self->_die("--icon and --info support needs Win32::Exe");
+        $self->_die("--icon and --info support needs Win32::Exe");
     }
 }
+
+# extracts a parl (static) or parldyn (dynamic) from the appropriate data class
+# using the class' write_parl($file) method. Note that 'write_parl' extracts to
+# a temporary file first, then uses that plain parl to embed the core modules into
+# the file given as argument. This was taken from the PAR bootstrapping process.
+# First argument must be the class name.
+# Returns the path and name of the file (or the empty list on failure).
+sub _extract_parl {
+    my $self = shift;
+    my $class = shift;
+
+    $self->_die("First argument to _extract_parl must be a class name")
+      if not defined $class;
+    $self->_die("Class '$class' is not a PAR(L) data class. Can't call '${class}->write_parl()'")
+      if not $class->can('write_parl');
+
+    $self->_vprint(0, "Generating a fresh 'parl'.");
+    my ($fh, $filename) = File::Temp::tempfile(
+        "parlXXXXXXX",
+        SUFFIX => $Config{_exe},
+    );
+    
+    my $success = $class->write_parl($filename);
+    if (not $success) {
+        $self->_die("Failed to extract a parl from '$class' to file '$filename'");
+    }
+
+    chmod(oct('755'), $filename);
+    return $filename;
+}
+
 
 sub _fix_console {
     my ($self) = @_;
@@ -1250,7 +1373,15 @@ sub _generate_output {
         $self->{parl} = $^X;
     }
     $self->_vprint(0, "Running $self->{parl} @args");
-    system($self->{parl}, @args);
+
+    # Make sure the parl is callable. Prepend ./ if it's just a file name.
+    my $parl = $self->{parl};
+    my ($volume, $path, $file) = File::Spec->splitpath($parl);
+    if (not defined $path or $path eq '') {
+        $parl = File::Spec->catfile(File::Spec->curdir(), $parl);
+    }
+
+    system($parl, @args);
 }
 
 sub _strip_console {
@@ -1505,6 +1636,7 @@ sub DESTROY {
     my $opt      = $self->{options};
 
     unlink $par_file if ($par_file and !$opt->{S} and !$opt->{p});
+    unlink $self->{parl} if $self->{parl_is_temporary};
 }
 
 1;
