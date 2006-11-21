@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.959';
+$PAR::VERSION = '0.960';
 
 use 5.006;
 use strict;
@@ -13,7 +13,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.959 of PAR, released November 12, 2006.
+This document describes version 0.960 of PAR, released November 21, 2006.
 
 =head1 SYNOPSIS
 
@@ -780,9 +780,20 @@ sub _set_par_temp {
         qw( C:\\TEMP /tmp . )
     ) {
         next unless $path and -d $path and -w $path;
-        my $username = defined(&Win32::LoginName)
-            ? &Win32::LoginName()
-            : $ENV{USERNAME} || $ENV{USER} || 'SYSTEM';
+        my $username;
+        my $pwuid;
+        # does not work everywhere:
+        eval {($pwuid) = getpwuid($>) if defined $>;};
+
+        if ( defined(&Win32::LoginName) ) {
+            $username = &Win32::LoginName;
+        }
+        elsif (defined $pwuid) {
+            $username = $pwuid;
+        }
+        else {
+            $username = $ENV{USERNAME} || $ENV{USER} || 'SYSTEM';
+        }
         $username =~ s/\W/_/g;
 
         my $stmpdir = File::Spec->catdir($path, "par-$username");

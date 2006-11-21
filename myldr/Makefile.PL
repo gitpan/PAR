@@ -13,6 +13,47 @@ use File::Basename;
 
 xsinit(undef);
 
+# used for searching libperls.
+sub find_file {
+    my $file = shift;
+
+    my @paths = (
+	    $Config{bin},
+    	File::Spec->catdir($Config{'archlibexp'}, 'CORE'),
+	    split(/\Q$Config{path_sep}\E/, $ENV{$Config{ldlibpthname}} || ''),
+    	split(/ /, $Config{libpth}),
+    );
+
+    my $libperl;
+    if ($libperl = DynaLoader::dl_findfile("-lperl")) {
+        if (-l $libperl) {
+            my $realpath = readlink($libperl);
+            if (!File::Spec->file_name_is_absolute($realpath)) {
+                $realpath = File::Spec->rel2abs(
+                    File::Spec->catfile(
+                        dirname($libperl) => $realpath
+                    )
+                );
+            }
+            $libperl = $realpath;
+        }
+        return $libperl if -e $libperl;
+    }
+
+    foreach my $path (@paths) {
+	    $libperl = File::Spec->catfile($path, $file);
+    	return $libperl if -e $libperl;
+        
+    	# for MinGW
+	    $libperl = File::Spec->catfile($path, $1) if $file =~ /^lib(.+)/;
+    	return $libperl if -e $libperl;
+        
+       	# for Cygwin
+    	$libperl = File::Spec->catfile($path, $file.$Config{_a});
+    	return $libperl if -e $libperl;
+    }
+}
+
 my $debug = $ENV{DEBUG};
 my $chunk_size = 30000;
 my $perl = $^X;
@@ -90,46 +131,21 @@ elsif ($dynperl) {
 
     $file =~ s/\.(?!\d)[^.]*$/.$Config{so}/;
 
-    my @paths = (
-	$Config{bin},
-	File::Spec->catdir($Config{'archlibexp'}, 'CORE'),
-	split(/\Q$Config{path_sep}\E/, $ENV{$Config{ldlibpthname}} || ''),
-	split(/ /, $Config{libpth}),
-    );
-
-    if ($libperl = DynaLoader::dl_findfile("-lperl")) {
-        if (-l $libperl) {
-            my $realpath = readlink($libperl);
-            if (!File::Spec->file_name_is_absolute($realpath)) {
-                $realpath = File::Spec->rel2abs(
-                    File::Spec->catfile(
-                        dirname($libperl) => $realpath
-                    )
-                );
-            }
-            $libperl = $realpath;
-        }
-        @paths = () if $libperl and -e $libperl;
-    }
-
-    foreach my $path (@paths) {
-	    $libperl = File::Spec->catfile($path, $file);
-    	last if -e $libperl;
-        
-    	# for MinGW
-	    $libperl = File::Spec->catfile($path, $1) if $file =~ /^lib(.+)/;
-    	last if -e $libperl;
-        
-       	# for Cygwin
-    	$libperl = File::Spec->catfile($path, $file.$Config{_a});
-    	last if -e $libperl;
+    $libperl = find_file($file);
+    if (not -e $libperl) {
+        $file =~ s/\.(?!\d)[^.]*$/.a/;
+        $libperl = find_file($file);
     }
 
     # die "Can't find $file in (@paths) -- please contact the author!"
     # 	unless -e $libperl;
     undef $dynperl if !-e $libperl;
 }
-else {
+
+if (not $dynperl) {
+    my $file = $Config{libperl};
+    $file = 'libperl.a' if $file eq 'libper'; # same redhat bug? Just making sure...
+    $libperl = find_file($file);
     $ldflags = $static_ldflags;
 }
 
@@ -142,6 +158,21 @@ my $all = (
 
 $perl = Win32::GetShortPathName($perl)
     if $perl =~ / / and defined &Win32::GetShortPathName;
+
+
+# Determine whether we can find a config.h. If yes, include it in
+# usernamefrompwuid.h. If not, set I_PWD to undefined in that header.
+# -- Steffen
+my $configh = "$Config::Config{archlibexp}/CORE/config.h";
+open PWOUT, '> usernamefrompwuid.h' or die "open 'usernamefrompwuid.h': $!";
+if (not -f $configh) {
+    print PWOUT "#undef I_PWD\n";
+}
+else {
+    print PWOUT "#include \"$configh\"\n";
+}
+close PWOUT;
+
 
 print "Writing Makefile for the par$exe program\n";
 
@@ -190,6 +221,7 @@ clean:
 	-\$(RM) main$o my_par_pl$o static$o
 	-\$(RM) sha1$o sha1.c
 	-\$(RM) *.opt *.pdb perlxsi.c
+	-\$(RM) usernamefrompwuid.h
 	\$(MV) Makefile Makefile.old
 
 realclean: clean
@@ -246,9 +278,9 @@ my_perl.c:
 my_par.c: $par_exe
 	\$(PERL) $f2c $par_exe \$@ load_me_1 $long_literal $chunk_size
 
-strippedparl: $static_exe
+strippedparl: $par
 	\$(PERL) -e "chmod(oct('0600'), '$strippedparl_mod');"
-	\$(PERL) encode_append.pl $static_exe $strippedparl_mod
+	\$(PERL) encode_append.pl $par $strippedparl_mod
 	\$(PERL) -e "chmod(oct('0444'), '$strippedparl_mod');"
 
 strippedparldyn: $par_exe

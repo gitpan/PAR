@@ -315,7 +315,16 @@ my ($start_pos, $data_pos);
     # load rest of the group in
     while (my $filename = (sort keys %require_list)[0]) {
         #local $INC{'Cwd.pm'} = __FILE__ if $^O ne 'MSWin32';
-        require $filename unless $INC{$filename} or $filename =~ /BSDPAN/;
+        unless ($INC{$filename} or $filename =~ /BSDPAN/) {
+            # require modules, do other executable files
+            if ($filename =~ /\.pmc?$/i) {
+                require $filename;
+            }
+            else {
+                # Skip ActiveState's sitecustomize.pl file:
+                do $filename unless $filename =~ /sitecustomize\.pl$/;
+            }
+        }
         delete $require_list{$filename};
     }
 
@@ -692,9 +701,20 @@ sub _set_par_temp {
         qw( C:\\TEMP /tmp . )
     ) {
         next unless $path and -d $path and -w $path;
-        my $username = defined(&Win32::LoginName)
-            ? &Win32::LoginName()
-            : $ENV{USERNAME} || $ENV{USER} || 'SYSTEM';
+        my $username;
+        my $pwuid;
+        # does not work everywhere:
+        eval {($pwuid) = getpwuid($>) if defined $>;};
+
+        if ( defined(&Win32::LoginName) ) {
+            $username = &Win32::LoginName;
+        }
+        elsif (defined $pwuid) {
+            $username = $pwuid;
+        }
+        else {
+            $username = $ENV{USERNAME} || $ENV{USER} || 'SYSTEM';
+        }
         $username =~ s/\W/_/g;
 
         my $stmpdir = "$path$Config{_delim}par-$username";
