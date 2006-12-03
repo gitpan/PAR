@@ -12,7 +12,7 @@ no_index:
 provides: 
   PAR: 
     file: lib/PAR.pm
-    version: 0.969_01
+    version: 0.970
   PAR::Heavy: 
     file: lib/PAR/Heavy.pm
     version: 0.09
@@ -24,4 +24,4 @@ requires:
   File::Temp: 0.05
   PAR::Dist: 0.21
   perl: 5.6.0
-version: 0.969_01
+version: 0.970
