@@ -10,9 +10,12 @@ no_index:
     - inc
     - t
 provides: 
+  AutoLoader: 
+    file: lib/PAR/AutoLoaderFix.pm
+    version: 5.61
   PAR: 
     file: lib/PAR.pm
-    version: 0.970
+    version: 0.970_01
   PAR::Heavy: 
     file: lib/PAR/Heavy.pm
     version: 0.09
@@ -24,4 +27,4 @@ requires:
   File::Temp: 0.05
   PAR::Dist: 0.21
   perl: 5.6.0
-version: 0.970
+version: 0.970_01
