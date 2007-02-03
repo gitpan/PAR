@@ -1,11 +1,28 @@
 package PAR;
-$PAR::VERSION = '0.972';
+$PAR::VERSION = '0.973';
 
 use 5.006;
 use strict;
 use warnings;
 use Config '%Config';
 use Carp qw/croak/;
+
+# If the 'prefork' module is available, we
+# register various run-time loaded modules with it.
+# That way, there is more shared memory in a forking
+# environment.
+BEGIN {
+    if (eval 'require prefork') {
+        prefork->import($_) for qw/
+            Archive::Zip
+            File::Glob
+            File::Spec
+            File::Temp
+            LWP::Simple
+            PAR::Heavy
+        /;
+    }
+}
 
 =head1 NAME
 
@@ -98,7 +115,7 @@ F<script/myscript> exits, so does your main program. To make this more useful,
 you can defer this to runtime: (otherwise equivalent)
 
     require PAR;
-    PAR->import( { file => 'foo.par', run => 'myscript' };
+    PAR->import( { file => 'foo.par', run => 'myscript' } );
 
 If you have L<PAR::Repository::Client> installed, you can do this:
 
@@ -233,6 +250,47 @@ By default, PAR strips POD sections from bundled modules. In case
 that causes trouble, you can turn this off by setting the
 environment variable C<PAR_VERBATIM> to C<1>.
 
+=head2 import options
+
+When you "use PAR {...}" or call PAR->import({...}), the following
+options are available.
+
+  PAR->import({ file => 'foo.par' });
+  # or
+  PAR->import({ repository => 'http://foo/bar/' });
+
+=over
+
+=item file
+
+The par filename.
+
+You must pass I<one> option of either 'file' or 'repository'.
+
+=item repository
+
+A par repository (exclusive of file)
+
+=item fallback
+
+Search the system @INC before the par.
+
+=item run
+
+The name of a script to run in the par.  Exits when done.
+
+=item no_shlib_unpack
+
+Skip unpacking bundled dynamic libraries from shlib/$archname.  The
+client may have them installed, or you may wish to cache them yourself.
+In either case, they must end up in the standard install location (such
+as /usr/local/lib/) or in $ENV{PAR_TEMP} I<before> you require the
+module which needs them.  If they are not accessible before you require
+the dependent module, perl will die with a message such as "cannot open
+shared object file..." 
+
+=back
+
 =cut
 
 use vars qw(@PAR_INC);              # explicitly stated PAR library files (prefered)
@@ -242,6 +300,9 @@ use vars qw(@LibCache %LibCache);   # I really miss pseudohash.
 use vars qw($LastAccessedPAR $LastTempFile);
 use vars qw(@RepositoryObjects);    # If we have PAR::Repository::Client support, we
                                     # put the ::Client objects in here.
+use vars qw(%FileCache);            # The Zip-file file-name-cache
+                                    # Layout:
+                                    # $FileCache{$ZipObj}{$FileName} = $Member
 
 my $ver  = $Config{version};
 my $arch = $Config{archname};
@@ -253,6 +314,8 @@ my $is_insensitive_fs = (
 );
 my $par_temp;
 
+# lexical for import(), and _import_foo() functions to control unpar()
+my %unpar_options;
 
 # called on "use PAR"
 sub import {
@@ -346,6 +409,10 @@ sub import {
 # import() helper for the "use PAR {...};" syntax.
 sub _import_hash_ref {
     my $opt = shift;
+
+    # hash slice assignment -- pass all of the options into unpar
+    local @unpar_options{keys(%$opt)} = values(%$opt);
+
     # check for incompatible options:
     if ( exists $opt->{repository} and exists $opt->{file} ) {
         croak("Invalid PAR loading options. Cannot have a 'repository' and 'file' option at the same time.");
@@ -452,14 +519,15 @@ sub _import_repository {
     return $obj;
 }
 
+# Given an Archive::Zip obj and a list of files/paths,
+# this function returns the Archive::Zip::Member for the
+# first of the files found in the ZIP. If none is found,
+# returns the empty list.
 sub _first_member {
     my $zip = shift;
-    my %names = map { ( $_->fileName => $_ ) } $zip->members;
-    my %lc_names;
-    %lc_names = map { ( lc($_->fileName) => $_ ) } $zip->members if $is_insensitive_fs;
     foreach my $name (@_) {
-        return $names{$name} if $names{$name};
-        return $lc_names{lc($name)} if $is_insensitive_fs and $lc_names{lc($name)};
+        my $member = _cached_member_named($zip, $name);
+        return $member if $member;
     }
     return;
 }
@@ -493,6 +561,12 @@ sub _run_member {
 sub _extract_inc {
     my $file = shift;
     my $inc = "$par_temp/inc";
+    # FIXME: What the hell is the following code doing?
+    # There is a "use Config '%Config'" at the top of PAR.pm
+    # I'll probably replace it by
+    # my $dlext = defined($Config{dlext}) ? $Config{dlext} : '';
+    # eventually!
+    # -- Steffen
     my $dlext = do {
         require Config;
         (defined %Config::Config) ? $Config::Config{dlext} : '';
@@ -596,6 +670,7 @@ sub reload_libs {
     foreach my $par (@par_files) {
         my $inc_ref = $PAR_INC{$par} or next;
         delete $LibCache{$par};
+        delete $FileCache{$par};
         foreach my $file (sort keys %$inc_ref) {
             delete $INC{$file};
             require $file;
@@ -626,10 +701,12 @@ sub unpar {
     my $zip = $LibCache{$par};
     my @rv = $par;
 
+    # a guard against (currently unimplemented) recursion
     return if $PAR::__unpar;
     local $PAR::__unpar = 1;
 
     unless ($zip) {
+        # URL use case ==> download
         if ($par =~ m!^\w+://!) {
             require File::Spec;
             require LWP::Simple;
@@ -637,6 +714,7 @@ sub unpar {
             # reflector support
             $par .= "pm=$file" if $par =~ /[?&;]/;
 
+            # prepare cache directory
             $ENV{PAR_CACHE} ||= '_par';
             mkdir $ENV{PAR_CACHE}, 0777;
             if (!-d $ENV{PAR_CACHE}) {
@@ -645,6 +723,12 @@ sub unpar {
                 return unless -d $ENV{PAR_CACHE};
             }
 
+            # Munge URL into local file name
+            # FIXME: This might result in unbelievably long file names!
+            # I have run into the file/path length limitations of linux
+            # with similar code in PAR::Repository::Client.
+            # I suspect this is even worse on Win32.
+            # -- Steffen
             my $file = $par;
             if (!%escapes) {
                 $escapes{chr($_)} = sprintf("%%%02X", $_) for 0..255;
@@ -653,16 +737,20 @@ sub unpar {
                 use bytes;
                 $file =~ s/([^\w\.])/$escapes{$1}/g;
             }
+
             $file = File::Spec->catfile( $ENV{PAR_CACHE}, $file);
             LWP::Simple::mirror( $par, $file );
-            return unless -e $file;
+            return unless -e $file and -f _;
             $par = $file;
         }
+        # Got the .par as a string. (reference to scalar, of course)
         elsif (ref($par) eq 'SCALAR') {
             my ($fh) = _tempfile();
             print $fh $$par;
             $par = $fh;
         }
+        # If the par is not a valid .par file name and we're being strict
+        # about this, then also check whether "$par.par" exists
         elsif (!(($allow_other_ext or $par =~ /\.par\z/i) and -f $par)) {
             $par .= ".par";
             return unless -f $par;
@@ -689,8 +777,10 @@ sub unpar {
 
         push @LibCache, $zip;
         $LibCache{$_[0]} = $zip;
+        $FileCache{$_[0]} = _make_file_cache($zip);
 
-        foreach my $member ( $zip->membersMatching(
+        # only recursive case -- appears to be unused and unimplemented
+        foreach my $member ( _cached_members_matching($zip, 
             "^par/(?:$Config{version}/)?(?:$Config{archname}/)?"
         ) ) {
             next if $member->isDirectory;
@@ -699,24 +789,32 @@ sub unpar {
             push @rv, unpar(\$content, undef, undef, 1);
         }
         
-        # extract all dlls from the .par to $ENV{PAR_TEMP}!
-        # XXX is this correct?
+        # extract all shlib dlls from the .par to $ENV{PAR_TEMP}
         # Intended to fix problem with Alien::wxWidgets/Wx...
-        # for all zip members that end in .dll/.so (depending on platform)
-        foreach my $member ( $zip->membersMatching(
-            '\.'.quotemeta($Config{dlext}).'$'
-        ) ) {
-            next if $member->isDirectory or !$ENV{PAR_TEMP};
-            my $member_name = $member->fileName;
-            next unless $member_name =~ m{
-                    \/([^/]+)$
-                }x
-                or $member_name =~ m{
-                    ^([^/]+)$
-                };
-            my $extract_name = $1;
-            my $dest_name = File::Spec->catfile($ENV{PAR_TEMP}, $extract_name);
-            $member->extractToFileNamed($dest_name);
+        # NOTE auto/foo/foo.so|dll will get handled by the dynaloader
+        # hook, so no need to pull it out here.
+        # Allow this to be disabled so caller can do their own caching
+        # via import({no_shlib_unpack => 1, file => foo.par})
+        unless($unpar_options{no_shlib_unpack}) {
+            my @members = _cached_members_matching( $zip,
+              qr#^shlib/$Config{archname}/.*\.\Q$Config{dlext}\E(?:\.|$)#
+            );
+            foreach my $member (@members) {
+                next if $member->isDirectory or !$ENV{PAR_TEMP};
+                my $member_name = $member->fileName;
+                next unless $member_name =~ m{
+                        \/([^/]+)$
+                    }x
+                    or $member_name =~ m{
+                        ^([^/]+)$
+                    };
+                my $extract_name = $1;
+                my $dest_name =
+                    File::Spec->catfile($ENV{PAR_TEMP}, $extract_name);
+                # but don't extract it if we've already got one
+                $member->extractToFileNamed($dest_name)
+                    unless(-e $dest_name);
+            }
         }
 
         # Now push this path into usual library search paths
@@ -902,6 +1000,55 @@ sub _set_progname {
 }
 
 
+# Given an Archive::Zip object, this generates a hash of
+#   file_name_in_zip => file object
+# and returns a reference to that.
+# If we broke the encapsulation of A::Zip::Member and
+# accessed $member->{fileName} directly, that would be
+# *significantly* faster.
+sub _make_file_cache {
+    my $zip = shift;
+    if (not ref($zip)) {
+        croak("_make_file_cache needs an Archive::Zip object as argument.");
+    }
+    my $cache = {};
+    foreach my $member ($zip->members) {
+        $cache->{$member->fileName()} = $member;
+    }
+    return $cache;
+}
+
+# given an Archive::Zip object, this finds the cached hash
+# of Archive::Zip member names => members,
+# and returns all member objects whose file names match
+# a regexp
+# Without file caching, it just uses $zip->membersMatching
+sub _cached_members_matching {
+    my $zip = shift;
+    my $regex = shift;
+
+    my $cache = $FileCache{$zip};
+    $cache = $FileCache{$zip} = _make_file_cache($zip) if not $cache;
+
+    return map {$cache->{$_}}
+        grep { $_ =~ $regex }
+        keys %$cache;
+}
+
+# access named zip file member through cache. Fall
+# back to using Archive::Zip (slow)
+sub _cached_member_named {
+    my $zip = shift;
+    my $name = shift;
+
+    my $cache = $FileCache{$zip};
+    $cache = $FileCache{$zip} = _make_file_cache($zip) if not $cache;
+    return $cache->{$name};
+}
+
+
+
+
 1;
 
 __END__
@@ -924,6 +1071,10 @@ L<PAR::Repository> for details on how to set up such a repository.
 L<Archive::Zip>, L<perlfunc/require>
 
 L<ex::lib::zip>, L<Acme::use::strict::with::pride>
+
+PAR supports the L<prefork> module. It declares various run-time
+dependencies so you can use the L<prefork> module to get streamlined
+processes in a forking environment.
 
 =head1 ACKNOWLEDGMENTS
 
