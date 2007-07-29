@@ -1,4 +1,13 @@
 
+[Changes for 0.976 - Jul 29, 2007]
+* New features
+  - Use Archive::Unzip::Burst for unpacking binary executables if
+      available. (This yields a significant startup speed-up.)
+
+* Bug fixes, etc.
+    - Removed the auto_install feature from Makefile.PL. auto_install
+      is conceptually broken.
+
 [Changes for 0.973 - Feb  3, 2007]
 * New features
     - A new option for the "use PAR { ... };" use case:

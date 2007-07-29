@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.973';
+$PAR::VERSION = '0.976';
 
 use 5.006;
 use strict;
@@ -21,6 +21,8 @@ BEGIN {
             LWP::Simple
             PAR::Heavy
         /;
+        # not including Archive::Unzip::Burst which only makes sense
+        # in the context of a PAR::Packer'ed executable anyway.
     }
 }
 
@@ -30,7 +32,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.972 of PAR, released January 16, 2007.
+This document describes version 0.976 of PAR, released July 29, 2007.
 
 =head1 SYNOPSIS
 
@@ -561,33 +563,40 @@ sub _run_member {
 sub _extract_inc {
     my $file = shift;
     my $inc = "$par_temp/inc";
-    # FIXME: What the hell is the following code doing?
-    # There is a "use Config '%Config'" at the top of PAR.pm
-    # I'll probably replace it by
-    # my $dlext = defined($Config{dlext}) ? $Config{dlext} : '';
-    # eventually!
-    # -- Steffen
-    my $dlext = do {
-        require Config;
-        (defined %Config::Config) ? $Config::Config{dlext} : '';
-    };
+    my $dlext = defined($Config{dlext}) ? $Config::Config{dlext} : '';
 
     if (!-d $inc) {
         for (1 .. 10) { mkdir("$inc.lock", 0755) and last; sleep 1 }
+        
+        # First try to unzip the *fast* way.
+        eval {
+          require Archive::Unzip::Burst;
+          Archive::Unzip::Burst::unzip($file, $inc)
+            and die "Could not unzip into '$inc'. Error: $!";
+        };
 
-        open my $fh, '<', $file or die "Cannot find '$file': $!";
-        binmode($fh);
-        bless($fh, 'IO::File');
-
-        my $zip = Archive::Zip->new;
-        ( $zip->readFromFileHandle($fh, $file) == Archive::Zip::AZ_OK() )
-            or die "Read '$file' error: $!";
-
-        for ( $zip->memberNames() ) {
-            next if m{\.\Q$dlext\E[^/]*$};
-            s{^/}{};
-            $zip->extractMember($_, "$inc/" . $_);
+        # This means the fast module is there, but didn't work.
+        if ($@ =~ /^Could not unzip/) {
+          die $@;
         }
+
+        # failed to load Archive::Unzip::Burst. Default to slow way.
+        elsif ($@) {
+          open my $fh, '<', $file or die "Cannot find '$file': $!";
+          binmode($fh);
+          bless($fh, 'IO::File');
+
+          my $zip = Archive::Zip->new;
+          ( $zip->readFromFileHandle($fh, $file) == Archive::Zip::AZ_OK() )
+              or die "Read '$file' error: $!";
+
+          for ( $zip->memberNames() ) {
+              next if m{\.\Q$dlext\E[^/]*$};
+              s{^/}{};
+              $zip->extractMember($_, "$inc/" . $_);
+          }
+        }
+        
         rmdir("$inc.lock");
     }
 
@@ -759,9 +768,9 @@ sub unpar {
         require Archive::Zip;
         $zip = Archive::Zip->new;
 
-    	my @file;
+        my @file;
         if (!ref $par) {
-	        @file = $par;
+            @file = $par;
 
             open my $fh, '<', $par;
             binmode($fh);
