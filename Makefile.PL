@@ -31,4 +31,5 @@ include_deps        'Test::More';
 no_index            directory => 'contrib';
 auto_provides;
 
-WriteAll sign => 1;
+#WriteAll sign => 1;
+WriteAll;

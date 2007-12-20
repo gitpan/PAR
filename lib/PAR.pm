@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.976';
+$PAR::VERSION = '0.977';
 
 use 5.006;
 use strict;
@@ -32,7 +32,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.976 of PAR, released July 29, 2007.
+This document describes version 0.977 of PAR, released October 19, 2007.
 
 =head1 SYNOPSIS
 
@@ -957,7 +957,7 @@ sub _tempfile {
             # delete it has the only effect of giving ugly warnings
             ($fh, $filename) = File::Temp::tempfile(
                 DIR     => $par_temp,
-                UNLINK  => ($^O ne 'MSWin32'),
+                UNLINK  => ($^O ne 'MSWin32' and $^O !~ /hpux/),
             ) or die "Cannot create temporary file: $!";
             binmode($fh);
             return ($fh, 1, $filename);

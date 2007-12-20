@@ -1,5 +1,5 @@
 package PAR::Heavy;
-$PAR::Heavy::VERSION = '0.09';
+$PAR::Heavy::VERSION = '0.11';
 
 =head1 NAME
 
@@ -84,21 +84,22 @@ sub _bootstrap {
 
     my $member;
     $member = PAR::_find_par_any(undef, $file, 1) if defined &PAR::_find_par_any;
-    return $bootstrap->(@args) unless $member;
+    return $bootstrap->(@args) unless $member; # we failed to find the dll, let DynaLoader (try or) throw an error
 
     $FullCache{$file} = _dl_extract($member, $file);
 
     # Now extract all associated shared objs in the same auto/ dir
+    # XXX: shouldn't this also set $FullCache{...} for those files?
     my $first = $member->fileName;
-    my $pat = $first;
-    $pat =~ s{[^/]*$}{};
+    my $path_pattern = $first;
+    $path_pattern =~ s{[^/]*$}{};
     if ($PAR::LastAccessedPAR) {
         foreach my $member ( $PAR::LastAccessedPAR->members ) {
             next if $member->isDirectory;
 
             my $name = $member->fileName;
             next if $name eq $first;
-            next unless $name =~ m{^/?\Q$pat\E\/[^/]?\.\Q$dlext\E[^/]*$};
+            next unless $name =~ m{^/?\Q$path_pattern\E\/[^/]*\.\Q$dlext\E[^/]*$};
             $name =~ s{.*/}{};
             _dl_extract($member, $file, $name);
         }
@@ -126,20 +127,20 @@ sub _dl_extract {
         ($fh, $filename) = File::Temp::tempfile(
             DIR         => ($ENV{PAR_TEMP} || File::Spec->tmpdir),
             SUFFIX      => ".$dlext",
-            UNLINK      => ($^O ne 'MSWin32'),
+            UNLINK      => ($^O ne 'MSWin32' and $^O !~ /hpux/),
         );
-		($filename) = $filename =~ /^([\x20-\xff]+)$/;
+        ($filename) = $filename =~ /^([\x20-\xff]+)$/;
     }
     else {
         $filename = File::Spec->catfile(
             ($ENV{PAR_TEMP} || File::Spec->tmpdir),
             ($name || ($member->crc32String . ".$dlext"))
         );
-		($filename) = $filename =~ /^([\x20-\xff]+)$/;
+        ($filename) = $filename =~ /^([\x20-\xff]+)$/;
 
         open $fh, '>', $filename or die $!
-            unless -r $filename and -e $filename
-                and -s $filename == $member->uncompressedSize;
+            unless -r $filename and -e _
+                and -s _ == $member->uncompressedSize;
     }
 
     if ($fh) {
@@ -170,7 +171,7 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2002, 2003, 2004, 2005, 2006 by Audrey Tang
+Copyright 2002-2007 by Audrey Tang
 E<lt>cpan@audreyt.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
