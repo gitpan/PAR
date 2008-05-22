@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.979';
+$PAR::VERSION = '0.980';
 
 use 5.006;
 use strict;
@@ -32,7 +32,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes version 0.979 of PAR, released May 13, 2008.
+This document describes version 0.980 of PAR, released May 22, 2008.
 
 =head1 SYNOPSIS
 
@@ -87,9 +87,6 @@ Use in a program:
 
     # PAR::read_file() returns a file inside any loaded PARs
     my $conf = PAR::read_file('data/MyConfig.yaml');
-
-    # PAR::get_filehandle() returns an fh for a file inside any loaded PARs
-    my $largeFile = PAR::get_filehandle('data/MyConfig.xml');
 
     # PAR::par_handle() returns an Archive::Zip handle
     my $zip = PAR::par_handle('foo.par')
@@ -575,7 +572,7 @@ sub _extract_inc {
         eval {
           require Archive::Unzip::Burst;
           Archive::Unzip::Burst::unzip($file, $inc)
-            and die "Could not unzip into '$inc'. Error: $!";
+            and die "Could not unzip '$file' into '$inc'. Error: $!";
         };
 
         # This means the fast module is there, but didn't work.
@@ -690,16 +687,16 @@ sub reload_libs {
     }
 }
 
-sub get_filehandle {
-    my $file = pop;
-
-    foreach my $zip (@LibCache) {
-        my $member = _first_member($zip, $file) or next;
-        return $member->fh();
-    }
-
-    return;
-}
+#sub find_zip_member {
+#    my $file = pop;
+#
+#    foreach my $zip (@LibCache) {
+#        my $member = _first_member($zip, $file) or next;
+#        return $member;
+#    }
+#
+#    return;
+#}
 
 sub read_file {
     my $file = pop;

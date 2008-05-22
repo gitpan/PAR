@@ -1,0 +1,55 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.55.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 62c278a45f15052f86bc79f305895eadf35e1a58 AUTHORS
+SHA1 678fa49eb42bd2231f2556de0ebc387ba695539e ChangeLog
+SHA1 793164ba2fd4239b0c32c71bcd86dabadb4baf05 MANIFEST
+SHA1 1b76a18f37473dd21b20f8ae98c8d5a27bbfab03 MANIFEST.SKIP
+SHA1 412990e2851635279609199fe172c00ea4aa4dfe META.yml
+SHA1 c1bbb5a716c39b157fb9cf82a3da39bc87137e1b Makefile.PL
+SHA1 8c2f9ec457ddd9089b1e2ca642a7e139d620c76e README
+SHA1 886fa7bf70cf69d8b6050355754f6d9ec2567115 TODO
+SHA1 b8d2808110bf9835361aaa9862c2ba187ceb0cf0 inc/Module/Install.pm
+SHA1 8e81750ac96cda45093ab44bca99773fc5e5f210 inc/Module/Install/Base.pm
+SHA1 0cd5ed798196fb0db86012cb3e3a6766caf9f74e inc/Module/Install/Can.pm
+SHA1 29a3a37cc58a102e9f1c555e4bc8c0d1a297060f inc/Module/Install/Fetch.pm
+SHA1 2c472de292437f0fa08f829920144bacab7bf831 inc/Module/Install/Include.pm
+SHA1 2bca4d97c764847e06364350aaff04b7256192e8 inc/Module/Install/Makefile.pm
+SHA1 ee554c8935eab61ed610b003849981bef3a6e484 inc/Module/Install/Metadata.pm
+SHA1 00355795924ec8178f492be53c568fbdd490df73 inc/Module/Install/Win32.pm
+SHA1 5b03f293c89acff403ea35d92ed54bbe8486df4d inc/Module/Install/WriteAll.pm
+SHA1 8b1cc43f1fc02b371cf5232e7071d3c2697f9f78 inc/PerlIO.pm
+SHA1 4f29a27c21fbf9808140f69496e8c26f586c7ab6 inc/Test/Builder.pm
+SHA1 15260d018c2f7dd0dc9705a621684149742e7a5f inc/Test/Builder/Module.pm
+SHA1 0b8387e071b32d2d595715e303e18c3d4579ca33 inc/Test/More.pm
+SHA1 e65273396c19834c1ca3809df9cc58a202514045 lib/PAR.pm
+SHA1 96874619c5de471f84a08a28859049ed2a33312b lib/PAR/Environment.pod
+SHA1 00a964bc6d9d4f0cd907d621624c22064a36cef8 lib/PAR/FAQ.pod
+SHA1 963afc2d516c1f86a29379cb9c3ba3f001e9e2c2 lib/PAR/Heavy.pm
+SHA1 44d0f288e8c9a7362697b5d64c4272da16cfe0c9 lib/PAR/Tutorial.pod
+SHA1 3467e6bd4b5227f8e1e21f45832b279c2e8c5b7f t/00-pod.t
+SHA1 dc1c8eb9ff09172ea1df02257b68032695673e2e t/01-basic.t
+SHA1 82548e8de5a8d7a451d33cfcdece13f613d0efc2 t/40-par-hashref.t
+SHA1 550e7f3685242e47e9d47be45495417a7597e11c t/50-autoloaderfix.t
+SHA1 0ebe6181affc8afe78fad4446075d8f0ee420cfd t/Hello.pm
+SHA1 a0258484d56cc699190be4cd93a16d145a0e1d16 t/hello.par
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFINVtFZCuimE51gxcRAnNEAKCISg36S6EAcb3cgQzOQ6I22azNOwCgpJAN
+93FTPslkfKkLFxfvTF2UgVM=
+=0a0U
+-----END PGP SIGNATURE-----
