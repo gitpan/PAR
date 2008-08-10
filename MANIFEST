@@ -13,7 +13,6 @@ inc/PerlIO.pm
 inc/Test/Builder.pm
 inc/Test/Builder/Module.pm
 inc/Test/More.pm
-lib/.PAR.pm.swp
 lib/PAR.pm
 lib/PAR/Environment.pod
 lib/PAR/FAQ.pod

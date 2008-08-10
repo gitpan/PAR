@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.981_01';
+$PAR::VERSION = '0.982';
 
 use 5.006;
 use strict;
@@ -35,7 +35,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes development release 0.981_01 of PAR, released August 10, 2008.
+This document describes release 0.982 of PAR, released August 10, 2008.
 
 =head1 SYNOPSIS
 
@@ -487,7 +487,7 @@ sub _import_hash_ref {
             croak("Cannot run script '$script' from PAR file '$opt->{file}'. Script couldn't be found in PAR file.");
         }
         
-        _run_member($member);
+        _run_member_from_par($member);
     }
 
     return();
@@ -534,6 +534,27 @@ sub _first_member {
         return $member if $member;
     }
     return;
+}
+
+sub _run_member_from_par {
+    my $member = shift;
+    my $clear_stack = shift;
+    my ($fh, $is_new, $filename) = _tempfile($member->crc32String . ".pl");
+
+    if ($is_new) {
+        my $file = $member->fileName;
+        print $fh "package main;\n";
+        print $fh "#line 1 \"$file\"\n";
+        $member->extractToFileHandle($fh);
+        seek ($fh, 0, 0);
+    }
+
+    $ENV{PAR_0} = $filename; # for Pod::Usage
+    { do $filename;
+      CORE::exit($1) if ($@ =~/^_TK_EXIT_\((\d+)\)/);
+      die $@ if $@;
+      exit;
+    }
 }
 
 sub _run_member {
