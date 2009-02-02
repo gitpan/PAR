@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.984';
+$PAR::VERSION = '0.985_01';
 
 use 5.006;
 use strict;
@@ -35,7 +35,7 @@ PAR - Perl Archive Toolkit
 
 =head1 VERSION
 
-This document describes release 0.984 of PAR, released January 25, 2008.
+This document describes release 0.985_01 of PAR, released February  2, 2008.
 
 =head1 SYNOPSIS
 
@@ -138,6 +138,9 @@ installed on your system. (C<use PAR { repository =E<gt> 'http://foo/bar', insta
 Furthermore, there is an C<upgrade =E<gt> 1> option that checks for upgrades
 in the repository in addition to installing. Please note that an upgraded
 version of a module is only loaded on the next run of your application.
+
+Adding the C<dependencies =E<gt> 1> option will enable PAR::Repository::Client's
+static dependency resolution (PAR::Repository::Client 0.23 and up).
 
 Finally, you can combine the C<run> and C<repository>
 options to run an application directly from a repository! (And you can add
@@ -339,6 +342,10 @@ sub import {
 
     my @args = @_;
     
+    # Insert PAR hook in @INC.
+    unshift @INC, \&find_par   unless grep { $_ eq \&find_par }      @INC;
+    push @INC, \&find_par_last unless grep { $_ eq \&find_par_last } @INC;
+
     # process args to use PAR 'foo.par', { opts }, ...;
     foreach my $par (@args) {
         if (ref($par) eq 'HASH') {
@@ -360,10 +367,6 @@ sub import {
 
     return if $PAR::__import;
     local $PAR::__import = 1;
-
-    # Insert PAR hook in @INC.
-    unshift @INC, \&find_par   unless grep { $_ eq \&find_par }      @INC;
-    push @INC, \&find_par_last unless grep { $_ eq \&find_par_last } @INC;
 
     require PAR::Heavy;
     PAR::Heavy::_init_dynaloader();
@@ -516,6 +519,10 @@ sub _import_repository {
         croak "In order to use the 'upgrade' option, you need to install the PAR::Repository::Client module (version 0.22 or later) from CPAN";
     }
 
+    if ($opt->{dependencies} and not eval PAR::Repository::Client->VERSION >= 0.23) {
+        croak "In order to use the 'dependencies' option, you need to install the PAR::Repository::Client module (version 0.23 or later) from CPAN";
+    }
+
     my $obj;
 
     # Support existing clients passed in as objects.
@@ -524,9 +531,10 @@ sub _import_repository {
     }
     else {
         $obj = PAR::Repository::Client->new(
-            uri => $url,
-            auto_install => $opt->{install},
-            auto_upgrade => $opt->{upgrade},
+            uri                 => $url,
+            auto_install        => $opt->{install},
+            auto_upgrade        => $opt->{upgrade},
+            static_dependencies => $opt->{dependencies},
         );
     }
 
