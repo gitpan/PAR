@@ -16,7 +16,7 @@ no_index:
 provides:
   PAR:
     file: lib/PAR.pm
-    version: 0.985_01
+    version: 0.986
   PAR::Heavy:
     file: lib/PAR/Heavy.pm
     version: 0.11
@@ -35,4 +35,4 @@ requires:
   perl: 5.6.0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.985_01
+version: 0.986
