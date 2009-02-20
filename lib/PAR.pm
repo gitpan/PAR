@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.986';
+$PAR::VERSION = '0.987_01';
 
 use 5.006;
 use strict;
@@ -1074,7 +1074,19 @@ sub _cached_member_named {
 }
 
 
-
+# Attempt to clean up the temporary directory if
+# --> We're running in clean mode
+# --> It's defined
+# --> It's an existing directory
+# --> It's empty
+END {
+  if (exists $ENV{PAR_CLEAN} and $ENV{PAR_CLEAN}
+      and exists $ENV{PAR_TEMP} and defined $ENV{PAR_TEMP} and -d $ENV{PAR_TEMP}
+  ) {
+    local($!); # paranoid: ignore potential errors without clobbering a global variable!
+    rmdir($ENV{PAR_TEMP});
+  }
+}
 
 1;
 
