@@ -29,7 +29,6 @@ t/00-pod.t
 t/01-basic.t
 t/40-par-hashref.t
 t/50-autoloaderfix.t
-t/60-cleanup.t
 t/hello.par
 t/Hello.pm
 TODO
