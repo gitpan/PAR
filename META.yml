@@ -3,7 +3,7 @@ abstract: 'Perl Archive Tookit'
 author:
   - 'Audrey Tang <cpan@audreyt.org>'
 distribution_type: module
-generated_by: 'Module::Install version 0.78'
+generated_by: 'Module::Install version 0.79'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -16,7 +16,7 @@ no_index:
 provides:
   PAR:
     file: lib/PAR.pm
-    version: 0.987_01
+    version: 0.988
   PAR::Heavy:
     file: lib/PAR/Heavy.pm
     version: 0.11
@@ -35,4 +35,4 @@ requires:
   perl: 5.6.0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.987_01
+version: 0.988
