@@ -2,8 +2,10 @@
 abstract: 'Perl Archive Tookit'
 author:
   - 'Audrey Tang <cpan@audreyt.org>'
+configure_requires:
+  ExtUtils::MakeMaker: 6.50
 distribution_type: module
-generated_by: 'Module::Install version 0.79'
+generated_by: 'Module::Install version 0.81'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -16,7 +18,7 @@ no_index:
 provides:
   PAR:
     file: lib/PAR.pm
-    version: 0.991
+    version: 0.992
   PAR::Heavy:
     file: lib/PAR/Heavy.pm
     version: 0.11
@@ -35,4 +37,4 @@ requires:
   perl: 5.6.0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.991
+version: 0.992
