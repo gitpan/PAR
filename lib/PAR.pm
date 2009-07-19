@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '0.992';
+$PAR::VERSION = '0.993';
 
 use 5.006;
 use strict;
@@ -640,6 +640,34 @@ sub _run_member {
     }
 }
 
+sub _run_external_file {
+    my $filename = shift;
+    my $clear_stack = shift;
+    require 5.008;
+    open my $ffh, '<', $filename
+      or die "Can't open perl script \"$filename\": $!";
+
+    my $clearstack = '';
+    if (defined &Internals::PAR::CLEARSTACK and $clear_stack) {
+        $clear_stack = "Internals::PAR::CLEARSTACK();\n";
+    }
+    my $string = "package main; shift \@INC;\n$clearstack#line 1 \"$filename\"\n"
+                 . do { local $/ = undef; <$ffh> };
+    close $ffh;
+
+    open my $fh, '<', \$string
+      or die "Can't open file handle to string: $!";
+
+    unshift @INC, sub { $fh };
+
+    $ENV{PAR_0} = $filename; # for Pod::Usage
+    { do 'main';
+      CORE::exit($1) if ($@ =~/^_TK_EXIT_\((\d+)\)/);
+      die $@ if $@;
+      exit;
+    }
+}
+
 # extract the contents of a .par (or .exe) or any
 # Archive::Zip handle to the PAR_TEMP/inc directory.
 # returns that directory.
@@ -741,12 +769,20 @@ sub find_par {
                 # Then, realize that if you pass undef for the file handle, perl (5.8.9)
                 # does NOT use the subroutine. Thus the hacky GLOB ref.
                 my $line = 1;
+                no warnings;
                 return (\*I_AM_NOT_HERE, sub {$line ? ($_="1;",$line=0,return(1)) : ($_="",return(0))});
             }
 
-            if ($local_file) {
-                return _find_par_internals([$PAR_INC_LAST[-1]], @args);
-            }
+            # Note: This is likely not necessary as the module has been installed
+            # into the system by upgrade_module if it was available at all.
+            # If it was already loaded, this will not be reached (see return right above).
+            # If it could not be loaded from the system and neither found in the repository,
+            # we simply want to have the normal error message, too!
+            #
+            #if ($local_file) {
+            #    # XXX load with fallback - is that right?
+            #    return _find_par_internals([$PAR_INC_LAST[-1]], @args);
+            #}
         }
     }
     my $rv = _find_par_internals(\@PAR_INC, @args);
@@ -758,9 +794,11 @@ sub find_par {
     $module =~ s/\.pm$//;
     $module =~ s/\//::/g;
     foreach my $client (@PriorityRepositoryObjects) {
-        my $local_file = $client->get_module($module, 1); # 1 == fallback
+        my $local_file = $client->get_module($module, 0); # 1 == fallback
         if ($local_file) {
-            return _find_par_internals([$PAR_INC_LAST[-1]], @args);
+            # Not loaded as fallback (cf. PRIORITY) thus look at PAR_INC
+            # instead of PAR_INC_LAST
+            return _find_par_internals([$PAR_INC[-1]], @args);
         }
     }
     return();
@@ -785,19 +823,12 @@ sub find_par_last {
     foreach my $client (@RepositoryObjects) {
         my $local_file = $client->get_module($module, 1); # 1 == fallback
         if ($local_file) {
+            # Loaded as fallback thus look at PAR_INC_LAST
             return _find_par_internals([$PAR_INC_LAST[-1]], @args);
         }
     }
     return $rv;
 }
-
-
-# This is a conjunction of the early find_par and the late
-# find_par_last. It's called by PAR::Heavy for Dynaloader stuff.
-sub _find_par_any {
-    return _find_par_internals([@PAR_INC, @PAR_INC_LAST], @_);
-}
-
 
 
 # This routine implements loading modules from PARs
@@ -810,7 +841,7 @@ sub _find_par_internals {
     my $scheme;
     foreach (@$INC_ARY ? @$INC_ARY : @INC) {
         my $path = $_;
-        if ($[ < 5.008001) {
+        if ($] < 5.008001) {
             # reassemble from "perl -Ischeme://path" autosplitting
             $path = "$scheme:$path" if !@$INC_ARY
                 and $path and $path =~ m!//!

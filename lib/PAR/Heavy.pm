@@ -78,13 +78,30 @@ sub _bootstrap {
     my $file = $cache_key = "auto/$modpname/$modfname.$dlext";
 
     if ($FullCache{$file}) {
+        # TODO: understand
         local $DynaLoader::do_expand = 1;
         return $bootstrap->(@args);
     }
 
     my $member;
-    $member = PAR::_find_par_any(undef, $file, 1) if defined &PAR::_find_par_any;
-    return $bootstrap->(@args) unless $member; # we failed to find the dll, let DynaLoader (try or) throw an error
+    # First, try to find things in the peferentially loaded PARs:
+    $member = PAR::_find_par_internals([@PAR::PAR_INC], undef, $file, 1);
+
+    # If that failed to find the dll, let DynaLoader (try or) throw an error
+    unless ($member) { 
+        my $filename = eval { $bootstrap->(@args) };
+        return $filename if not $@ and defined $filename;
+
+        # Now try the fallback pars
+        $member = PAR::_find_par_internals([@PAR::PAR_INC_LAST], undef, $file, 1);
+
+        # If that fails, let dynaloader have another go JUST to throw an error
+        # While this may seem wasteful, nothing really matters once we fail to
+        # load shared libraries!
+        unless ($member) { 
+            return $bootstrap->(@args);
+        }
+    }
 
     $FullCache{$file} = _dl_extract($member, $file);
 
@@ -171,8 +188,11 @@ Please submit bug reports to E<lt>bug-par@rt.cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2008 by Audrey Tang
+Copyright 2002-2009 by Audrey Tang
 E<lt>cpan@audreyt.orgE<gt>.
+
+Copyright 2006-2009 by Steffen Mueller
+E<lt>smueller@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
