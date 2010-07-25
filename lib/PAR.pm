@@ -1,5 +1,5 @@
 package PAR;
-$PAR::VERSION = '1.000';
+$PAR::VERSION = '1.001';
 
 use 5.006;
 use strict;
@@ -721,8 +721,12 @@ sub _extract_inc {
           mkdir($inc) if not -d $inc;
 
           for ( $zip->memberNames() ) {
-              next if m{\.\Q$dlext\E[^/]*$};
               s{^/}{};
+
+              # Skip DLLs (these will be handled by the dynaloader hook) 
+              # except for those placed in File::ShareDir directories.
+              next if (m{\.\Q$dlext\E[^/]*$} && !m{^lib/auto/share/(dist|module)/}); 
+
               my $outfile =  File::Spec->catfile($inc, $_);
               next if -e $outfile and not -w _;
               $zip->extractMember($_, "$inc/" . $_);
