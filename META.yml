@@ -20,14 +20,16 @@ no_index:
 provides:
   PAR:
     file: lib/PAR.pm
-    version: 1.001
+    version: 1.002
   PAR::Heavy:
     file: lib/PAR/Heavy.pm
     version: 0.12
   PAR::SetupProgname:
     file: lib/PAR/SetupProgname.pm
+    version: 1.002
   PAR::SetupTemp:
     file: lib/PAR/SetupTemp.pm
+    version: 1.002
 recommends:
   Digest: Module::Signature
 requires:
@@ -39,4 +41,4 @@ requires:
   perl: 5.6.0
 resources:
   license: http://dev.perl.org/licenses/
-version: 1.001
+version: 1.002
