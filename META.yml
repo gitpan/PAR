@@ -8,7 +8,7 @@ configure_requires:
   ExtUtils::MakeMaker: 6.57
 distribution_type: module
 dynamic_config: 1
-generated_by: 'Module::Install version 1.00'
+generated_by: 'Module::Install version 1.04'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -18,6 +18,19 @@ no_index:
   directory:
     - inc
     - t
+provides:
+  PAR:
+    file: lib/PAR.pm
+    version: 1.004
+  PAR::Heavy:
+    file: lib/PAR/Heavy.pm
+    version: 0.12
+  PAR::SetupProgname:
+    file: lib/PAR/SetupProgname.pm
+    version: 1.002
+  PAR::SetupTemp:
+    file: lib/PAR/SetupTemp.pm
+    version: 1.002
 recommends:
   Digest: Module::Signature
 requires:
@@ -29,4 +42,4 @@ requires:
   perl: 5.6.0
 resources:
   license: http://dev.perl.org/licenses/
-version: 1.003
+version: 1.004
