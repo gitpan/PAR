@@ -3,7 +3,7 @@ abstract: 'Perl Archive Tookit'
 author:
   - 'Audrey Tang <cpan@audreyt.org>'
 build_requires:
-  ExtUtils::MakeMaker: 6.6302
+  ExtUtils::MakeMaker: 6.59
 configure_requires:
   ExtUtils::MakeMaker: 0
 dynamic_config: 0
@@ -24,4 +24,4 @@ requires:
   File::Temp: 0.05
   PAR::Dist: 0.32
   perl: 5.008001
-version: 1.006
+version: 1.007
